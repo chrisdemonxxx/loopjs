@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,6 +9,7 @@ const bcrypt = require('bcrypt');
 const WebSocket = require('ws');
 const http = require('http');
 const path = require('path');
+const cors = require('cors'); // ✅ NEW
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +17,12 @@ const wss = new WebSocket.Server({ server });
 
 const wsHandler = require('./configs/ws.handler');
 const User = require('./models/User');
+
+// ✅ CORS Middleware (must be placed BEFORE routes)
+app.use(cors({
+    origin: "https://loopjs-2.onrender.com", // your frontend origin
+    credentials: true
+}));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -28,7 +34,8 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI })
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    cookie: { sameSite: 'none', secure: true } // ✅ Necessary for cross-site cookie in HTTPS
 }));
 app.use(passport.initialize());
 app.use(passport.session());
