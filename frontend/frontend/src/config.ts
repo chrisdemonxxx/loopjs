@@ -5,5 +5,5 @@ export const API_URL = isProd
   : "http://localhost:10000";
 
 export const WS_URL = isProd
-  ? "wss://loopjs-websocket.onrender.com"
-  : "ws://localhost:10001";
+  ? "wss://loopjs.onrender.com/ws"   // 👈 this is important
+  : "ws://localhost:10000/ws";       // 👈 same port as API + "/ws" path
