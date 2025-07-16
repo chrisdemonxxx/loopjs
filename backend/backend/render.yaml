@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: loopjs-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: PORT
+        value: 10000
+    rootDir: backend
+
+  - type: web
+    name: loopjs-websocket
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10001
+    rootDir: websocket-server
+
+  - type: static
+    name: loopjs-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    rootDir: frontend
