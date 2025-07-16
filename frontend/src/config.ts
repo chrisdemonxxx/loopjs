@@ -1,6 +1,9 @@
-const APP_CONFIG = {
-    API_ENDPOINT: 'http://104.207.148.168:8080/api/v1/',
-    WEBSOCKET_URL: 'ws://104.207.148.168:8080',
-};
+const isProd = window.location.protocol === "https:";
 
-export default APP_CONFIG;
+export const API_URL = isProd
+  ? "https://loopjs-backend.onrender.com"
+  : "http://localhost:10000";
+
+export const WS_URL = isProd
+  ? "wss://loopjs-websocket.onrender.com"
+  : "ws://localhost:10001";

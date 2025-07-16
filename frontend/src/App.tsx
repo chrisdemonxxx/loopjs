@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import request from './axios';
-import config from './config';
+import { WS_URL } from './config';
 import TransferModal from './TransferModal';
 
 export default function App() {
@@ -19,7 +19,7 @@ export default function App() {
 
     const initWebSocket = () => {
         // Create WebSocket connection to your server
-        const ws = new WebSocket(config.WEBSOCKET_URL); // Replace with your WebSocket server URL
+        const ws = new WebSocket(WS_URL);
 
         // Event handler when the WebSocket connection is open
         ws.onopen = () => {

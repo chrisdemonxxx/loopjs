@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import APP_CONFIG from './config';
+import { API_URL } from './config';
+
 
 interface RequestOptions {
   url: string;
