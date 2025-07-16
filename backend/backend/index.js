@@ -13,7 +13,7 @@ const cors = require('cors'); // ✅ NEW
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server, path: "/ws" });
 
 const wsHandler = require('./configs/ws.handler');
 const User = require('./models/User');
