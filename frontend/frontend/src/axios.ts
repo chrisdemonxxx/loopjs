@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_URL } from './config';
 
-
 interface RequestOptions {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -17,11 +16,11 @@ const request = async ({
 }: RequestOptions): Promise<AxiosResponse> => {
   const config: AxiosRequestConfig = {
     method,
-    url: APP_CONFIG.API_ENDPOINT + url,
+    url: API_URL + url, // ✅ FIXED
     headers,
+    withCredentials: true, // ✅ allow session-based auth (important!)
   };
 
-  // Add auth token from localStorage if available
   if (data) {
     if (data instanceof FormData) {
       config.data = data;
