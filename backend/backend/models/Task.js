@@ -1,11 +1,25 @@
-
 const mongoose = require('mongoose');
 
-const TaskSchema = new mongoose.Schema({
-    uuid: String,
-    command: String,
-    status: { type: String, enum: ['pending', 'executed', 'failed'], default: 'pending' },
-    createdAt: { type: Date, default: Date.now }
+const taskSchema = new mongoose.Schema({
+    uuid: {
+        type: String,
+        required: true,
+    },
+    command: {
+        type: String,
+        required: true,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'executed', 'failed'],
+        default: 'pending',
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
 });
 
-module.exports = mongoose.model('Task', TaskSchema);
+const Task = mongoose.model('Task', taskSchema);
+
+module.exports = Task;

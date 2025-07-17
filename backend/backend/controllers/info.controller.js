@@ -1,32 +1,25 @@
-const webSocket = require("./../configs/ws.handler");
+const Client = require('../models/Client');
 
-exports.getUserListAction = async(req, res) => {
+/**
+ * Fetches the list of all clients (agents) from the database.
+ */
+const getUserListAction = async (req, res) => {
     try {
-        const userList = [];
-        const length = webSocket.socketList.length;
-
-        for(var i = 0; i < length; i++) {
-            const socket = webSocket.socketList[i];
-            if(socket.ipAddress && socket.computerName) {
-                userList.push({
-                    computerName: socket.computerName,
-                    ipAddress: socket.ipAddress,
-                    country: socket.country,
-                    status: 'Active',
-                    lastActiveTime: socket.lastActiveTime,
-                    additionalSystemDetails: 'N/A',
-                })
-            }
-        }
+        const clients = await Client.find({});
         res.status(200).json({
             status: 'success',
-            userList,
-            length
-        })
+            data: clients,
+        });
     } catch (error) {
+        console.error('Error fetching user list:', error);
         res.status(500).json({
-            status: "server_error",
-            message: error.message
-        })
+            status: 'error',
+            message: 'Internal server error while fetching user list.',
+        });
     }
-}
+};
+
+// Export the function so it can be used by info.route.js
+module.exports = {
+    getUserListAction,
+};
