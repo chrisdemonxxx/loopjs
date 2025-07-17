@@ -105,7 +105,8 @@ app.get('/logout', (req, res, next) => {
 
 // --- API Routes ---
 // This handles all other API routes like /info/get-user-list
-app.use('/', apiRoutes);
+app.use('/api', apiRoutes);
+
 
 
 // --- WebSocket Connection Handler ---
