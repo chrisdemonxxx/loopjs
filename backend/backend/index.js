@@ -20,7 +20,7 @@ const app = express();
 
 // --- CORS Configuration ---
 const corsOptions = {
-    origin: '[https://loopjs-2.onrender.com](https://loopjs-2.onrender.com)', // Corrected: Removed markdown link syntax
+    origin: 'https://loopjs-2.onrender.com',
     credentials: true,
     optionsSuccessStatus: 200
 };
