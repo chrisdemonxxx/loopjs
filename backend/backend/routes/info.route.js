@@ -1,3 +1,6 @@
+// This corrected file changes the /get-user-list route from a POST
+// request to a GET request to match the frontend.
+
 const express = require('express');
 const infoController = require('../controllers/info.controller');
 
