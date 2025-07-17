@@ -28,5 +28,3 @@ services:
     # repository has both frontend and backend in it.
     # If your repo is ONLY the frontend, you can remove this line.
     rootDir: frontend
-
-```javascript
