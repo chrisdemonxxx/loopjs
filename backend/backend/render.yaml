@@ -10,21 +10,20 @@ services:
         sync: false
       - key: PORT
         value: 10000
+      - key: SESSION_SECRET
+        sync: false
+    # The rootDir should point to your backend folder if your
+    # repository has both frontend and backend in it.
+    # If your repo is ONLY the backend, you can remove this line.
     rootDir: backend
-
-  - type: web
-    name: loopjs-websocket
-    env: node
-    plan: free
-    buildCommand: npm install
-    startCommand: node server.js
-    envVars:
-      - key: PORT
-        value: 10001
-    rootDir: websocket-server
 
   - type: static
     name: loopjs-frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    # The rootDir should point to your frontend folder if your
+    # repository has both frontend and backend in it.
+    # If your repo is ONLY the frontend, you can remove this line.
     rootDir: frontend
+
+```javascript

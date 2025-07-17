@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -8,7 +9,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 const WebSocket = require('ws');
 const http = require('http');
-const cors = require('cors'); // Ensure you have run 'npm install cors'
+const cors = require('cors');
 
 // Route imports
 const apiRoutes = require('./routes/index'); 
@@ -19,13 +20,10 @@ const User = require('./models/User');
 const app = express();
 
 // --- CORS Configuration ---
-// This is the most important part. It MUST be placed before any routes.
-// This configuration allows your frontend at 'loopjs-2.onrender.com'
-// to make API calls to this backend.
 const corsOptions = {
-    origin: 'https://loopjs-2.onrender.com', // The specific URL of your frontend
-    credentials: true, // Allows cookies and session info to be sent
-    optionsSuccessStatus: 200 // For legacy browser support
+    origin: '[https://loopjs-2.onrender.com](https://loopjs-2.onrender.com)', // The specific URL of your frontend
+    credentials: true,
+    optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
@@ -45,16 +43,15 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session Middleware (must be before passport)
+// Session Middleware
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    // Cookie settings are important for cross-domain requests
     cookie: { 
         sameSite: 'none', 
-        secure: true, // 'secure: true' is required for 'sameSite: none'
+        secure: true,
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
@@ -93,7 +90,7 @@ passport.deserializeUser(async (id, done) => {
 
 
 // --- API Routes ---
-// This line is changed to remove the '/api' prefix, matching the frontend's requests.
+// The '/api' prefix has been removed to match the frontend requests.
 app.use('/', apiRoutes);
 
 
@@ -106,3 +103,4 @@ const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+```javascript
