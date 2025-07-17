@@ -1,18 +1,21 @@
-// This corrected file changes the /get-user-list route from a POST
-// request to a GET request to match the frontend.
-
 const express = require('express');
 const infoController = require('../controllers/info.controller');
-
 const router = express.Router();
 
-// This was changed from .post() to .get()
-router.get('/get-user-list', infoController.getUserListAction);
+// 🔒 Middleware to check authentication
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: 'Unauthorized' });
+}
+
+// ✅ Protect this route
+router.get('/get-user-list', isAuthenticated, infoController.getUserListAction);
 
 router.get('/', (req, res) => {
-    res.status(200).json({
-        status: "success",
-        message: "Info APIs",
-    });
+  res.status(200).json({
+    status: "success",
+    message: "Info APIs",
+  });
 });
+
 module.exports = router;
