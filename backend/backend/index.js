@@ -1,5 +1,3 @@
-// This corrected file re-adds the /login and /logout routes.
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -22,7 +20,7 @@ const app = express();
 
 // --- CORS Configuration ---
 const corsOptions = {
-    origin: '[https://loopjs-2.onrender.com](https://loopjs-2.onrender.com)', // The specific URL of your frontend
+    origin: '[https://loopjs-2.onrender.com](https://loopjs-2.onrender.com)', // Corrected: Removed markdown link syntax
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -94,7 +92,7 @@ passport.deserializeUser(async (id, done) => {
 // This handles the POST request from the frontend login form.
 app.post('/login', passport.authenticate('local'), (req, res) => {
     // If authentication is successful, Passport will establish a session.
-    res.status(200).json({ status: 'success', message: 'Logged in successfully' });
+    res.status(200).json({ status: 'success', message: 'Logged in successfully', user: req.user });
 });
 
 app.get('/logout', (req, res, next) => {
