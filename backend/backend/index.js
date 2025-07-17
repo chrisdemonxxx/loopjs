@@ -1,5 +1,4 @@
-// This corrected file removes the unnecessary '/api' prefix from the routes
-// to match what the frontend is requesting.
+// This corrected file re-adds the /login and /logout routes.
 
 require('dotenv').config();
 const express = require('express');
@@ -91,8 +90,23 @@ passport.deserializeUser(async (id, done) => {
 });
 
 
+// --- Auth Routes ---
+// This handles the POST request from the frontend login form.
+app.post('/login', passport.authenticate('local'), (req, res) => {
+    // If authentication is successful, Passport will establish a session.
+    res.status(200).json({ status: 'success', message: 'Logged in successfully' });
+});
+
+app.get('/logout', (req, res, next) => {
+    req.logout(function(err) {
+        if (err) { return next(err); }
+        res.status(200).json({ status: 'success', message: 'Logged out successfully' });
+    });
+});
+
+
 // --- API Routes ---
-// The '/api' prefix has been removed to match the frontend requests.
+// This handles all other API routes like /info/get-user-list
 app.use('/', apiRoutes);
 
 
