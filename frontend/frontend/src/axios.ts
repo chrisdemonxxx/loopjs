@@ -16,9 +16,9 @@ const request = async ({
 }: RequestOptions): Promise<AxiosResponse> => {
   const config: AxiosRequestConfig = {
     method,
-    url: API_URL + "/api" + url,
+    url: API_URL + url, // ✅ DO NOT prepend /api again
     headers,
-    withCredentials: true, // ✅ allow session-based auth (important!)
+    withCredentials: true,
   };
 
   if (data) {
@@ -40,5 +40,6 @@ const request = async ({
     throw error;
   }
 };
+
 
 export default request;

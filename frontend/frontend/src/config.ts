@@ -6,5 +6,6 @@ export const API_URL = isProd
 
 
 export const WS_URL = isProd
-  ? "wss://loopjs.onrender.com/ws"   // 👈 this is important
-  : "ws://localhost:10000/ws";       // 👈 same port as API + "/ws" path
+  ? "wss://loopjs-2.onrender.com/ws"   // ✅ matches API domain
+  : "ws://localhost:10000/ws";
+
