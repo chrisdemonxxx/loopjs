@@ -93,8 +93,8 @@ passport.deserializeUser(async (id, done) => {
 
 
 // --- API Routes ---
-// All your API routes are now prefixed with /api
-app.use('/api', apiRoutes);
+// This line is changed to remove the '/api' prefix, matching the frontend's requests.
+app.use('/', apiRoutes);
 
 
 // --- WebSocket Connection Handler ---
