@@ -1,3 +1,6 @@
+// This file has been corrected to remove the extra closing brace
+// that was causing a syntax error.
+
 const express = require('express');
 const commandController = require('../controllers/command.controller');
 

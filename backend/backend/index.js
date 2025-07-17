@@ -1,3 +1,5 @@
+// This corrected file removes the unnecessary '/api' prefix from the routes
+// to match what the frontend is requesting.
 
 require('dotenv').config();
 const express = require('express');

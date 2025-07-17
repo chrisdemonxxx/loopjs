@@ -1,3 +1,6 @@
+# This corrected file removes the redundant websocket service and
+# correctly points to your single backend service.
+
 services:
   - type: web
     name: loopjs-backend
