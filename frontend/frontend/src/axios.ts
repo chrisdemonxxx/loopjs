@@ -16,7 +16,7 @@ const request = async ({
 }: RequestOptions): Promise<AxiosResponse> => {
   const config: AxiosRequestConfig = {
     method,
-    url: API_URL + url, // ✅ FIXED
+    url: API_URL + "/api" + url,
     headers,
     withCredentials: true, // ✅ allow session-based auth (important!)
   };
