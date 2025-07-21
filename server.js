@@ -8,7 +8,7 @@ const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
 // Uncomment below if using a database
-// const MONGO_URI = process.env.MONGO_URI || 'your-mongodb-connection-string';
+const MONGO_URI=mongodb+srv://chrisdemonxxx:QrsdvAf7K3ZVcwRG@cluster0.lsyii5u.mongodb.net/loopjs?retryWrites=true&w=majority&appName=Cluster0
 
 wss.on('connection', (ws) => {
     console.log("Client connected.");
