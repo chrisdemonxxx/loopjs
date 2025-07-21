@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,106 +11,79 @@ const WebSocket = require('ws');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
-// Route imports
-const apiRoutes = require('./routes/index'); 
+const apiRoutes = require('./routes/index');
 const wsHandler = require('./configs/ws.handler');
 const User = require('./models/User');
 
-// --- Main App Setup ---
 const app = express();
-
-// --- CORS Configuration ---
 const corsOptions = {
-    origin: 'https://loopjs-2.onrender.com',
+    origin: '*',
     credentials: true,
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Server and WebSocket Setup ---
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: "/ws" });
 
-// --- MongoDB Connection ---
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected successfully.'))
-    .catch(err => console.error('MongoDB connection error:', err));
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
 
-// --- Middleware ---
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error(err));
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Session Middleware
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'defaultsecret',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { 
-        sameSite: 'none', 
-        secure: true,
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    store: MongoStore.create({ mongoUrl: MONGO_URI })
 }));
-
-// Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
-// --- Passport Configuration ---
 passport.use(new LocalStrategy(async (username, password, done) => {
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            return done(null, false, { message: 'Incorrect username.' });
-        }
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            return done(null, false, { message: 'Incorrect password.' });
-        }
-        return done(null, user);
-    } catch (err) {
-        return done(err);
-    }
+    const user = await User.findOne({ username });
+    if (!user) return done(null, false);
+    const match = await bcrypt.compare(password, user.password_hash);
+    return match ? done(null, user) : done(null, false);
 }));
 passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser(async (id, done) => {
-    try {
-        const user = await User.findById(id);
-        done(null, user);
-    } catch (err) {
-        done(err);
-    }
+passport.deserializeUser((id, done) => User.findById(id, done));
+
+app.use('/api', apiRoutes);
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// --- Auth Routes ---
-app.post('/login', passport.authenticate('local'), (req, res) => {
-    res.status(200).json({ status: 'success', message: 'Logged in successfully', user: req.user });
-});
+// WebSocket logic merged
+wss.on('connection', (ws) => {
+    console.log("Client connected.");
 
-app.get('/logout', (req, res, next) => {
-    req.logout(function(err) {
-        if (err) { return next(err); }
-        res.status(200).json({ status: 'success', message: 'Logged out successfully' });
+    ws.on('message', async (data) => {
+        const message = data.toString();
+        console.log("Received:", message);
+
+        if (mongoose.connection.readyState === 1) {
+            await mongoose.connection.db.collection('messages').insertOne({
+                text: message,
+                at: new Date()
+            });
+        }
+
+        ws.send("FROM_SERVERsep-x8jmjgfmr9messageboxsep-x8jmjgfmr9Hello,This is from Node,info");
+    });
+
+    ws.on('close', () => {
+        console.log("Client disconnected.");
     });
 });
 
-// --- API Routes ---
-app.use('/api', apiRoutes);
-
-// --- Serve Frontend Build ---
-app.use(express.static(path.join(__dirname, 'dist')));
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// --- WebSocket Connection Handler ---
-wss.on('connection', wsHandler);
-
-// --- Start Server ---
-const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server listening on port ${PORT}`);
 });

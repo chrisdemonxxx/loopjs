@@ -1,30 +1,13 @@
-# This corrected file removes the redundant websocket service and
-# correctly points to your single backend service.
-
 services:
   - type: web
-    name: loopjs-backend
+    name: loopjs-1
     env: node
     plan: free
     buildCommand: npm install
     startCommand: node index.js
+    rootDir: backend/backend
     envVars:
       - key: MONGO_URI
         sync: false
-      - key: PORT
-        value: 10000
       - key: SESSION_SECRET
         sync: false
-    # The rootDir should point to your backend folder if your
-    # repository has both frontend and backend in it.
-    # If your repo is ONLY the backend, you can remove this line.
-    rootDir: backend
-
-  - type: static
-    name: loopjs-frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    # The rootDir should point to your frontend folder if your
-    # repository has both frontend and backend in it.
-    # If your repo is ONLY the frontend, you can remove this line.
-    rootDir: frontend
