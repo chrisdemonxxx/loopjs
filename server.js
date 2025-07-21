@@ -32,7 +32,6 @@ server.listen(PORT, () => {
     console.log(`WebSocket server running on port ${PORT}`);
 });
 
-Uncomment this if using DB
 /*
 (async () => {
     const client = new MongoClient(MONGO_URI);
