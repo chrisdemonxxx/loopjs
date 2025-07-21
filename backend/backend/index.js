@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -32,10 +31,12 @@ const wss = new WebSocket.Server({ server, path: "/ws" });
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+// MongoDB connection
+mongoose.connect(MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error(err));
 
+// Express middleware
 app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'defaultsecret',
@@ -43,25 +44,45 @@ app.use(session({
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: MONGO_URI })
 }));
+
+// Debug: Session status
+app.use((req, res, next) => {
+    console.log("Session state:", req.session);
+    next();
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport local strategy
 passport.use(new LocalStrategy(async (username, password, done) => {
-    const user = await User.findOne({ username });
-    if (!user) return done(null, false);
-    const match = await bcrypt.compare(password, user.password_hash);
-    return match ? done(null, user) : done(null, false);
+    try {
+        const user = await User.findOne({ username });
+        if (!user) return done(null, false);
+        const match = await bcrypt.compare(password, user.password_hash);
+        return match ? done(null, user) : done(null, false);
+    } catch (err) {
+        return done(err);
+    }
 }));
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id, done));
 
+// API Routes
 app.use('/api', apiRoutes);
 
+// Base HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// WebSocket logic merged
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error("🔥 UNHANDLED ERROR:", err.stack || err);
+    res.status(500).json({ error: "Internal server error" });
+});
+
+// WebSocket logic
 wss.on('connection', (ws) => {
     console.log("Client connected.");
 
