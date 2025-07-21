@@ -1,11 +1,5 @@
-const isProd = window.location.protocol === "https:";
+const isLocal = window.location.hostname === "localhost";
+const devPort = 3000; // or whatever you use locally
 
-export const API_URL = isProd
-  ? "https://loopjs-2.onrender.com/api"
-  : "http://localhost:10000/api";
-
-
-export const WS_URL = isProd
-  ? "wss://loopjs-2.onrender.com/ws"   // ✅ matches API domain
-  : "ws://localhost:10000/ws";
-
+export const API_URL = isLocal ? `http://localhost:${devPort}/api` : "/api";
+export const WS_URL  = isLocal ? `ws://localhost:${devPort}/ws`    : `wss://${window.location.host}/ws`;
