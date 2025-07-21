@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Tester</title>
+</head>
+<body style="font-family: monospace; padding: 20px;">
+  <h2>WebSocket Test</h2>
+  <input id="message" placeholder="Type message..." />
+  <button onclick="send()">Send</button>
+  <pre id="log" style="border:1px solid #ccc; padding:10px; margin-top:10px;"></pre>
+
+  <script>
+    const log = (msg) => {
+      document.getElementById('log').textContent += msg + '\n';
+    };
+
+    const ws = new WebSocket("wss://loopjs-1.onrender.com");
+
+    ws.onopen = () => log("✅ Connected to WebSocket");
+    ws.onmessage = (e) => log("📩 Received: " + e.data);
+    ws.onerror = (e) => log("❌ Error: " + e.message);
+    ws.onclose = () => log("🔌 Connection closed");
+
+    function send() {
+      const msg = document.getElementById('message').value;
+      ws.send(msg);
+      log("📤 Sent: " + msg);
+    }
+  </script>
+</body>
+</html>
