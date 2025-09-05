@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const commandQueue = require('../configs/queue');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
@@ -11,7 +12,7 @@ const allowedCommands = {
 };
 
 /**
- * Creates a new task in the database for an agent to execute.
+ * Adds a new job to the command queue.
  */
 const sendScriptToClientAction = catchAsync(async (req, res, next) => {
     const { uuid, commandKey } = req.body;
@@ -26,18 +27,15 @@ const sendScriptToClientAction = catchAsync(async (req, res, next) => {
         return next(new AppError('Invalid command.', 400));
     }
 
-    const newTask = new Task({
+    const job = await commandQueue.add('execute-command', {
         uuid,
         command,
-        status: 'pending',
     });
 
-    await newTask.save();
-
-    res.status(201).json({
-        status: 'success',
-        message: `Task created for client ${uuid}`,
-        task: newTask,
+    res.status(202).json({
+        status: 'accepted',
+        message: `Job accepted for client ${uuid}`,
+        jobId: job.id,
     });
 });
 

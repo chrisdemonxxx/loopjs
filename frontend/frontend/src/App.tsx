@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import request from './axios';
 import { WS_URL } from './config';
 import TasksModal from './components/TasksModal';
@@ -6,6 +7,7 @@ import TransferModal from './TransferModal';
 import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
 import UserTable from './components/UserTable';
+import TerminalPage from './pages/TerminalPage';
 import { User } from './types';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -123,22 +125,28 @@ export default function App() {
       <div className="dark:bg-boxdark-2 dark:text-bodydark">
         <div className="flex h-screen overflow-hidden">
           <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+            <Header onLogout={handleLogout} />
             <main>
               <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-                <div className="flex flex-col gap-10">
-                  <Header onLogout={handleLogout} />
-                  {isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <p>Loading...</p>
-                    </div>
-                  ) : (
-                    <UserTable
-                      users={tableData}
-                      onActionClick={handleActionClicked}
-                      onTasksClick={handleTasksClicked}
-                    />
-                  )}
-                </div>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      isLoading ? (
+                        <div className="flex justify-center items-center h-full">
+                          <p>Loading...</p>
+                        </div>
+                      ) : (
+                        <UserTable
+                          users={tableData}
+                          onActionClick={handleActionClicked}
+                          onTasksClick={handleTasksClicked}
+                        />
+                      )
+                    }
+                  />
+                  <Route path="/terminal/:uuid" element={<TerminalPage />} />
+                </Routes>
               </div>
             </main>
           </div>

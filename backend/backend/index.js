@@ -8,12 +8,14 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 const WebSocket = require('ws');
 const http = require('http');
-const cors = require('cors');
+const cors =require('cors');
 const path = require('path');
 const fs = require('fs');
+const url = require('url');
 
 const apiRoutes = require('./routes/index');
 const wsHandler = require('./configs/ws.handler');
+const terminalWsHandler = require('./configs/terminal.ws.handler');
 const User = require('./models/User');
 
 const app = express();
@@ -26,15 +28,28 @@ app.use(cors(corsOptions));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: "/ws" });
+
+// Create two WebSocket servers without attaching them to the HTTP server
+const mainWss = new WebSocket.Server({ noServer: true });
+const terminalWss = new WebSocket.Server({ noServer: true });
+
+// Set up the connection handlers for each server
+mainWss.on('connection', wsHandler);
+
+terminalWss.on('connection', (ws, req) => {
+    // We need to extract the uuid from the request url
+    const { pathname } = url.parse(req.url);
+    const uuid = pathname.split('/').pop();
+    terminalWsHandler(ws, uuid);
+});
 
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // MongoDB connection
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error(err));
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error(err));
 
 // Express middleware
 app.use(express.json());
@@ -91,8 +106,23 @@ app.use((err, req, res, next) => {
     });
 });
 
-// WebSocket logic
-wss.on('connection', wsHandler);
+// NEW: Handle WebSocket upgrades manually
+server.on('upgrade', (request, socket, head) => {
+    const { pathname } = url.parse(request.url);
+
+    if (pathname.startsWith('/ws/terminal/')) {
+        terminalWss.handleUpgrade(request, socket, head, (ws) => {
+            terminalWss.emit('connection', ws, request);
+        });
+    } else if (pathname === '/ws') {
+        mainWss.handleUpgrade(request, socket, head, (ws) => {
+            mainWss.emit('connection', ws, request);
+        });
+    } else {
+        console.log('Destroying socket for invalid WebSocket path:', pathname);
+        socket.destroy();
+    }
+});
 
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

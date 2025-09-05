@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { User } from '../types';
 
 interface UserTableProps {
@@ -60,6 +61,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, onActionClick, onTasksClic
                     <button className="hover:text-primary" onClick={() => onTasksClick(user)}>
                       Tasks
                     </button>
+                    <Link to={`/terminal/${user.uuid}`} className="hover:text-primary">
+                      Terminal
+                    </Link>
                   </div>
                 </td>
               </tr>
