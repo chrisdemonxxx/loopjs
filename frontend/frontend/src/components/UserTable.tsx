@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { User } from '../types';
 
 interface UserTableProps {
@@ -27,7 +28,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, onActionClick, onTasksClic
             {users.map((user) => (
               <tr key={user.uuid}>
                 <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
-                  <p className="text-black dark:text-white text-sm">{user.computerName}</p>
+                  <Link to={`/clients/${user.uuid}`}>
+                    <p className="text-black dark:text-white text-sm hover:text-primary">{user.computerName}</p>
+                  </Link>
                 </td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                   <p className="text-black dark:text-white text-sm">{user.ipAddress}</p>

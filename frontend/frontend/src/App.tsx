@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import request from './axios';
 import { WS_URL } from './config';
+import { useClientStore } from './store';
 import TasksModal from './components/TasksModal';
 import TransferModal from './TransferModal';
 import LoginPage from './pages/LoginPage';
@@ -8,55 +10,14 @@ import Header from './components/Header';
 import UserTable from './components/UserTable';
 import { User } from './types';
 import toast, { Toaster } from 'react-hot-toast';
+import ClientDetailPage from './pages/ClientDetailPage';
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('isAuthenticated') === 'true'
-  );
-  const [tableData, setTableData] = useState<User[]>([]);
+const MainPage = () => {
+  const { clients, fetchClients } = useClientStore();
   const [isLoading, setIsLoading] = useState(true);
   const [modalStatus, setModalStatus] = useState(false);
   const [tasksModalStatus, setTasksModalStatus] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  const initWebSocket = () => {
-    const ws = new WebSocket(WS_URL);
-
-    ws.onopen = () => {
-      console.log('Connected to WebSocket');
-    };
-
-    ws.onmessage = (event) => {
-      if (event.data === 'reload') {
-        getUserList();
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-      toast.error('WebSocket connection error.');
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket');
-    };
-  };
-
-  const getUserList = async () => {
-    try {
-      setIsLoading(true);
-      const info = await request({
-        url: 'info/get-user-list',
-        method: 'GET',
-      });
-      setTableData(info.data.data);
-    } catch (error) {
-      toast.error('Failed to fetch user list.');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleActionClicked = (user: User) => {
     setSelectedUser(user);
@@ -86,25 +47,17 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    setIsAuthenticated(false);
-  };
-
   useEffect(() => {
-    if (isAuthenticated) {
-      initWebSocket();
-      getUserList();
-    }
-  }, [isAuthenticated]);
-
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
-  }
+    const loadClients = async () => {
+      setIsLoading(true);
+      await fetchClients();
+      setIsLoading(false);
+    };
+    loadClients();
+  }, [fetchClients]);
 
   return (
     <>
-      <Toaster />
       {selectedUser && (
         <TransferModal
           isOpen={modalStatus}
@@ -120,6 +73,68 @@ export default function App() {
           user={selectedUser}
         />
       )}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <p>Loading...</p>
+        </div>
+      ) : (
+        <UserTable
+          users={clients}
+          onActionClick={handleActionClicked}
+          onTasksClick={handleTasksClicked}
+        />
+      )}
+    </>
+  );
+};
+
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('isAuthenticated') === 'true'
+  );
+  const { fetchClients } = useClientStore();
+
+  const initWebSocket = () => {
+    const ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      console.log('Connected to WebSocket');
+    };
+
+    ws.onmessage = (event) => {
+      if (event.data === 'reload') {
+        fetchClients();
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+      toast.error('WebSocket connection error.');
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from WebSocket');
+    };
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    setIsAuthenticated(false);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      initWebSocket();
+    }
+  }, [isAuthenticated, fetchClients]);
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  return (
+    <>
+      <Toaster />
       <div className="dark:bg-boxdark-2 dark:text-bodydark">
         <div className="flex h-screen overflow-hidden">
           <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
@@ -127,17 +142,10 @@ export default function App() {
               <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
                 <div className="flex flex-col gap-10">
                   <Header onLogout={handleLogout} />
-                  {isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <p>Loading...</p>
-                    </div>
-                  ) : (
-                    <UserTable
-                      users={tableData}
-                      onActionClick={handleActionClicked}
-                      onTasksClick={handleTasksClicked}
-                    />
-                  )}
+                  <Routes>
+                    <Route path="/" element={<MainPage />} />
+                    <Route path="/clients/:uuid" element={<ClientDetailPage />} />
+                  </Routes>
                 </div>
               </div>
             </main>

@@ -10,6 +10,7 @@ function isAuthenticated(req, res, next) {
 
 // ✅ Protect this route
 router.get('/get-user-list', isAuthenticated, infoController.getUserListAction);
+router.get('/get-user/:uuid', isAuthenticated, infoController.getUserAction);
 
 router.get('/', (req, res) => {
   res.status(200).json({

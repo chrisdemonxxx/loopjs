@@ -6,10 +6,10 @@ const clientSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    ip: {
+    ipAddress: {
         type: String,
     },
-    hostname: {
+    computerName: {
         type: String,
     },
     platform: {
@@ -22,6 +22,20 @@ const clientSchema = new mongoose.Schema({
         type: String,
         enum: ['online', 'offline'],
         default: 'offline',
+    },
+    osInfo: {
+        type: String,
+    },
+    cpuUsage: {
+        type: Number,
+    },
+    ramUsage: {
+        type: Number,
+    },
+    diskUsage: {
+        total: Number,
+        used: Number,
+        free: Number,
     },
 });
 

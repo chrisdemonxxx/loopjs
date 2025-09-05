@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
-const Task = require('../models/Task');
+const Task =require('../models/Task');
+const webSocketManager = require('./ws.manager');
 
 module.exports = function connectionHandler(ws) {
     // Log when a new client connects to help with debugging
@@ -13,10 +14,34 @@ module.exports = function connectionHandler(ws) {
             const messageString = message.toString();
             const data = JSON.parse(messageString);
 
+            if (data.type === 'subscribe') {
+                webSocketManager.addClient(data.uuid, ws);
+                return;
+            }
+
             if (data.type === 'output') {
                 // This is an output message from a client
                 const { taskId, output } = data;
                 await Task.findByIdAndUpdate(taskId, { output: output });
+                return;
+            }
+
+            if (data.type === 'metrics') {
+                const { uuid, osInfo, cpuUsage, ramUsage, diskUsage } = data;
+                await Client.findOneAndUpdate(
+                    { uuid: uuid },
+                    {
+                        $set: {
+                            osInfo,
+                            cpuUsage,
+                            ramUsage,
+                            diskUsage,
+                            lastSeen: new Date(),
+                            status: 'online'
+                        }
+                    }
+                );
+                webSocketManager.broadcast(uuid, { type: 'metrics', osInfo, cpuUsage, ramUsage, diskUsage });
                 return;
             }
 
@@ -34,8 +59,8 @@ module.exports = function connectionHandler(ws) {
                 { uuid: data.uuid },
                 {
                     $set: {
-                        ip: data.ip,
-                        hostname: data.hostname,
+                        ipAddress: data.ipAddress,
+                        computerName: data.computerName,
                         platform: data.platform,
                         lastSeen: new Date(),
                         status: 'online'
@@ -58,6 +83,7 @@ module.exports = function connectionHandler(ws) {
     });
 
     ws.on('close', async () => {
+        webSocketManager.removeClient(ws);
         // When the connection closes, update the client's status to 'offline'.
         if (ws.uuid) {
             console.log(`Client ${ws.uuid} disconnected.`);
