@@ -47,7 +47,7 @@ export default function App() {
   const getUserList = async () => {
     const info = await request({
       url: "info/get-user-list",
-      method: "POST",
+      method: "GET",
     });
     setTableData(info.data.userList);
   };

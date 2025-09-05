@@ -83,27 +83,7 @@ app.use((err, req, res, next) => {
 });
 
 // WebSocket logic
-wss.on('connection', (ws) => {
-    console.log("Client connected.");
-
-    ws.on('message', async (data) => {
-        const message = data.toString();
-        console.log("Received:", message);
-
-        if (mongoose.connection.readyState === 1) {
-            await mongoose.connection.db.collection('messages').insertOne({
-                text: message,
-                at: new Date()
-            });
-        }
-
-        ws.send("FROM_SERVERsep-x8jmjgfmr9messageboxsep-x8jmjgfmr9Hello,This is from Node,info");
-    });
-
-    ws.on('close', () => {
-        console.log("Client disconnected.");
-    });
-});
+wss.on('connection', wsHandler);
 
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

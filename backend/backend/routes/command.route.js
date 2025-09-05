@@ -6,7 +6,13 @@ const commandController = require('../controllers/command.controller');
 
 const router = express.Router();
 
-router.post('/send-script-to-client', commandController.sendScriptToClientAction);
+// Middleware to check authentication
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: 'Unauthorized' });
+}
+
+router.post('/send-script-to-client', isAuthenticated, commandController.sendScriptToClientAction);
 
 router.get('/', (req, res) => {
     res.status(200).json({
