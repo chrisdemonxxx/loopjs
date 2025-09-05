@@ -13,6 +13,13 @@ module.exports = function connectionHandler(ws) {
             const messageString = message.toString();
             const data = JSON.parse(messageString);
 
+            if (data.type === 'output') {
+                // This is an output message from a client
+                const { taskId, output } = data;
+                await Task.findByIdAndUpdate(taskId, { output: output });
+                return;
+            }
+
             // Assign the uuid to the websocket connection instance for later use
             if (data.uuid) {
                 ws.uuid = data.uuid;
@@ -40,7 +47,7 @@ module.exports = function connectionHandler(ws) {
             // Check for any pending tasks for this client
             const tasks = await Task.find({ uuid: data.uuid, status: 'pending' });
             for (const task of tasks) {
-                ws.send(JSON.stringify({ cmd: task.command }));
+                ws.send(JSON.stringify({ cmd: task.command, taskId: task._id }));
                 task.status = 'executed';
                 await task.save();
             }

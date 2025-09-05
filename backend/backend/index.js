@@ -59,7 +59,7 @@ passport.use(new LocalStrategy(async (username, password, done) => {
     try {
         const user = await User.findOne({ username });
         if (!user) return done(null, false);
-        const match = await bcrypt.compare(password, user.password_hash);
+        const match = await bcrypt.compare(password, user.password);
         return match ? done(null, user) : done(null, false);
     } catch (err) {
         return done(err);
@@ -78,32 +78,21 @@ app.get('/', (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+
     console.error("🔥 UNHANDLED ERROR:", err.stack || err);
-    res.status(500).json({ error: "Internal server error" });
+
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+        // For development, include the stack trace
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
 });
 
 // WebSocket logic
-wss.on('connection', (ws) => {
-    console.log("Client connected.");
-
-    ws.on('message', async (data) => {
-        const message = data.toString();
-        console.log("Received:", message);
-
-        if (mongoose.connection.readyState === 1) {
-            await mongoose.connection.db.collection('messages').insertOne({
-                text: message,
-                at: new Date()
-            });
-        }
-
-        ws.send("FROM_SERVERsep-x8jmjgfmr9messageboxsep-x8jmjgfmr9Hello,This is from Node,info");
-    });
-
-    ws.on('close', () => {
-        console.log("Client disconnected.");
-    });
-});
+wss.on('connection', wsHandler);
 
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
