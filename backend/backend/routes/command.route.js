@@ -14,6 +14,8 @@ function isAuthenticated(req, res, next) {
 
 router.post('/send-script-to-client', isAuthenticated, commandController.sendScriptToClientAction);
 
+router.get('/tasks/:uuid', isAuthenticated, commandController.getTasksForClientAction);
+
 router.get('/', (req, res) => {
     res.status(200).json({
         status: "success",
