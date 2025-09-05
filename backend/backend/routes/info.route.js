@@ -1,15 +1,10 @@
 const express = require('express');
 const infoController = require('../controllers/info.controller');
+const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 const router = express.Router();
 
-// 🔒 Middleware to check authentication
-function isAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.status(401).json({ message: 'Unauthorized' });
-}
-
 // ✅ Protect this route
-router.get('/get-user-list', isAuthenticated, infoController.getUserListAction);
+router.get('/get-user-list', verifyToken, checkRole(['admin']), infoController.getUserListAction);
 
 router.get('/', (req, res) => {
   res.status(200).json({

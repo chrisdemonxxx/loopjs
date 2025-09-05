@@ -1,3 +1,4 @@
+const { validationResult } = require('express-validator');
 const Task = require('../models/Task');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -14,11 +15,12 @@ const allowedCommands = {
  * Creates a new task in the database for an agent to execute.
  */
 const sendScriptToClientAction = catchAsync(async (req, res, next) => {
-    const { uuid, commandKey } = req.body;
-
-    if (!uuid || !commandKey) {
-        return next(new AppError('Request body must contain uuid and commandKey.', 400));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+
+    const { uuid, commandKey } = req.body;
 
     const command = allowedCommands[commandKey];
 

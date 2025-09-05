@@ -2,19 +2,23 @@
 // that was causing a syntax error.
 
 const express = require('express');
+const { body } = require('express-validator');
 const commandController = require('../controllers/command.controller');
+const { verifyToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Middleware to check authentication
-function isAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.status(401).json({ message: 'Unauthorized' });
-}
+router.post(
+    '/send-script-to-client',
+    verifyToken,
+    [
+        body('uuid').isUUID().withMessage('Invalid UUID format'),
+        body('commandKey').notEmpty().trim().escape().withMessage('commandKey is required')
+    ],
+    commandController.sendScriptToClientAction
+);
 
-router.post('/send-script-to-client', isAuthenticated, commandController.sendScriptToClientAction);
-
-router.get('/tasks/:uuid', isAuthenticated, commandController.getTasksForClientAction);
+router.get('/tasks/:uuid', verifyToken, commandController.getTasksForClientAction);
 
 router.get('/', (req, res) => {
     res.status(200).json({
