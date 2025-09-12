@@ -71,8 +71,8 @@ passport.deserializeUser((id, done) => User.findById(id, done));
 // API Routes
 app.use('/api', apiRoutes);
 
-// Base HTML
-app.get('/', (req, res) => {
+// Catch-all handler for client-side routing (must be after API routes)
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
