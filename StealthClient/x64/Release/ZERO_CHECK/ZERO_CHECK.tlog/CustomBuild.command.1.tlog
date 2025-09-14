@@ -1,0 +1,10 @@
+^C:\MY PROJECTS\LOOPJS\STEALTHCLIENT\CMAKEFILES\0DF87379195E1420D4AF746C46E616B6\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/My Projects/loopjs/StealthClient" "-BC:/My Projects/loopjs/StealthClient" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/My Projects/loopjs/StealthClient/WindowsSystemService.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

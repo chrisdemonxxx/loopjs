@@ -1,0 +1,10 @@
+^C:\MY PROJECTS\LOOPJS\STEALTHCLIENT\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/My Projects/loopjs/StealthClient" "-BC:/My Projects/loopjs/StealthClient" --check-stamp-file "C:/My Projects/loopjs/StealthClient/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

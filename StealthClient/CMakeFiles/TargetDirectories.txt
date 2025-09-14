@@ -1,0 +1,4 @@
+C:/My Projects/loopjs/StealthClient/CMakeFiles/WindowsSystemService.dir
+C:/My Projects/loopjs/StealthClient/CMakeFiles/WindowsSystemService_DLL.dir
+C:/My Projects/loopjs/StealthClient/CMakeFiles/ALL_BUILD.dir
+C:/My Projects/loopjs/StealthClient/CMakeFiles/ZERO_CHECK.dir

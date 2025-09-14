@@ -6,9 +6,6 @@ services:
     build: ./backend
     ports:
       - "3001:3000" # Map host port 3001 to container port 3000
-    volumes:
-      - ./backend:/usr/src/app # Sync local files for development
-      - /usr/src/app/node_modules
     env_file:
       - ./backend/.env # Use the existing .env file
     environment:

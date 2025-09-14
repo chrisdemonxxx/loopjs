@@ -1,0 +1,10 @@
+^C:\MY PROJECTS\LOOPJS\STEALTHCLIENT\TEST_CLIENT_DIR\BUILD\CMAKEFILES\A2B634F1580DAC88E94CA1E495939C40\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/My Projects/loopjs/StealthClient/test_client_dir" "-BC:/My Projects/loopjs/StealthClient/test_client_dir/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/My Projects/loopjs/StealthClient/test_client_dir/build/TestClient.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,3 @@
+C:/My Projects/loopjs/StealthClient/test_client_dir/build/CMakeFiles/test_client.dir
+C:/My Projects/loopjs/StealthClient/test_client_dir/build/CMakeFiles/ALL_BUILD.dir
+C:/My Projects/loopjs/StealthClient/test_client_dir/build/CMakeFiles/ZERO_CHECK.dir

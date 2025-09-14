@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/My Projects/loopjs/StealthClient/test_client_dir/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
