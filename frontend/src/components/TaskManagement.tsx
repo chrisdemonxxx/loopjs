@@ -32,59 +32,27 @@ interface Task {
 }
 
 const TaskManagement: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      name: 'System Backup',
-      description: 'Perform full system backup of all critical data',
-      status: 'running',
-      priority: 'high',
-      assignedTo: 'System Admin',
-      createdAt: '2024-01-15T10:00:00Z',
-      updatedAt: '2024-01-15T14:30:00Z',
-      progress: 65,
-      estimatedTime: '2 hours',
-      actualTime: '1.5 hours'
-    },
-    {
-      id: '2',
-      name: 'Security Scan',
-      description: 'Run comprehensive security vulnerability scan',
-      status: 'pending',
-      priority: 'medium',
-      assignedTo: 'Security Team',
-      createdAt: '2024-01-15T09:00:00Z',
-      updatedAt: '2024-01-15T09:00:00Z',
-      progress: 0,
-      estimatedTime: '45 minutes'
-    },
-    {
-      id: '3',
-      name: 'Database Optimization',
-      description: 'Optimize database queries and rebuild indexes',
-      status: 'completed',
-      priority: 'low',
-      assignedTo: 'Database Admin',
-      createdAt: '2024-01-14T16:00:00Z',
-      updatedAt: '2024-01-15T08:00:00Z',
-      progress: 100,
-      estimatedTime: '3 hours',
-      actualTime: '2.5 hours'
-    },
-    {
-      id: '4',
-      name: 'Update System Patches',
-      description: 'Install latest security patches and system updates',
-      status: 'failed',
-      priority: 'critical',
-      assignedTo: 'System Admin',
-      createdAt: '2024-01-15T12:00:00Z',
-      updatedAt: '2024-01-15T13:15:00Z',
-      progress: 25,
-      estimatedTime: '1 hour',
-      actualTime: '30 minutes'
-    }
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Load tasks from API
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        // TODO: Replace with actual API call
+        // const response = await fetch('/api/tasks');
+        // const data = await response.json();
+        // setTasks(data);
+        
+        // For now, initialize with empty array
+        setTasks([]);
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+        setTasks([]);
+      }
+    };
+
+    loadTasks();
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

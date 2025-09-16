@@ -11,7 +11,8 @@ import {
   FiMenu,
   FiX,
   FiChevronDown,
-  FiChevronRight
+  FiChevronRight,
+  FiTerminal
 } from 'react-icons/fi';
 
 interface SidebarProps {
@@ -43,7 +44,8 @@ const menuItems: MenuItem[] = [
     children: [
       { id: 'clients', label: 'Connected Clients', icon: <FiUsers className="w-4 h-4" />, path: '/clients' },
       { id: 'monitoring', label: 'System Monitoring', icon: <FiActivity className="w-4 h-4" />, path: '/monitoring' },
-      { id: 'tasks', label: 'Task Management', icon: <FiDatabase className="w-4 h-4" />, path: '/tasks' }
+      { id: 'tasks', label: 'Task Management', icon: <FiDatabase className="w-4 h-4" />, path: '/tasks' },
+      { id: 'commands', label: 'Command Interface', icon: <FiTerminal className="w-4 h-4" />, path: '/commands' }
     ]
   },
   {

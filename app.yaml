@@ -1,0 +1,63 @@
+runtime: nodejs20
+
+# Environment variables for production
+env_variables:
+  NODE_ENV: production
+  PORT: 8080
+  MONGO_URI: mongodb+srv://chrisdemonxxx:QrsdvAf7K3ZVcwRG@cluster0.lsyii5u.mongodb.net/loopjs-production?retryWrites=true&w=majority&appName=Cluster0
+  SESSION_SECRET: Pr0d_S3cR3t_K3y_Ch4ng3_M3_F0r_Pr0duct10n_2024!
+  JWT_SECRET: Pr0d_JWT_S3cr3t_K3y_V3ry_Str0ng_4nd_R4nd0m_2024_GCP!
+  JWT_ACCESS_TOKEN_EXPIRATION: 15m
+  JWT_REFRESH_TOKEN_EXPIRATION: 24h
+  LOG_LEVEL: info
+  RATE_LIMIT_WINDOW_MS: 900000
+  RATE_LIMIT_MAX_REQUESTS: 100
+  WS_HEARTBEAT_INTERVAL: 30000
+  WS_CONNECTION_TIMEOUT: 60000
+
+# Automatic scaling configuration
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+# Network configuration for WebSocket support
+network:
+  session_affinity: true
+
+# Health check configuration
+readiness_check:
+  path: "/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 4
+  success_threshold: 2
+
+# Resource allocation
+resources:
+  cpu: 1
+  memory_gb: 1
+  disk_size_gb: 10
+
+# Skip files for deployment
+skip_files:
+  - ^(.*/)?#.*#$
+  - ^(.*/)?.*~$
+  - ^(.*/)?.*\.py[co]$
+  - ^(.*/)?.*/RCS/.*$
+  - ^(.*/)?\..*$
+  - ^(.*/)?node_modules/.*$
+  - ^(.*/)?test/.*$
+  - ^(.*/)?tests/.*$
+  - ^(.*/)?\.git/.*$
+  - ^(.*/)?\.gitignore$
+  - ^(.*/)?README\.md$
+  - ^(.*/)?\.env$
+  - ^(.*/)?\.env\.development$

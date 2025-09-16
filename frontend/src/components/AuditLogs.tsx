@@ -43,48 +43,24 @@ const AuditLogs: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [logsPerPage] = useState(20);
 
-  // Generate sample audit logs
+  // Load audit logs from API
   useEffect(() => {
-    const generateSampleLogs = (): AuditLog[] => {
-      const users = ['admin', 'john.doe', 'jane.smith', 'system', 'mike.wilson'];
-      const actions = [
-        'User login', 'User logout', 'Password changed', 'User created', 'User deleted',
-        'Role assigned', 'Permission granted', 'System backup', 'Configuration changed',
-        'File uploaded', 'File deleted', 'Database query', 'API access', 'Failed login attempt'
-      ];
-      const resources = [
-        'User Management', 'System Settings', 'Database', 'File System', 'API Endpoint',
-        'Authentication Service', 'Backup System', 'Monitoring Dashboard', 'Audit Logs'
-      ];
-      const categories: AuditLog['category'][] = ['authentication', 'user_management', 'system', 'security', 'data'];
-      const severities: AuditLog['severity'][] = ['low', 'medium', 'high', 'critical'];
-      const statuses: AuditLog['status'][] = ['success', 'failure', 'warning'];
-
-      const sampleLogs: AuditLog[] = [];
-      
-      for (let i = 0; i < 150; i++) {
-        const timestamp = new Date();
-        timestamp.setTime(timestamp.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000); // Last 7 days
+    const loadAuditLogs = async () => {
+      try {
+        // TODO: Replace with actual API call
+        // const response = await fetch('/api/audit-logs');
+        // const data = await response.json();
+        // setLogs(data);
         
-        sampleLogs.push({
-          id: `log-${i + 1}`,
-          timestamp,
-          user: users[Math.floor(Math.random() * users.length)],
-          action: actions[Math.floor(Math.random() * actions.length)],
-          resource: resources[Math.floor(Math.random() * resources.length)],
-          details: `Detailed information about the ${actions[Math.floor(Math.random() * actions.length)].toLowerCase()} operation performed on ${resources[Math.floor(Math.random() * resources.length)]}.`,
-          ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          severity: severities[Math.floor(Math.random() * severities.length)],
-          category: categories[Math.floor(Math.random() * categories.length)],
-          status: statuses[Math.floor(Math.random() * statuses.length)]
-        });
+        // For now, initialize with empty array
+        setLogs([]);
+      } catch (error) {
+        console.error('Failed to load audit logs:', error);
+        setLogs([]);
       }
-      
-      return sampleLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     };
 
-    setLogs(generateSampleLogs());
+    loadAuditLogs();
   }, []);
 
   // Filter logs based on search and filters

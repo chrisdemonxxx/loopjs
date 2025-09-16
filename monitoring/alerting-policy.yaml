@@ -1,0 +1,34 @@
+displayName: "LoopJS Service Availability Alert"
+documentation:
+  content: "Alert when LoopJS services are down or experiencing high error rates"
+  mimeType: "text/markdown"
+conditions:
+  - displayName: "Backend Service Down"
+    conditionThreshold:
+      filter: 'resource.type="uptime_url" AND resource.label.host="loopjs-backend-kn2yg4ji5a-uc.a.run.app"'
+      comparison: COMPARISON_EQUAL
+      thresholdValue: 0
+      duration: 300s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_FRACTION_TRUE
+          crossSeriesReducer: REDUCE_MEAN
+          groupByFields:
+            - "resource.label.host"
+  - displayName: "Frontend Service Down"
+    conditionThreshold:
+      filter: 'resource.type="uptime_url" AND resource.label.host="loopjs-frontend-361659024403.us-central1.run.app"'
+      comparison: COMPARISON_EQUAL
+      thresholdValue: 0
+      duration: 300s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_FRACTION_TRUE
+          crossSeriesReducer: REDUCE_MEAN
+          groupByFields:
+            - "resource.label.host"
+combiner: OR
+enabled: true
+notificationChannels: []
+alertStrategy:
+  autoClose: 86400s

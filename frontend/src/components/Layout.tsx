@@ -11,31 +11,63 @@ import AuditLogs from './AuditLogs';
 import SettingsPage from './SettingsPage';
 import Settings from './Settings';
 import LoadingSpinner from './LoadingSpinner';
+import CommandInterface from './CommandInterface';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  tableData: any[];
+  isLoading: boolean;
+  onActionClicked: (user: any) => void;
+  onTasksClicked: (user: any) => void;
   onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+const Layout: React.FC<LayoutProps> = ({ 
+  tableData, 
+  isLoading, 
+  onActionClicked, 
+  onTasksClicked, 
+  onLogout 
+}) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data for tables
-  const tableData = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active', lastLogin: '2024-01-15' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active', lastLogin: '2024-01-14' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Moderator', status: 'Inactive', lastLogin: '2024-01-10' }
-  ];
-
-  const onActionClicked = (action: string, user: any) => {
-    console.log('Action clicked:', action, user);
+  const handleViewUser = (user: any) => {
+    setSelectedUser(user);
+    onActionClicked(user);
   };
 
-  const onTasksClicked = (user: any) => {
-    console.log('Tasks clicked for user:', user);
+  const handleViewTasks = (user: any) => {
+    onTasksClicked(user);
+  };
+
+  const handleExecuteCommand = async (command: string, args?: string[]) => {
+    if (!selectedUser) return;
+    
+    try {
+      const response = await fetch('/api/commands/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientId: selectedUser.uuid,
+          command,
+          args: args || []
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Command executed:', result);
+        // You might want to show a success message or update the UI
+      } else {
+        console.error('Failed to execute command');
+      }
+    } catch (error) {
+      console.error('Error executing command:', error);
+    }
   };
 
   // Update active tab based on current route
@@ -45,14 +77,14 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
   }, [location]);
 
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <Sidebar 
-        isOpen={sidebarOpen} 
+        isOpen={isSidebarOpen} 
         toggleSidebar={toggleSidebar}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -63,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
         <Header 
           onLogout={onLogout} 
           onToggleSidebar={toggleSidebar}
-          isSidebarOpen={sidebarOpen}
+          isSidebarOpen={isSidebarOpen}
         />
 
         {/* Main Content Area */}
@@ -81,8 +113,8 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
                    ) : (
                      <UserTable
                        users={tableData}
-                       onActionClick={onActionClicked}
-                       onTasksClick={onTasksClicked}
+                       onViewUser={handleViewUser}
+                       onViewTasks={handleViewTasks}
                      />
                    )
                  }
@@ -94,13 +126,19 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
                  element={
                    <UserTable 
                      users={tableData} 
-                     onActionClick={onActionClicked} 
-                     onTasksClick={onTasksClicked} 
+                     onActionClick={handleViewUser} 
+                     onTasksClick={handleViewTasks} 
                    />
                  } 
                />
                <Route path="/roles" element={<UserManagement />} />
                <Route path="/audit" element={<AuditLogs />} />
+               <Route path="/commands" element={
+                 <CommandInterface 
+                   selectedUser={selectedUser} 
+                   onExecuteCommand={handleExecuteCommand} 
+                 />
+               } />
                <Route path="/settings" element={<Settings />} />
                <Route path="/general" element={<Settings />} />
                <Route path="/security" element={<Settings />} />

@@ -1,0 +1,20 @@
+displayName: "LoopJS Backend Health Check"
+httpCheck:
+  path: "/health"
+  port: 443
+  requestMethod: GET
+  useSsl: true
+monitoredResource:
+  type: "uptime_url"
+  labels:
+    project_id: "code-assist-470813"
+    host: "loopjs-backend-kn2yg4ji5a-uc.a.run.app"
+period: 60s
+timeout: 10s
+contentMatchers:
+  - content: '"status":"healthy"'
+    matcher: CONTAINS_STRING
+selectedRegions:
+  - "USA_OREGON"
+  - "USA_IOWA"
+  - "EUROPE_LONDON"

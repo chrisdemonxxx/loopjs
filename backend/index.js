@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 const apiRoutes = require('./routes/index');
+const healthRoutes = require('./routes/health');
 const wsHandler = require('./configs/ws.handler');
 const User = require('./models/User');
 const { helmetConfig, apiRateLimit } = require('./middleware/security');
@@ -20,9 +21,16 @@ const app = express();
 
 // CORS middleware should be first
 const corsOptions = {
-    origin: '*',
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://loopjs-frontend-361659024403.us-central1.run.app',
+        'https://loopjs-backend-361659024403.us-central1.run.app'
+    ],
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 app.use(cors(corsOptions));
 
@@ -52,12 +60,23 @@ require('./configs/passport-jwt')(passport);
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id, done));
 
-// API Routes
+// Routes
 app.use('/api', apiRoutes);
+app.use('/', healthRoutes);
 
-// Base HTML
+// Health check endpoint for deployment monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Root endpoint
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/index.html'));
+    res.json({ message: 'LoopJS Backend Server is running' });
 });
 
 // Global error handler

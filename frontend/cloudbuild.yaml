@@ -10,7 +10,6 @@ steps:
       - '--build-arg'
       - 'VITE_BACKEND_URL=https://loopjs-backend-$PROJECT_ID.a.run.app'
       - '.'
-    dir: 'frontend'
 
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -23,9 +22,9 @@ steps:
       - 'push'
       - 'gcr.io/$PROJECT_ID/loopjs-frontend:latest'
 
-  # Deploy container image to Cloud Run
+  # Step 3: Deploy to Cloud Run with zero-downtime deployment
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: 'gcloud'
     args:
       - 'run'
       - 'deploy'
@@ -39,14 +38,61 @@ steps:
       - '--allow-unauthenticated'
       - '--port'
       - '80'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
       - '--memory'
       - '512Mi'
       - '--cpu'
       - '1'
-      - '--max-instances'
-      - '5'
-      - '--set-env-vars'
-      - 'NODE_ENV=production'
+      - '--timeout'
+      - '300'
+      - '--concurrency'
+      - '80'
+      - '--no-traffic'
+      - '--tag'
+      - 'candidate'
+
+  # Step 4: Health check and traffic promotion
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get the candidate revision URL
+        CANDIDATE_URL=$$(gcloud run services describe loopjs-frontend \
+          --region=us-central1 \
+          --format="value(status.traffic[].url)" \
+          --filter="status.traffic[].tag:candidate")
+        
+        # If no candidate URL found, get the latest revision URL
+        if [ -z "$$CANDIDATE_URL" ]; then
+          CANDIDATE_URL=$$(gcloud run services describe loopjs-frontend \
+            --region=us-central1 \
+            --format="value(status.url)")
+        fi
+        
+        echo "Testing candidate revision at: $$CANDIDATE_URL"
+        
+        # Health check with retry
+        for i in {1..5}; do
+          if curl -f -s "$$CANDIDATE_URL" > /dev/null 2>&1; then
+            echo "Health check passed, promoting to production"
+            gcloud run services update-traffic loopjs-frontend \
+              --region=us-central1 \
+              --to-latest
+            exit 0
+          fi
+          echo "Health check attempt $$i failed, retrying in 10 seconds..."
+          sleep 10
+        done
+        
+        echo "Health check failed, rolling back"
+        gcloud run services update-traffic loopjs-frontend \
+          --region=us-central1 \
+          --to-revisions=LATEST=100
+        exit 1
 
 images:
   - 'gcr.io/$PROJECT_ID/loopjs-frontend:$COMMIT_SHA'
