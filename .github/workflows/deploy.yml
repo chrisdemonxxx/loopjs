@@ -33,13 +33,8 @@ jobs:
       - name: Configure Docker to use gcloud as credential helper
         run: gcloud auth configure-docker
 
-      - name: Install MCP Dependencies
-        run: npm install
-        working-directory: ./mcp-ssh-deployer
-
-      - name: Create secrets in Secret Manager
+      - name: Create/Update secrets in Secret Manager
         run: |
-          # Create secrets if they don't exist, otherwise update them
           echo "${{ secrets.MONGO_URI }}" | gcloud secrets create MONGO_URI --data-file=- 2>/dev/null || \
           echo "${{ secrets.MONGO_URI }}" | gcloud secrets versions add MONGO_URI --data-file=-
           
@@ -49,11 +44,28 @@ jobs:
           echo "${{ secrets.SESSION_SECRET }}" | gcloud secrets create SESSION_SECRET --data-file=- 2>/dev/null || \
           echo "${{ secrets.SESSION_SECRET }}" | gcloud secrets versions add SESSION_SECRET --data-file=-
 
-      - name: Deploy with MCP (Zero-Downtime)
-        run: node src/index.js ../loopjs
-        working-directory: ./mcp-ssh-deployer
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+      - name: Build & Deploy Backend (Cloud Build -> Cloud Run)
+        run: |
+          gcloud builds submit ./backend \
+            --config=./backend/cloudbuild.yaml \
+            --substitutions=COMMIT_SHA=${{ github.sha }}
+
+      - name: Build & Deploy Frontend (Cloud Build -> Cloud Run)
+        run: |
+          gcloud builds submit ./frontend \
+            --config=./frontend/cloudbuild.yaml \
+            --substitutions=COMMIT_SHA=${{ github.sha }}
+
+      - name: Build SPA assets for App Engine
+        run: |
+          BACKEND_URL=$(gcloud run services describe loopjs-backend --region=$REGION --format='value(status.url)')
+          echo "Resolved BACKEND_URL: $BACKEND_URL"
+          npm ci --prefix frontend
+          VITE_BACKEND_URL="$BACKEND_URL" npm run build --prefix frontend
+
+      - name: Deploy App Engine (serves UI at appspot.com)
+        run: |
+          gcloud app deploy app.yaml --quiet
 
       - name: Verify Deployment Health
         run: |
@@ -63,16 +75,20 @@ jobs:
           # Get service URLs
           BACKEND_URL=$(gcloud run services describe loopjs-backend --region=$REGION --format='value(status.url)')
           FRONTEND_URL=$(gcloud run services describe loopjs-frontend --region=$REGION --format='value(status.url)')
+          APPENGINE_URL="https://${{ secrets.GCP_PROJECT_ID }}.uc.r.appspot.com"
           
           echo "Backend URL: $BACKEND_URL"
-          echo "Frontend URL: $FRONTEND_URL"
+          echo "Frontend (Cloud Run) URL: $FRONTEND_URL"
+          echo "App Engine UI URL: $APPENGINE_URL"
           
-          # Perform comprehensive health checks
           echo "Testing backend health endpoint..."
           curl -f "$BACKEND_URL/health" --max-time 30 || exit 1
           
-          echo "Testing frontend availability..."
+          echo "Testing Cloud Run frontend availability..."
           curl -f "$FRONTEND_URL" --max-time 30 || exit 1
+          
+          echo "Testing App Engine UI availability..."
+          curl -f "$APPENGINE_URL" --max-time 30 || exit 1
           
           echo "All health checks passed! Deployment successful."
 
@@ -80,6 +96,5 @@ jobs:
         if: failure()
         run: |
           echo "Deployment failed, initiating rollback..."
-          # Get previous revision and rollback if needed
           gcloud run services update-traffic loopjs-backend --region=$REGION --to-revisions=LATEST=100 || true
           gcloud run services update-traffic loopjs-frontend --region=$REGION --to-revisions=LATEST=100 || true

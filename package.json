@@ -1,5 +1,30 @@
 {
+  "name": "loopjs-production",
+  "version": "1.0.0",
+  "description": "LoopJS WebSocket Server for Production Deployment",
+  "main": "backend/index.js",
+  "scripts": {
+    "start": "node backend/index.js",
+    "postinstall": "cd backend && npm install",
+    "gcp-build": "npm ci --prefix frontend && npm run build --prefix frontend"
+  },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "express-session": "^1.18.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.6.2",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
     "ws": "^8.18.3"
-  }
+  },
+  "author": "LoopJS Team",
+  "license": "MIT"
 }

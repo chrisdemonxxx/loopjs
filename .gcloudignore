@@ -53,9 +53,11 @@ docs/
 .git/
 .gitignore
 
-# Frontend build artifacts (if any)
-frontend/dist/
-frontend/build/
+# Frontend build artifacts (allow upload for App Engine)
+# Previously ignored, but App Engine needs built assets in frontend/dist
+# Do NOT ignore these paths so gcloud app deploy can serve the SPA
+# frontend/dist/
+# frontend/build/
 frontend/node_modules/
 
 # Client applications (not needed on server)

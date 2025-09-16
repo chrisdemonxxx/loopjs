@@ -1,5 +1,43 @@
 runtime: nodejs20
 
+# Static files handler for React frontend
+handlers:
+# API routes go to the backend
+- url: /api/.*
+  script: auto
+  secure: always
+
+# WebSocket routes go to the backend  
+- url: /ws
+  script: auto
+  secure: always
+
+# Health check goes to backend
+- url: /health
+  script: auto
+  secure: always
+
+# Static assets from the build
+- url: /assets/(.*)
+  static_files: frontend/dist/assets/\1
+  upload: frontend/dist/assets/.*
+  secure: always
+
+# Other static files (js, css, fonts, images)
+- url: /(.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))$
+  static_files: frontend/dist/\1
+  upload: frontend/dist/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$
+  secure: always
+
+# Serve index.html for all other routes (React Router)
+- url: /.*
+  static_files: frontend/dist/index.html
+  upload: frontend/dist/index.html
+  secure: always
+
+# Entry point for API and WebSocket
+entrypoint: node backend/index.js
+
 # Environment variables for production
 env_variables:
   NODE_ENV: production
@@ -45,19 +83,3 @@ resources:
   cpu: 1
   memory_gb: 1
   disk_size_gb: 10
-
-# Skip files for deployment
-skip_files:
-  - ^(.*/)?#.*#$
-  - ^(.*/)?.*~$
-  - ^(.*/)?.*\.py[co]$
-  - ^(.*/)?.*/RCS/.*$
-  - ^(.*/)?\..*$
-  - ^(.*/)?node_modules/.*$
-  - ^(.*/)?test/.*$
-  - ^(.*/)?tests/.*$
-  - ^(.*/)?\.git/.*$
-  - ^(.*/)?\.gitignore$
-  - ^(.*/)?README\.md$
-  - ^(.*/)?\.env$
-  - ^(.*/)?\.env\.development$

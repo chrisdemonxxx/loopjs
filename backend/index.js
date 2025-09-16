@@ -21,16 +21,43 @@ const app = express();
 
 // CORS middleware should be first
 const corsOptions = {
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://loopjs-frontend-361659024403.us-central1.run.app',
-        'https://loopjs-backend-361659024403.us-central1.run.app'
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Get allowed origins from environment variable or use defaults
+        const envOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+        const allowedList = new Set([
+            'http://localhost:5173',
+            'http://localhost:3000',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:3000',
+            ...envOrigins.map(o => o.trim()).filter(Boolean)
+        ]);
+
+        // Permit Cloud Run/App Engine default domains by pattern to avoid hardcoding project numbers
+        const isGoogleManagedOrigin = (o) => {
+            try {
+                const url = new URL(o);
+                const host = url.hostname;
+                return host.endsWith('.run.app') || host.endsWith('.a.run.app') || host.endsWith('.appspot.com');
+            } catch {
+                return false;
+            }
+        };
+        
+        if (allowedList.has(origin) || isGoogleManagedOrigin(origin)) {
+            return callback(null, true);
+        }
+        
+        console.log('CORS blocked origin:', origin);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Set-Cookie']
 };
 app.use(cors(corsOptions));
 
@@ -45,10 +72,17 @@ const wss = new WebSocket.Server({ server, path: "/ws" });
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// MongoDB connection
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error(err));
+// MongoDB connection (optional)
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => {
+      console.error('MongoDB connection failed:', err && err.message ? err.message : err);
+      console.error('Continuing to run without a database connection.');
+    });
+} else {
+  console.warn('MONGO_URI is not set. Starting server without a database connection.');
+}
 
 // Express middleware
 app.use(express.json());

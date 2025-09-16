@@ -1,15 +1,33 @@
 steps:
-  # Build the container image
-  - name: 'gcr.io/cloud-builders/docker'
+  # Step 1: Discover backend URL dynamically
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
     args:
-      - 'build'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/loopjs-frontend:$COMMIT_SHA'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/loopjs-frontend:latest'
-      - '--build-arg'
-      - 'VITE_BACKEND_URL=https://loopjs-backend-$PROJECT_ID.a.run.app'
-      - '.'
+      - '-c'
+      - |
+        set -euo pipefail
+        BACKEND_URL=$(gcloud run services describe loopjs-backend \
+          --region=us-central1 \
+          --format='value(status.url)')
+        if [ -z "$BACKEND_URL" ]; then
+          echo "Failed to resolve backend URL" >&2
+          exit 1
+        fi
+        echo "BACKEND_URL=$BACKEND_URL" > backend_url.txt
+        echo "Resolved backend URL: $BACKEND_URL"
+
+  # Step 2: Build the container image with the resolved BACKEND_URL
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        . ./backend_url.txt
+        docker build \
+          -t gcr.io/$PROJECT_ID/loopjs-frontend:$COMMIT_SHA \
+          -t gcr.io/$PROJECT_ID/loopjs-frontend:latest \
+          --build-arg VITE_BACKEND_URL="$BACKEND_URL" \
+          .
 
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'

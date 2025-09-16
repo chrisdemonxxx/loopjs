@@ -12,6 +12,9 @@ const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100, message = 'Too ma
         },
         standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+        // Use default key generator to avoid IPv6 issues
+        // This will automatically handle IPv6 addresses properly
+        trustProxy: true
     });
 };
 
