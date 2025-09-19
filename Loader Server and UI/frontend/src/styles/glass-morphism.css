@@ -1,0 +1,189 @@
+/* Glass Morphism Effects */
+.glass-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 2px 2px rgba(255, 255, 255, 0.05);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+/* Frosted Glass Effect */
+.frosted-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+}
+
+/* Neon Glow Effects */
+.neon-glow {
+  box-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor,
+    0 0 20px currentColor;
+  animation: neon-pulse 2s infinite alternate;
+}
+
+@keyframes neon-pulse {
+  from {
+    box-shadow: 
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
+  to {
+    box-shadow: 
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 30px currentColor;
+  }
+}
+
+/* Holographic Effects */
+.holographic {
+  background: linear-gradient(
+    45deg,
+    rgba(0, 212, 255, 0.1),
+    rgba(255, 0, 255, 0.1),
+    rgba(255, 255, 0, 0.1),
+    rgba(0, 255, 0, 0.1)
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: hologram-shimmer 3s infinite alternate;
+}
+
+@keyframes hologram-shimmer {
+  from {
+    background-position: 0% 0%;
+    opacity: 0.8;
+  }
+  to {
+    background-position: 100% 100%;
+    opacity: 1;
+  }
+}
+
+/* Cyber Grid Effect */
+.cyber-grid {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: grid-move 20s linear infinite;
+}
+
+@keyframes grid-move {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 20px 20px;
+  }
+}
+
+/* Particle System */
+.particle-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.particle-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: particles-float 10s infinite alternate;
+}
+
+@keyframes particles-float {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+/* Theme-specific glass variations */
+.theme-glass .glass-container {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.theme-hologram .glass-container {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 255, 0.1),
+    rgba(255, 0, 255, 0.1)
+  );
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.theme-cyberpunk .glass-container {
+  background: rgba(255, 0, 255, 0.1);
+  border-color: rgba(255, 0, 255, 0.4);
+}
+
+.theme-matrix .glass-container {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: rgba(0, 255, 65, 0.4);
+}
+
+.theme-redteam .glass-container {
+  background: rgba(255, 0, 64, 0.1);
+  border-color: rgba(255, 0, 64, 0.4);
+}
