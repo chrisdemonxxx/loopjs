@@ -1,0 +1,13 @@
+{
+  "watch": ["."],
+  "ignore": [
+    "node_modules",
+    "*.log",
+    "*.txt",
+    ".git",
+    "public"
+  ],
+  "delay": 2000,
+  "restartable": "rs",
+  "verbose": false
+}

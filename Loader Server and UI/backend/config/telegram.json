@@ -1,0 +1,11 @@
+{
+  "botToken": "",
+  "chatId": "",
+  "enabled": false,
+  "notifications": {
+    "newConnection": true,
+    "disconnection": true,
+    "taskCompletion": false,
+    "systemAlerts": true
+  }
+}
