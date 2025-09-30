@@ -1,0 +1,143 @@
+name: Deploy All Services
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    outputs:
+      backend_url: ${{ steps.url.outputs.url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build Backend Docker image
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:latest \
+            ./backend
+
+      - name: Push Backend Docker image
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:latest
+
+      - name: Deploy Backend to Cloud Run
+        run: |
+          gcloud run deploy loopjs-backend \
+            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets="MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest" \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --timeout 300
+
+      - name: Get Backend URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe loopjs-backend \
+            --region ${{ env.REGION }} \
+            --format='value(status.url)')
+          echo "Backend deployed to: $URL"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Test Backend Health
+        run: |
+          sleep 10
+          curl -f ${{ steps.url.outputs.url }}/health || exit 1
+          echo "✅ Backend health check passed!"
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build Frontend Docker image
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest \
+            ./frontend
+
+      - name: Push Frontend Docker image
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest
+
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy loopjs-frontend \
+            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 256Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --timeout 300 \
+            --port 80
+
+      - name: Get Frontend URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe loopjs-frontend \
+            --region ${{ env.REGION }} \
+            --format='value(status.url)')
+          echo "Frontend deployed to: $URL"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Test Frontend
+        run: |
+          sleep 10
+          curl -f ${{ steps.url.outputs.url }} || exit 1
+          echo "✅ Frontend is responding!"
+
+      - name: Deployment Summary
+        run: |
+          echo "🚀 Deployment Complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Backend URL:  ${{ needs.deploy-backend.outputs.backend_url }}"
+          echo "Backend Live: https://loopjs-backend-361659024403.us-central1.run.app/"
+          echo "Frontend URL: ${{ steps.url.outputs.url }}"
+          echo "Frontend Live: https://loopjs.vidai.sbs/"
+          echo "WebSocket URL: wss://loopjs-backend-361659024403.us-central1.run.app/ws"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
