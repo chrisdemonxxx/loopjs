@@ -9,7 +9,8 @@ function App() {
 
   useEffect(() => {
     // Check backend health
-    fetch(`${process.env.REACT_APP_API_URL}/health`)
+    const apiUrl = process.env.REACT_APP_API_URL || 'https://loopjs-backend-361659024403.us-central1.run.app';
+    fetch(`${apiUrl}/health`)
       .then(response => response.json())
       .then(data => {
         setBackendStatus(data.status === 'healthy' ? 'Connected' : 'Unhealthy');
@@ -20,7 +21,7 @@ function App() {
       });
 
     // Connect to WebSocket
-    const wsUrl = process.env.REACT_APP_WS_URL || 'wss://loopjs-backend-placeholder-url/ws';
+    const wsUrl = process.env.REACT_APP_WS_URL || 'wss://loopjs-backend-361659024403.us-central1.run.app/ws';
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
