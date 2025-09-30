@@ -1,0 +1,58 @@
+name: Deploy Frontend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          
+      - name: Authorize Docker push
+        run: gcloud auth configure-docker
+      
+      - name: Get Backend URL
+        run: |
+          BACKEND_URL=$(gcloud run services describe loopjs-backend --region us-central1 --format="value(status.url)" || echo "https://loopjs-backend-placeholder-url")
+          echo "Using backend URL: $BACKEND_URL"
+          echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_ENV
+      
+      - name: Configure frontend environment
+        run: |
+          cd frontend
+          # Create or update .env file with backend URL
+          echo "REACT_APP_API_URL=${{ env.BACKEND_URL }}" > .env
+          echo "REACT_APP_WS_URL=wss://${BACKEND_URL#https://}/ws" >> .env
+          cat .env
+          
+      - name: Build and push container
+        run: |
+          cd frontend
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/loopjs-frontend:${{ github.sha }} .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/loopjs-frontend:${{ github.sha }}
+          
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy loopjs-frontend \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/loopjs-frontend:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --set-secrets=API_KEY=API_KEY:latest
+            
+      - name: Output Frontend URL
+        run: |
+          FRONTEND_URL=$(gcloud run services describe loopjs-frontend --region us-central1 --format="value(status.url)")
+          echo "Frontend deployed to: $FRONTEND_URL"
