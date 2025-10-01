@@ -12,7 +12,7 @@ import {
   Search,
   RefreshCw
 } from 'lucide-react';
-import { request } from '../axios';
+import request from '../axios';
 import toast from 'react-hot-toast';
 
 interface Task {
