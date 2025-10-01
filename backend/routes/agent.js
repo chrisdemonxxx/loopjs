@@ -74,7 +74,15 @@ router.post('/:agentId/command', protect, async (req, res) => {
         const connectedClients = getConnectedClients();
         
         // Get the target client directly from the Map
+        console.log(`Looking for agentId: ${agentId}`);
+        console.log(`Connected clients keys:`, Array.from(connectedClients.keys()));
+        console.log(`Connected clients size:`, connectedClients.size);
+        
         const targetClient = connectedClients.get(agentId);
+        console.log(`Target client found:`, !!targetClient);
+        if (targetClient) {
+            console.log(`Target client type:`, targetClient.clientType);
+        }
         
         if (targetClient && targetClient.clientType === 'client') {
             // Generate taskId for tracking
