@@ -220,8 +220,9 @@ Write-Host "="*60 -ForegroundColor $(if ($allChecksPassed) { "Green" } else { "Y
 Write-Host "`n📋 Deployment Status:" -ForegroundColor Cyan
 if ($backendUrl) {
     Write-Host "  • Backend URL:   $backendUrl" -ForegroundColor White
-    Write-Host "  • Backend Domain: https://loopjs-backend-361659024403.us-central1.run.app/" -ForegroundColor White
-    Write-Host "  • WebSocket URL: wss://loopjs-backend-361659024403.us-central1.run.app/ws" -ForegroundColor White
+    $wsUrl = $backendUrl -replace "^https://", "wss://"
+    $wsUrl = "$wsUrl/ws"
+    Write-Host "  • WebSocket URL: $wsUrl" -ForegroundColor White
 }
 Write-Host "  • Frontend Domain: https://loopjs.vidai.sbs/" -ForegroundColor White
 Write-Host "  • Health Status: $(if ($allChecksPassed) { '✅ Healthy' } else { '⚠️  Issues detected' })" -ForegroundColor $(if ($allChecksPassed) { "Green" } else { "Yellow" })

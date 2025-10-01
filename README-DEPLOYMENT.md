@@ -4,9 +4,9 @@ Complete automation for deploying LoopJS frontend and backend to Google Cloud Ru
 
 ## 📋 Overview
 
-- **Backend**: [https://loopjs-backend-361659024403.us-central1.run.app/](https://loopjs-backend-361659024403.us-central1.run.app/)
+- **Backend**: [https://loopjs-backend-kn2yg4ji5a-uc.a.run.app/](https://loopjs-backend-kn2yg4ji5a-uc.a.run.app/)
 - **Frontend**: [https://loopjs.vidai.sbs/](https://loopjs.vidai.sbs/)
-- **WebSocket**: `wss://loopjs-backend-361659024403.us-central1.run.app/ws`
+- **WebSocket**: `wss://loopjs-backend-kn2yg4ji5a-uc.a.run.app/ws`
 
 ## 🎯 What You Get
 
@@ -263,7 +263,7 @@ gcloud run services update-traffic loopjs-backend `
 
 ```powershell
 # Check backend health
-curl https://loopjs-backend-361659024403.us-central1.run.app/health
+curl https://loopjs-backend-kn2yg4ji5a-uc.a.run.app/health
 
 # View recent errors
 gcloud run services logs read loopjs-backend --region us-central1 --limit 100
@@ -288,9 +288,22 @@ gcloud run domain-mappings describe loopjs.vidai.sbs --region us-central1
 ### Client Can't Connect
 
 1. Verify backend is running
-2. Check WebSocket URL is correct: `wss://loopjs-backend-361659024403.us-central1.run.app/ws`
+2. Check WebSocket URL is correct: `wss://loopjs-backend-kn2yg4ji5a-uc.a.run.app/ws`
 3. Update client configuration: `.\scripts\update-client-config.ps1`
 4. Rebuild client: `cd clients/qt-client && .\build.bat`
+
+### Health Check Failing
+
+If the health endpoint returns empty or fails:
+
+1. Check backend logs for errors:
+```bash
+gcloud run services logs read loopjs-backend --region us-central1 --limit 50
+```
+
+2. Verify the health endpoint exists in your backend code
+3. Check if the backend is properly starting up
+4. Ensure all required secrets are accessible
 
 ## 📈 Scaling & Performance
 
@@ -354,7 +367,7 @@ Cloud Run charges based on:
 - [ ] Workflows pushed to GitHub (`.github/workflows/`)
 - [ ] Backend deploying successfully
 - [ ] Frontend deploying successfully
-- [ ] Health check passing: [https://loopjs-backend-361659024403.us-central1.run.app/health](https://loopjs-backend-361659024403.us-central1.run.app/health)
+- [ ] Health check passing: [https://loopjs-backend-kn2yg4ji5a-uc.a.run.app/health](https://loopjs-backend-kn2yg4ji5a-uc.a.run.app/health)
 - [ ] Frontend accessible: [https://loopjs.vidai.sbs/](https://loopjs.vidai.sbs/)
 - [ ] Client connecting to WebSocket
 - [ ] Monitoring and logging working

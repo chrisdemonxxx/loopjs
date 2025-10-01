@@ -119,6 +119,6 @@ jobs:
           echo ""
           echo "Public URLs:"
           echo "🌐 Frontend:  https://loopjs.vidai.sbs/"
-          echo "🔧 Backend:   https://loopjs-backend-361659024403.us-central1.run.app/"
-          echo "🔌 WebSocket: wss://loopjs-backend-361659024403.us-central1.run.app/ws"
+          echo "🔧 Backend:   ${{ needs.deploy-backend.outputs.backend_url }}"
+          echo "🔌 WebSocket: wss://$(echo ${{ needs.deploy-backend.outputs.backend_url }} | sed 's|https://||')/ws"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
