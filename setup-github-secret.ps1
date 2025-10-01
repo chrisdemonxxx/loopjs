@@ -84,6 +84,6 @@ if ($createKey -eq "y" -or $createKey -eq "Y") {
     Write-Host "https://github.com/$REPO/settings/secrets/actions" -ForegroundColor Cyan
 }
 
-Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
-Write-Host "📚 For more info, see: .github/DEPLOYMENT_FIX.md" -ForegroundColor Cyan
+Write-Host "" -ForegroundColor Gray
+Write-Host "For more info, see: .github/DEPLOYMENT_FIX.md" -ForegroundColor Cyan
 
