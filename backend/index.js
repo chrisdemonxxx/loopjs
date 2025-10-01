@@ -35,6 +35,8 @@ const corsOptions = {
             'https://loopjs.sendparcel.art',
             'https://loopjs.vidai.sbs',
             'https://loopjs-frontend-361659024403.us-central1.run.app',
+            'https://loopjs-frontend-kn2yg4ji5a-uc.a.run.app',
+            'https://loopjs-backend-kn2yg4ji5a-uc.a.run.app',
             'https://loopjs-by-loopcreations-6p0gj7w5b-chrisdemonxxxs-projects.vercel.app',
             'https://frontend-i5o13j8jz-chrisdemonxxxs-projects.vercel.app',
             'https://frontend-b65tmnfvy-chrisdemonxxxs-projects.vercel.app',
