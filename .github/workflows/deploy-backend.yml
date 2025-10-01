@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: code-assist-470813
   SERVICE_NAME: loopjs-backend
   REGION: us-central1
 
@@ -29,25 +29,13 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
-
-      - name: Build Docker image
-        run: |
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest \
-            ./backend
-
-      - name: Push Docker image
-        run: |
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
-
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run (using Cloud Build)
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --source ./backend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -68,7 +56,7 @@ jobs:
 
       - name: Test Health Endpoint
         run: |
-          sleep 10
+          sleep 15
           curl -f ${{ steps.url.outputs.url }}/health || exit 1
           echo "✅ Health check passed!"
 
@@ -77,3 +65,8 @@ jobs:
           echo "🚀 Deployment successful!"
           echo "Backend URL: ${{ steps.url.outputs.url }}"
           echo "WebSocket URL: wss://$(echo ${{ steps.url.outputs.url }} | sed 's|https://||')/ws"
+          echo ""
+          echo "Deployment Details:"
+          gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format='table(status.latestReadyRevisionName,status.traffic)'

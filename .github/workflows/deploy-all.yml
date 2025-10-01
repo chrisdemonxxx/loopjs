@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: code-assist-470813
   REGION: us-central1
 
 jobs:
@@ -28,25 +28,13 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
-
-      - name: Build Backend Docker image
-        run: |
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }} \
-            -t gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:latest \
-            ./backend
-
-      - name: Push Backend Docker image
-        run: |
-          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }}
-          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:latest
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Deploy Backend to Cloud Run
         run: |
           gcloud run deploy loopjs-backend \
-            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend:${{ github.sha }} \
+            --source ./backend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -67,7 +55,7 @@ jobs:
 
       - name: Test Backend Health
         run: |
-          sleep 10
+          sleep 15
           curl -f ${{ steps.url.outputs.url }}/health || exit 1
           echo "✅ Backend health check passed!"
 
@@ -75,6 +63,8 @@ jobs:
     name: Deploy Frontend
     runs-on: ubuntu-latest
     needs: deploy-backend
+    outputs:
+      frontend_url: ${{ steps.url.outputs.url }}
     
     steps:
       - name: Checkout code
@@ -87,29 +77,17 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
-
-      - name: Build Frontend Docker image
-        run: |
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }} \
-            -t gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest \
-            ./frontend
-
-      - name: Push Frontend Docker image
-        run: |
-          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }}
-          docker push gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Deploy Frontend to Cloud Run
         run: |
           gcloud run deploy loopjs-frontend \
-            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:${{ github.sha }} \
+            --source ./frontend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --memory 256Mi \
+            --memory 512Mi \
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
@@ -126,7 +104,7 @@ jobs:
 
       - name: Test Frontend
         run: |
-          sleep 10
+          sleep 15
           curl -f ${{ steps.url.outputs.url }} || exit 1
           echo "✅ Frontend is responding!"
 
@@ -135,9 +113,10 @@ jobs:
           echo "🚀 Deployment Complete!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Backend URL:  ${{ needs.deploy-backend.outputs.backend_url }}"
-          echo "Backend Live: https://loopjs-backend-361659024403.us-central1.run.app/"
           echo "Frontend URL: ${{ steps.url.outputs.url }}"
-          echo "Frontend Live: https://loopjs.vidai.sbs/"
-          echo "WebSocket URL: wss://loopjs-backend-361659024403.us-central1.run.app/ws"
+          echo ""
+          echo "Public URLs:"
+          echo "🌐 Frontend:  https://loopjs.vidai.sbs/"
+          echo "🔧 Backend:   https://loopjs-backend-361659024403.us-central1.run.app/"
+          echo "🔌 WebSocket: wss://loopjs-backend-361659024403.us-central1.run.app/ws"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
