@@ -19,7 +19,7 @@
 #include <QFileInfo>
 #include <QStorageInfo>
 
-// UPDATED: Cloud backend WebSocket URL (from web panel Security tab)
+// PRODUCTION: Cloud backend WebSocket URL
 #define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
 
 MainWindow::MainWindow(QWidget *parent)

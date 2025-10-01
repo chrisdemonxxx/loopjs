@@ -16,6 +16,7 @@ const healthRoutes = require('./routes/health');
 const agentRoutes = require('./routes/agent');
 const wsHandler = require('./configs/ws.handler');
 const User = require('./models/User');
+const Client = require('./models/Client');
 const { helmetConfig, apiRateLimit } = require('./middleware/security');
 
 const app = express();

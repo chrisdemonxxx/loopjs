@@ -1,5 +1,5 @@
 // API URL configuration for different environments
-const isLocal = false; // Always use production backend for now
+const isLocal = false; // Use production backend
 
 // Use deployed backend URL for production
 const BACKEND_URL = isLocal ? 'http://localhost:8080' : 'https://loopjs-backend-361659024403.us-central1.run.app';
