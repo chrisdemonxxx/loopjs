@@ -23,6 +23,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Store connected clients (must be before routes that use it)
+const clients = new Map();
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
@@ -56,9 +59,6 @@ const wss = new WebSocket.Server({
     callback(true);
   }
 });
-
-// Store connected clients
-const clients = new Map();
 
 wss.on('connection', (ws, req) => {
   const clientIp = req.socket.remoteAddress;
