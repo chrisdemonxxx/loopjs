@@ -230,6 +230,21 @@ const wsHandler = (ws, req) => {
                         message: 'Admin session acknowledged' 
                     }));
                     console.log('Admin session identified');
+                    
+                    // Send current client list to the newly connected admin
+                    const { webPanelIntegration } = require('./integration');
+                    const { clientIntegration } = require('./integration');
+                    
+                    clientIntegration.getAllClients().then(clients => {
+                        const formattedClients = webPanelIntegration.formatClientListForWebPanel(clients);
+                        ws.send(JSON.stringify({
+                            type: 'client_list_update',
+                            clients: formattedClients
+                        }));
+                        console.log('Sent client list to admin:', formattedClients.length, 'clients');
+                    }).catch(error => {
+                        console.error('Error sending client list to admin:', error);
+                    });
                 } else {
                     // Admin sessions should authenticate first with auth token
                     ws.send(JSON.stringify({ 

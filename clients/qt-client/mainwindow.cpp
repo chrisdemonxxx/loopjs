@@ -16,7 +16,7 @@
 #include <QDebug>
 
 // UPDATED: Cloud backend WebSocket URL (from web panel Security tab)
-#define DEF_WS_URL QUrl("wss://loopjs-backend-kn2yg4ji5a-uc.a.run.app/ws")
+#define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_isRegistered(false)

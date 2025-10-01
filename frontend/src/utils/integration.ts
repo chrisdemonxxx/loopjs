@@ -133,12 +133,14 @@ export const wsIntegration = {
     
     switch (type) {
       case 'client_list_update':
+        console.log('Received client list update:', data.clients);
         if (callbacks.onClientUpdate) {
           callbacks.onClientUpdate(data.clients);
         }
         break;
         
       case 'client_status_update':
+        console.log('Received client status update:', data.client);
         // Show toast notifications based on client status
         if (data.client && data.client.status) {
           if (data.client.status === 'online') {
