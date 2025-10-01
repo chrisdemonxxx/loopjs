@@ -50,7 +50,7 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production'
       - '--set-secrets'
-      - 'MONGO_URI=MONGO_URI:latest,JWT_SECRET=JWT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest'
+      - 'MONGO_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest'
 
   # Step 4: Health check and traffic promotion
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
