@@ -63,7 +63,7 @@ const clientIntegration = {
         client.ipAddress = clientData.ipAddress || client.ipAddress;
         client.hostname = clientData.hostname || client.hostname;
         client.platform = clientData.platform || client.platform;
-        client.operatingSystem = clientData.platform ? clientData.platform.toLowerCase() : client.operatingSystem || 'unknown';
+        client.operatingSystem = detectOperatingSystem(clientData.platform, clientData.userAgent) || client.operatingSystem || 'unknown';
         // Properly update capabilities structure
         if (!client.capabilities) {
           client.capabilities = {
