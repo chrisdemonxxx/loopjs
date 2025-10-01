@@ -129,10 +129,10 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
     return next(new AppError('Client WebSocket connection not found', 400));
   }
 
-  // Prepare command payload based on platform
+  // Prepare command payload based on platform (Qt client expects 'cmd' and 'taskId')
   let commandPayload = {
-    type: 'command',
-    id: commandId,
+    cmd: 'execute',
+    taskId: commandId,
     command: command,
     params: params,
     timestamp: new Date().toISOString()
