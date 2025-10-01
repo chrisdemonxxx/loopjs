@@ -1,4 +1,4 @@
-# LoopJS Frontend
+# LoopJS Frontend - Updated
 
 This is the frontend web application for the LoopJS project.
 
