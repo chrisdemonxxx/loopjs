@@ -67,20 +67,46 @@ router.post('/:agentId/command', protect, async (req, res) => {
         const { agentId } = req.params;
         const { command, params = {} } = req.body;
         
-        // For now, return mock response since we don't have real agent communication
-        // In a real implementation, this would send the command to the actual agent
-        const response = {
-            status: 'success',
-            data: {
-                agentId: agentId,
-                command: command,
-                result: `Command '${command}' executed successfully on agent ${agentId}`,
-                timestamp: new Date().toISOString(),
-                output: `Mock output for command: ${command}`
-            }
-        };
+        console.log(`API command request: ${command} for agent ${agentId}`);
         
-        res.json(response);
+        // Get WebSocket handler to send command to client
+        const { getConnectedClients } = require('../configs/ws.handler');
+        const connectedClients = getConnectedClients();
+        
+        // Find the target client
+        const targetClient = Array.from(connectedClients.values()).find(client => 
+            client.uuid === agentId && client.clientType === 'client'
+        );
+        
+        if (targetClient) {
+            // Send command to target client via WebSocket
+            const commandMessage = {
+                cmd: 'execute',
+                command: command,
+                taskId: `api_cmd_${Date.now()}`,
+                timestamp: new Date().toISOString()
+            };
+            
+            targetClient.send(JSON.stringify(commandMessage));
+            console.log(`Command sent to client ${agentId}: ${command}`);
+            
+            res.json({
+                status: 'success',
+                data: {
+                    agentId: agentId,
+                    command: command,
+                    result: `Command '${command}' sent to agent ${agentId}`,
+                    timestamp: new Date().toISOString(),
+                    message: 'Command sent successfully'
+                }
+            });
+        } else {
+            console.log(`Client ${agentId} not found or not connected`);
+            res.status(404).json({
+                status: 'error',
+                message: 'Client not found or not connected'
+            });
+        }
     } catch (error) {
         console.error('Error executing command:', error);
         res.status(500).json({

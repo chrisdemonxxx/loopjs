@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Frontend Connection</title>
+</head>
+<body>
+    <h1>Test Frontend Connection</h1>
+    <div id="status"></div>
+    <div id="clients"></div>
+    
+    <script>
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            const clientsDiv = document.getElementById('clients');
+            
+            try {
+                // Test login
+                statusDiv.innerHTML = 'Testing login...';
+                const loginResponse = await fetch('https://loopjs-backend-361659024403.us-central1.run.app/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                console.log('Login response:', loginData);
+                
+                if (loginData.accessToken) {
+                    statusDiv.innerHTML = 'Login successful! Token: ' + loginData.accessToken.substring(0, 20) + '...';
+                    
+                    // Test client list
+                    const clientsResponse = await fetch('https://loopjs-backend-361659024403.us-central1.run.app/api/info/get-user-list', {
+                        headers: {
+                            'Authorization': 'Bearer ' + loginData.accessToken
+                        }
+                    });
+                    
+                    const clientsData = await clientsResponse.json();
+                    console.log('Clients response:', clientsData);
+                    
+                    if (clientsData.data) {
+                        const onlineClients = clientsData.data.filter(client => client.status === 'online');
+                        clientsDiv.innerHTML = `
+                            <h3>Clients Found: ${clientsData.data.length}</h3>
+                            <h3>Online Clients: ${onlineClients.length}</h3>
+                            <ul>
+                                ${clientsData.data.map(client => `
+                                    <li>
+                                        <strong>${client.computerName}</strong> 
+                                        (${client.uuid.substring(0, 8)}...) 
+                                        - Status: <span style="color: ${client.status === 'online' ? 'green' : 'red'}">${client.status}</span>
+                                        - IP: ${client.ipAddress}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        `;
+                    } else {
+                        clientsDiv.innerHTML = 'No clients data received';
+                    }
+                } else {
+                    statusDiv.innerHTML = 'Login failed: ' + JSON.stringify(loginData);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Test WebSocket connection
+        function testWebSocket() {
+            const ws = new WebSocket('wss://loopjs-backend-361659024403.us-central1.run.app/ws');
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                // Send auth message
+                ws.send(JSON.stringify({
+                    type: 'auth',
+                    token: localStorage.getItem('accessToken') || 'test-token'
+                }));
+            };
+            
+            ws.onmessage = function(event) {
+                console.log('WebSocket message:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.type === 'client_list_update') {
+                    document.getElementById('clients').innerHTML += `
+                        <h3>WebSocket Client List Update:</h3>
+                        <p>Received ${data.clients.length} clients via WebSocket</p>
+                    `;
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket closed');
+            };
+        }
+        
+        // Run tests
+        testConnection();
+        testWebSocket();
+    </script>
+</body>
+</html>

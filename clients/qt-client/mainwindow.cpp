@@ -208,7 +208,7 @@ void MainWindow::onConnected()
     }
 }
 
-void MainWindow::onMessageReceived(const QString &strMessage)
+void MainWindow::onMessageReceived(const QString& strMessage)
 {
     qDebug() << "Received message:" << strMessage;
     

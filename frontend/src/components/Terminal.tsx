@@ -25,7 +25,7 @@ const Terminal: React.FC<TerminalProps> = ({ agents, onSendCommand }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const onlineAgents = agents.filter(agent => agent.status === 'Online');
+  const onlineAgents = agents.filter(agent => agent.status === 'online');
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -98,16 +98,18 @@ Ready for commands...`,
     // Send command to backend
     onSendCommand(selectedAgent, currentCommand);
 
-    // Simulate response (replace with actual WebSocket response handling)
-    setTimeout(() => {
-      const simulatedOutput = getSimulatedOutput(currentCommand);
+    // Set a timeout for command execution (30 seconds)
+    const timeoutId = setTimeout(() => {
       setCommandHistory(prev => prev.map(cmd => 
         cmd.id === commandEntry.id 
-          ? { ...cmd, output: simulatedOutput, status: 'success' }
+          ? { ...cmd, output: 'Command timeout - no response received', status: 'error' }
           : cmd
       ));
       setIsExecuting(false);
-    }, Math.random() * 2000 + 500);
+    }, 30000);
+
+    // Store timeout ID for potential cleanup
+    (commandEntry as any).timeoutId = timeoutId;
 
     setCurrentCommand('');
   };

@@ -44,6 +44,14 @@ export default function App() {
     
     const handleMessage = (data: any) => {
       console.log('WebSocket message received:', data);
+      
+      // Handle command responses
+      if (data.type === 'output' && data.uuid) {
+        console.log('Command output received from client:', data.uuid, 'Output:', data.output);
+        handleCommandResponse(data.uuid, data.output, data.status || 'success');
+        return;
+      }
+      
       wsIntegration.handleMessage(data, {
         onClientUpdate: (clients: any[]) => {
           console.log('onClientUpdate called with clients:', clients);
@@ -233,6 +241,31 @@ export default function App() {
     setTasksModalStatus(true);
   };
 
+  const handleSendCommand = (agentId: string, command: string) => {
+    console.log('Sending command to agent:', agentId, 'Command:', command);
+    
+    // Send command via WebSocket
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const commandMessage = {
+        type: 'command',
+        targetId: agentId,
+        command: command,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Sending WebSocket command:', commandMessage);
+      ws.send(JSON.stringify(commandMessage));
+    } else {
+      console.error('WebSocket not connected');
+      toast.error('WebSocket not connected. Cannot send command.');
+    }
+  };
+
+  const handleCommandResponse = (agentId: string, output: string, status: 'success' | 'error') => {
+    console.log('Command response from agent:', agentId, 'Status:', status, 'Output:', output);
+    // TODO: Pass this to Terminal component to update command history
+  };
+
   const handleProcess = async (user: Agent, commandKey: string) => {
     try {
       await agentService.sendCommand(user.id, commandKey);
@@ -305,6 +338,7 @@ export default function App() {
           onActionClicked={handleActionClicked}
           onTasksClicked={handleTasksClicked}
           onLogout={handleLogout}
+          onSendCommand={handleSendCommand}
         />
       </NotificationProvider>
     </ThemeProvider>

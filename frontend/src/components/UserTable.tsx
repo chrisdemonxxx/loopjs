@@ -59,10 +59,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
 
   const handleQuickCommand = async (user: Agent, command: string) => {
     try {
-      const response = await fetch(`/api/commands/execute/${user.id}`, {
+      const response = await fetch(`/api/agent/${user.id}/command`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
         body: JSON.stringify({
           command: command,
@@ -71,10 +72,17 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
       });
       
       if (response.ok) {
-        console.log(`Command ${command} sent to ${user.computerName}`);
+        const result = await response.json();
+        console.log(`Command ${command} sent to ${user.computerName}:`, result);
+        // Show success notification
+        alert(`Command ${command} sent successfully to ${user.computerName}`);
+      } else {
+        console.error('Failed to send command:', response.statusText);
+        alert(`Failed to send command ${command} to ${user.computerName}`);
       }
     } catch (error) {
       console.error('Failed to send command:', error);
+      alert(`Error sending command ${command} to ${user.computerName}: ${error.message}`);
     }
   };
 

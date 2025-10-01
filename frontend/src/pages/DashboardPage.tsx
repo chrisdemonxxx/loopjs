@@ -12,6 +12,7 @@ interface DashboardPageProps {
   onActionClicked: (agent: Agent) => void;
   onTasksClicked: (agent: Agent) => void;
   onLogout: () => void;
+  onSendCommand: (agentId: string, command: string) => void;
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ 
@@ -19,7 +20,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   isLoading, 
   onActionClicked, 
   onTasksClicked, 
-  onLogout 
+  onLogout,
+  onSendCommand
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -216,7 +218,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         );
 
       case 'terminal':
-        return <Terminal agents={onlineAgents} />;
+        return <Terminal agents={onlineAgents} onSendCommand={onSendCommand} />;
       
       case 'tasks':
         return <TaskScheduler agents={tableData} />;

@@ -382,14 +382,25 @@ const wsHandler = (ws, req) => {
 
             if (data.type === 'output') {
                 // This is an output message from a client
-                const { taskId, output } = data;
-                await Task.findByIdAndUpdate(taskId, { output: output });
+                const { taskId, output, status } = data;
                 
-                // Broadcast task completion to admin sessions
+                // Update task in database if taskId exists
+                if (taskId && taskId.startsWith('cmd_')) {
+                    // This is a direct command, not a stored task
+                    console.log(`Command output from client ${ws.uuid}: ${output}`);
+                } else {
+                    // This is a stored task
+                    await Task.findByIdAndUpdate(taskId, { output: output });
+                }
+                
+                // Broadcast output to admin sessions
                 broadcastToAdminSessions({
-                    type: 'task_completed',
+                    type: 'output',
+                    uuid: ws.uuid,
                     taskId: taskId,
-                    output: output
+                    output: output,
+                    status: status || 'success',
+                    timestamp: new Date().toISOString()
                 });
                 return;
             }
@@ -446,6 +457,50 @@ const wsHandler = (ws, req) => {
                     frameInfo,
                     timestamp: new Date().toISOString()
                 });
+                return;
+            }
+
+            if (data.type === 'command' && clientType === 'admin') {
+                // Handle command from admin to client
+                const { targetId, command } = data;
+                console.log(`Admin sending command to client ${targetId}: ${command}`);
+                
+                // Find the target client WebSocket
+                const targetClient = Array.from(connectedClients.values()).find(client => 
+                    client.uuid === targetId && client.clientType === 'client'
+                );
+                
+                if (targetClient) {
+                    // Send command to target client
+                    const commandMessage = {
+                        cmd: 'execute',
+                        command: command,
+                        taskId: `cmd_${Date.now()}`,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    targetClient.send(JSON.stringify(commandMessage));
+                    console.log(`Command sent to client ${targetId}`);
+                    
+                    // Send confirmation back to admin
+                    ws.send(JSON.stringify({
+                        type: 'command_sent',
+                        targetId: targetId,
+                        command: command,
+                        status: 'success',
+                        timestamp: new Date().toISOString()
+                    }));
+                } else {
+                    console.log(`Client ${targetId} not found or not connected`);
+                    ws.send(JSON.stringify({
+                        type: 'command_sent',
+                        targetId: targetId,
+                        command: command,
+                        status: 'error',
+                        error: 'Client not found or not connected',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
                 return;
             }
 
@@ -648,3 +703,4 @@ module.exports.getClientConnection = getClientConnection;
 module.exports.getConnectionStats = getConnectionStats;
 module.exports.broadcastConnectionStats = broadcastConnectionStats;
 module.exports.broadcastToAdminSessions = broadcastToAdminSessions;
+module.exports.getConnectedClients = () => connectedClients;
