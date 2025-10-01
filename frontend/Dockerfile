@@ -4,9 +4,12 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 COPY . .
+
+# Fix permissions for node_modules binaries
+RUN chmod -R +x node_modules/.bin
 
 RUN npm run build
 
