@@ -293,6 +293,69 @@ const wsHandler = (ws, req) => {
                     console.log('Client connection stored:', clientId);
                     console.log('Total connected clients:', connectedClients.size);
                 }
+                
+                // Send success response to client
+                ws.send(JSON.stringify({ 
+                    type: 'register_success', 
+                    message: 'Client registered successfully' 
+                }));
+                
+                // Use integration layer for client registration if available
+                try {
+                    console.log('Attempting to use integration layer for client registration');
+                    const { websocketHandlers } = require('./integration');
+                    // Ensure uuid is set from agentId if not provided
+                    if (!data.uuid && data.agentId) {
+                        data.uuid = data.agentId;
+                        console.log('Set uuid from agentId:', data.uuid);
+                    }
+                    
+                    // Normalize platform data before passing to integration layer
+                    const normalizedData = {
+                        ...data,
+                        platform: data.platform || 'Unknown',
+                        userAgent: data.userAgent || '',
+                        systemInfo: data.systemInfo || {}
+                    };
+                    
+                    console.log('Calling websocketHandlers.handleClientRegistration with normalized data:', normalizedData);
+                    const client = await websocketHandlers.handleClientRegistration(normalizedData, ws);
+                    console.log('Integration layer registration completed successfully');
+                    
+                    // Process pending tasks for this client
+                    if (client && client.uuid) {
+                        await processPendingTasks(client.uuid, ws);
+                    }
+                } catch (error) {
+                    console.log('Integration layer error:', error.message);
+                    // Fallback to direct database registration
+                    try {
+                        const client = await Client.findOneAndUpdate(
+                            { uuid: data.uuid || data.agentId },
+                            {
+                                $set: {
+                                    computerName: data.computerName || 'Unknown Computer',
+                                    ipAddress: data.ipAddress || '0.0.0.0',
+                                    platform: data.platform || 'Unknown',
+                                    operatingSystem: data.platform || 'Unknown',
+                                    osVersion: data.platform || 'Unknown',
+                                    architecture: data.architecture || 'Unknown',
+                                    capabilities: data.capabilities || {},
+                                    systemInfo: data.systemInfo || {},
+                                    lastHeartbeat: new Date(),
+                                    status: 'online'
+                                }
+                            },
+                            { upsert: true, new: true }
+                        );
+                        
+                        console.log('Direct database registration completed:', client.uuid);
+                    } catch (dbError) {
+                        console.error('Database registration error:', dbError.message);
+                    }
+                }
+                
+                return; // Exit early after handling registration
             }
             
             // Handle admin session identification
@@ -330,46 +393,6 @@ const wsHandler = (ws, req) => {
                 return;
             }
             
-            // Handle client registration
-            if ((data.type === 'register' || data.type === 'agent_register') && clientType === 'client') {
-                // Send success response to client
-                ws.send(JSON.stringify({ 
-                    type: 'register_success', 
-                    message: 'Client registered successfully' 
-                }));
-                
-                // Use integration layer for client registration if available
-                try {
-                    console.log('Attempting to use integration layer for client registration');
-                    const { websocketHandlers } = require('./integration');
-                    // Ensure uuid is set from agentId if not provided
-                    if (!data.uuid && data.agentId) {
-                        data.uuid = data.agentId;
-                        console.log('Set uuid from agentId:', data.uuid);
-                    }
-                    
-                    // Normalize platform data before passing to integration layer
-                    const normalizedData = {
-                        ...data,
-                        platform: data.platform || 'Unknown',
-                        userAgent: data.userAgent || '',
-                        systemInfo: data.systemInfo || {}
-                    };
-                    
-                    console.log('Calling websocketHandlers.handleClientRegistration with normalized data:', normalizedData);
-                    const client = await websocketHandlers.handleClientRegistration(normalizedData, ws);
-                    console.log('Integration layer registration completed successfully');
-                    
-                    // Process pending tasks for this client
-                    if (client && client.uuid) {
-                        await processPendingTasks(client.uuid, ws);
-                    }
-                } catch (error) {
-                    console.log('Integration layer error:', error.message);
-                    console.log('Using basic registration instead');
-                }
-                return;
-            }
             
             // Reject messages from unauthenticated connections
             if (!isAuthenticated) {
