@@ -149,9 +149,11 @@ const wsHandler = (ws, req) => {
     
     ws.on('message', async (message) => {
         try {
+            console.log('WebSocket message received from:', req.socket.remoteAddress, 'Message:', message.toString());
             let data;
             try {
                 data = JSON.parse(message);
+                console.log('Parsed WebSocket message:', data);
             } catch (parseError) {
                 console.error('Invalid JSON received:', parseError);
                 ws.send(JSON.stringify({ 
