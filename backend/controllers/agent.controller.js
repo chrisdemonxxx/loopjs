@@ -155,6 +155,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
 
   // Send command to client via WebSocket
   try {
+    console.log('Sending command to client:', commandPayload);
     clientConnection.send(JSON.stringify(commandPayload));
     
     // Store command in database for tracking
@@ -170,6 +171,8 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
       }
     });
 
+    console.log('Command sent successfully to client:', agent.uuid);
+
     res.status(200).json({
       status: 'success',
       message: `Command "${command}" sent to agent`,
@@ -182,6 +185,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
       }
     });
   } catch (wsError) {
+    console.error('Failed to send command to client:', wsError);
     return next(new AppError('Failed to send command to agent', 500));
   }
 });
