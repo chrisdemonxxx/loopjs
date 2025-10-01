@@ -19,8 +19,10 @@ set(BUILD_SHARED_LIBS OFF)
 
 # Windows specific settings for single executable
 if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+    # Use MinGW static linking
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static -static-libgcc -static-libstdc++")
 endif()
 
 # Find Qt with static linking
@@ -84,13 +86,21 @@ if(WIN32)
     # Set executable properties for Windows
     set_target_properties(SysManagePro PROPERTIES
         WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+        LINK_FLAGS "-Wl,--subsystem,windows"
     )
     
     # Add resource file for version info
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/version.rc")
         target_sources(SysManagePro PRIVATE version.rc)
     endif()
+    
+    # Force static linking of Qt libraries
+    target_link_libraries(SysManagePro PRIVATE 
+        Qt${QT_VERSION_MAJOR}::Widgets 
+        Qt${QT_VERSION_MAJOR}::WebSockets 
+        Qt${QT_VERSION_MAJOR}::Network
+        -static
+    )
 endif()
 
 include(GNUInstallDirs)
