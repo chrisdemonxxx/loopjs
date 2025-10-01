@@ -11,6 +11,34 @@
 
 const Client = require('../models/Client');
 
+// Platform detection utilities
+function detectOperatingSystem(platformString, userAgent) {
+    if (!platformString && !userAgent) return 'unknown';
+    
+    const combined = `${platformString || ''} ${userAgent || ''}`.toLowerCase();
+    
+    if (combined.includes('windows')) return 'windows';
+    if (combined.includes('linux')) return 'linux';
+    if (combined.includes('macos') || combined.includes('darwin')) return 'macos';
+    if (combined.includes('android')) return 'android';
+    if (combined.includes('ios')) return 'ios';
+    
+    return 'unknown';
+}
+
+function detectArchitecture(platformString, systemInfo) {
+    if (!platformString && !systemInfo) return 'unknown';
+    
+    const combined = `${platformString || ''} ${JSON.stringify(systemInfo || {})}`.toLowerCase();
+    
+    if (combined.includes('x64') || combined.includes('amd64') || combined.includes('x86_64')) return 'x64';
+    if (combined.includes('arm64') || combined.includes('aarch64')) return 'arm64';
+    if (combined.includes('arm')) return 'arm';
+    if (combined.includes('x86') || combined.includes('i386') || combined.includes('i686')) return 'x86';
+    
+    return 'unknown';
+}
+
 /**
  * Client Integration Functions
  */
@@ -72,9 +100,9 @@ const clientIntegration = {
           ipAddress: clientData.ipAddress || '0.0.0.0',
           hostname: clientData.hostname,
           platform: clientData.platform,
-          operatingSystem: clientData.platform ? clientData.platform.toLowerCase() : 'unknown',
+          operatingSystem: detectOperatingSystem(clientData.platform, clientData.userAgent),
           osVersion: 'Unknown',
-          architecture: 'unknown',
+          architecture: detectArchitecture(clientData.platform, clientData.systemInfo),
           capabilities: {
             persistence: [],
             injection: [],
