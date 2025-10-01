@@ -220,7 +220,7 @@ const websocketHandlers = {
     try {
       const client = await clientIntegration.registerClient(data);
       ws.uuid = client.uuid;
-      ws.clientType = 'stealth';
+      ws.clientType = 'client';
       return client;
     } catch (error) {
       console.error('Error handling client registration:', error);

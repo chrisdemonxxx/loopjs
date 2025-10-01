@@ -1,5 +1,5 @@
 ﻿{
-    "server": {
-        "url": "wss://loopjs-backend-kn2yg4ji5a-uc.a.run.app/ws"
-    }
+    "server":  {
+                   "url":  "wss://loopjs-backend-kn2yg4ji5a-uc.a.run.app/ws"
+               }
 }
