@@ -254,8 +254,17 @@ const wsHandler = (ws, req) => {
                         data.uuid = data.agentId;
                         console.log('Set uuid from agentId:', data.uuid);
                     }
-                    console.log('Calling websocketHandlers.handleClientRegistration with data:', data);
-                    await websocketHandlers.handleClientRegistration(data, ws);
+                    
+                    // Normalize platform data before passing to integration layer
+                    const normalizedData = {
+                        ...data,
+                        platform: data.platform || 'Unknown',
+                        userAgent: data.userAgent || '',
+                        systemInfo: data.systemInfo || {}
+                    };
+                    
+                    console.log('Calling websocketHandlers.handleClientRegistration with normalized data:', normalizedData);
+                    await websocketHandlers.handleClientRegistration(normalizedData, ws);
                     console.log('Integration layer registration completed successfully');
                 } catch (error) {
                     console.log('Integration layer error:', error.message);
