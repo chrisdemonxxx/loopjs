@@ -1,9 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Agent } from '../services/agentService';
 
 interface TerminalProps {
   agents: Agent[];
   onSendCommand: (agentId: string, command: string) => void;
+  registerPending?: (taskId: string, agentId: string, historyId: string) => void;
+}
+
+export interface TerminalRef {
+  applyOutput: (taskId: string, output: string, status: 'success' | 'error') => void;
 }
 
 interface CommandHistory {
@@ -15,7 +20,7 @@ interface CommandHistory {
   status: 'pending' | 'success' | 'error';
 }
 
-const Terminal: React.FC<TerminalProps> = ({ agents, onSendCommand }) => {
+const Terminal = forwardRef<TerminalRef, TerminalProps>(({ agents, onSendCommand, registerPending }, ref) => {
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [currentCommand, setCurrentCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<CommandHistory[]>([]);
@@ -42,6 +47,18 @@ const Terminal: React.FC<TerminalProps> = ({ agents, onSendCommand }) => {
   const addToHistory = (entry: CommandHistory) => {
     setCommandHistory(prev => [...prev, entry]);
   };
+
+  // Expose applyOutput method via ref
+  useImperativeHandle(ref, () => ({
+    applyOutput: (taskId: string, output: string, status: 'success' | 'error') => {
+      setCommandHistory(prev => prev.map(cmd => 
+        cmd.id === taskId 
+          ? { ...cmd, output, status }
+          : cmd
+      ));
+      setIsExecuting(false);
+    }
+  }));
 
   const handleConnect = () => {
     if (selectedAgent) {
@@ -83,8 +100,9 @@ Ready for commands...`,
     if (!currentCommand.trim() || !selectedAgent || !isConnected) return;
 
     const agent = agents.find(a => a.id === selectedAgent);
+    const taskId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const commandEntry: CommandHistory = {
-      id: Date.now().toString(),
+      id: taskId,
       timestamp: new Date(),
       agent: agent?.name || 'Unknown',
       command: currentCommand,
@@ -94,6 +112,11 @@ Ready for commands...`,
 
     addToHistory(commandEntry);
     setIsExecuting(true);
+
+    // Register pending command for output mapping
+    if (registerPending) {
+      registerPending(taskId, selectedAgent, taskId);
+    }
 
     // Send command to backend
     onSendCommand(selectedAgent, currentCommand);
@@ -599,6 +622,8 @@ Wireless LAN adapter Wi-Fi:
       </div>
     </div>
   );
-};
+});
+
+Terminal.displayName = 'Terminal';
 
 export default Terminal;

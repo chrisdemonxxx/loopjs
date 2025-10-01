@@ -471,22 +471,26 @@ const wsHandler = (ws, req) => {
                 );
                 
                 if (targetClient) {
+                    // Generate taskId for this command
+                    const taskId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
                     // Send command to target client
                     const commandMessage = {
                         cmd: 'execute',
                         command: command,
-                        taskId: `cmd_${Date.now()}`,
+                        taskId: taskId,
                         timestamp: new Date().toISOString()
                     };
                     
                     targetClient.send(JSON.stringify(commandMessage));
-                    console.log(`Command sent to client ${targetId}`);
+                    console.log(`Command sent to client ${targetId} with taskId: ${taskId}`);
                     
                     // Send confirmation back to admin
                     ws.send(JSON.stringify({
                         type: 'command_sent',
                         targetId: targetId,
                         command: command,
+                        taskId: taskId,
                         status: 'success',
                         timestamp: new Date().toISOString()
                     }));
@@ -496,6 +500,7 @@ const wsHandler = (ws, req) => {
                         type: 'command_sent',
                         targetId: targetId,
                         command: command,
+                        taskId: null,
                         status: 'error',
                         error: 'Client not found or not connected',
                         timestamp: new Date().toISOString()

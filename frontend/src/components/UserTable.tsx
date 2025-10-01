@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
+import toast from 'react-hot-toast';
 
 interface UserTableProps {
   users: Agent[];
@@ -75,14 +76,14 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
         const result = await response.json();
         console.log(`Command ${command} sent to ${user.computerName}:`, result);
         // Show success notification
-        alert(`Command ${command} sent successfully to ${user.computerName}`);
+        toast.success(`Command ${command} sent successfully to ${user.computerName}`);
       } else {
         console.error('Failed to send command:', response.statusText);
-        alert(`Failed to send command ${command} to ${user.computerName}`);
+        toast.error(`Failed to send command ${command} to ${user.computerName}`);
       }
     } catch (error) {
       console.error('Failed to send command:', error);
-      alert(`Error sending command ${command} to ${user.computerName}: ${error.message}`);
+      toast.error(`Error sending command ${command} to ${user.computerName}: ${error.message}`);
     }
   };
 

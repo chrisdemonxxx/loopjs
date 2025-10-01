@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -10,6 +10,7 @@ import { Agent } from './types';
 import agentService from './services/agentService';
 import toast from 'react-hot-toast';
 import { wsIntegration } from './utils/integration';
+import { TerminalRef } from './components/Terminal';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,6 +19,11 @@ export default function App() {
   const [modalStatus, setModalStatus] = useState(false);
   const [tasksModalStatus, setTasksModalStatus] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
+  
+  // Terminal ref and task mapping
+  const terminalRef = useRef<TerminalRef>(null);
+  const taskIdToHistoryId = useRef<Map<string, string>>(new Map());
+  const taskIdToAgentId = useRef<Map<string, string>>(new Map());
 
   // Check for existing authentication on app startup
   useEffect(() => {
@@ -46,9 +52,18 @@ export default function App() {
       console.log('WebSocket message received:', data);
       
       // Handle command responses
-      if (data.type === 'output' && data.uuid) {
-        console.log('Command output received from client:', data.uuid, 'Output:', data.output);
-        handleCommandResponse(data.uuid, data.output, data.status || 'success');
+      if (data.type === 'output' && data.taskId) {
+        console.log('Command output received:', data.taskId, 'Output:', data.output);
+        if (terminalRef.current) {
+          terminalRef.current.applyOutput(data.taskId, data.output, data.status || 'success');
+        }
+        return;
+      }
+
+      // Handle command sent confirmation
+      if (data.type === 'command_sent' && data.taskId) {
+        console.log('Command sent confirmation:', data.taskId);
+        // The taskId mapping is already registered by handleRegisterPending
         return;
       }
       
@@ -261,6 +276,12 @@ export default function App() {
     }
   };
 
+  const handleRegisterPending = (taskId: string, agentId: string, historyId: string) => {
+    taskIdToHistoryId.current.set(taskId, historyId);
+    taskIdToAgentId.current.set(taskId, agentId);
+    console.log('Registered pending command:', { taskId, agentId, historyId });
+  };
+
   const handleCommandResponse = (agentId: string, output: string, status: 'success' | 'error') => {
     console.log('Command response from agent:', agentId, 'Status:', status, 'Output:', output);
     // TODO: Pass this to Terminal component to update command history
@@ -339,6 +360,8 @@ export default function App() {
           onTasksClicked={handleTasksClicked}
           onLogout={handleLogout}
           onSendCommand={handleSendCommand}
+          onRegisterPending={handleRegisterPending}
+          terminalRef={terminalRef}
         />
       </NotificationProvider>
     </ThemeProvider>

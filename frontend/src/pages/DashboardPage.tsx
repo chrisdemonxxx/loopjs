@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import UserTable from '../components/UserTable';
-import Terminal from '../components/Terminal';
+import Terminal, { TerminalRef } from '../components/Terminal';
 import TaskScheduler from '../components/TaskScheduler';
 import Settings from '../components/Settings';
 import AgentSection from '../components/AgentSection';
@@ -13,6 +13,8 @@ interface DashboardPageProps {
   onTasksClicked: (agent: Agent) => void;
   onLogout: () => void;
   onSendCommand: (agentId: string, command: string) => void;
+  onRegisterPending: (taskId: string, agentId: string, historyId: string) => void;
+  terminalRef: React.RefObject<TerminalRef>;
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ 
@@ -21,7 +23,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   onActionClicked, 
   onTasksClicked, 
   onLogout,
-  onSendCommand
+  onSendCommand,
+  onRegisterPending,
+  terminalRef
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -218,7 +222,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         );
 
       case 'terminal':
-        return <Terminal agents={onlineAgents} onSendCommand={onSendCommand} />;
+        return <Terminal 
+          ref={terminalRef}
+          agents={onlineAgents} 
+          onSendCommand={onSendCommand} 
+          registerPending={onRegisterPending}
+        />;
       
       case 'tasks':
         return <TaskScheduler agents={tableData} />;
