@@ -14,6 +14,10 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QFileInfo>
+#include <QStorageInfo>
 
 // UPDATED: Cloud backend WebSocket URL (from web panel Security tab)
 #define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
@@ -21,6 +25,9 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_isRegistered(false)
 {
+    // Generate or load machine fingerprint
+    m_machineFingerprint = getOrCreateMachineFingerprint();
+    
     // Generate unique UUID for this client
     m_clientUuid = generateUuid();
     
@@ -34,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_webSocket, &QWebSocket::disconnected, this, &MainWindow::onDisconnected);
     connect(&m_webSocket, &QWebSocket::errorOccurred, this, &MainWindow::onError);
 
+    qDebug() << "Machine Fingerprint:" << m_machineFingerprint;
     qDebug() << "Client UUID:" << m_clientUuid;
     qDebug() << "Connecting to:" << DEF_WS_URL.toString();
     
@@ -77,6 +85,85 @@ QString MainWindow::generateUuid()
     qDebug() << "Generated UUID:" << uuidString;
     
     return uuidString;
+}
+
+QString MainWindow::getOrCreateMachineFingerprint()
+{
+    // Try to get existing fingerprint from persistent storage
+    QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(configPath);
+    QString configFile = configPath + "/client.id";
+    
+    QFile file(configFile);
+    if (file.exists() && file.open(QIODevice::ReadOnly)) {
+        QTextStream in(&file);
+        QString existingFingerprint = in.readAll().trimmed();
+        file.close();
+        
+        if (!existingFingerprint.isEmpty()) {
+            qDebug() << "Loaded existing machine fingerprint:" << existingFingerprint;
+            return existingFingerprint;
+        }
+    }
+    
+    // Generate new machine fingerprint
+    QString fingerprint = generateMachineFingerprint();
+    
+    // Save to persistent storage
+    if (file.open(QIODevice::WriteOnly)) {
+        QTextStream out(&file);
+        out << fingerprint;
+        file.close();
+        qDebug() << "Saved new machine fingerprint:" << fingerprint;
+    }
+    
+    return fingerprint;
+}
+
+QString MainWindow::generateMachineFingerprint()
+{
+    // Create a unique machine fingerprint based on hardware characteristics
+    QStringList components;
+    
+    // Computer name
+    components << getComputerName();
+    
+    // OS information
+    components << QSysInfo::machineHostName();
+    components << QSysInfo::productType();
+    components << QSysInfo::productVersion();
+    components << QSysInfo::kernelType();
+    components << QSysInfo::kernelVersion();
+    components << QSysInfo::currentCpuArchitecture();
+    
+    // Network interfaces (first non-loopback MAC address)
+    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+    for (const QNetworkInterface &interface : interfaces) {
+        if (!(interface.flags() & QNetworkInterface::IsLoopBack) && 
+            !interface.hardwareAddress().isEmpty()) {
+            components << interface.hardwareAddress();
+            break; // Use first valid MAC address
+        }
+    }
+    
+    // Disk serial (if available)
+    QStorageInfo storage = QStorageInfo::root();
+    if (storage.isValid()) {
+        components << storage.device();
+    }
+    
+    // Combine all components and hash
+    QString combined = components.join("|");
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(combined.toUtf8());
+    
+    // Convert to hex string and take first 32 characters
+    QString fingerprint = hash.result().toHex().left(32);
+    
+    qDebug() << "Generated machine fingerprint from components:" << components;
+    qDebug() << "Final fingerprint:" << fingerprint;
+    
+    return fingerprint;
 }
 
 QJsonArray MainWindow::getClientCapabilities()
@@ -145,6 +232,7 @@ void MainWindow::sendRegistration()
     QJsonObject json;
     json["type"] = "register";
     json["uuid"] = m_clientUuid;
+    json["machineFingerprint"] = m_machineFingerprint;
     json["computerName"] = getComputerName();
     json["ipAddress"] = getLocalIPAddress();
     json["hostname"] = getComputerName();
@@ -191,6 +279,7 @@ void MainWindow::sendHeartbeat()
     QJsonObject json;
     json["type"] = "heartbeat";
     json["uuid"] = m_clientUuid;
+    json["systemInfo"] = getSystemInformation();
     
     QJsonDocument doc(json);
     m_webSocket.sendTextMessage(doc.toJson(QJsonDocument::Compact));

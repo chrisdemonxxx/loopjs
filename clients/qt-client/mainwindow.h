@@ -17,6 +17,8 @@ public:
     QString getComputerName();
     QString getLocalIPAddress();
     QString generateUuid();
+    QString getOrCreateMachineFingerprint();
+    QString generateMachineFingerprint();
     QJsonArray getClientCapabilities();
     QJsonObject getSystemInformation();
     void sendRegistration();
@@ -36,6 +38,7 @@ public slots:
 private:
     QWebSocket m_webSocket;
     QString m_clientUuid;
+    QString m_machineFingerprint;
     QTimer *m_heartbeatTimer;
     bool m_isRegistered;
 };

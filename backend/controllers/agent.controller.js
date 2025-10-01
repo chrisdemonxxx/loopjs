@@ -1,4 +1,5 @@
 const Client = require('../models/Client');
+const Task = require('../models/Task');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
@@ -105,6 +106,7 @@ exports.getAgent = catchAsync(async (req, res, next) => {
 exports.sendCommand = catchAsync(async (req, res, next) => {
   const { command, params = {} } = req.body;
   const agentId = req.params.id;
+  const createdBy = req.user ? req.user.id : 'system'; // Get user ID from auth
   
   const agent = await Client.findOne({ uuid: agentId });
   
@@ -112,81 +114,132 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
     return next(new AppError('No agent found with that ID', 404));
   }
   
-  // Check if agent is online
-  const isOnline = new Date(agent.lastHeartbeat) > new Date(Date.now() - 5 * 60 * 1000);
-  if (!isOnline) {
-    return next(new AppError('Agent is offline and cannot receive commands', 400));
-  }
-  
-  // Generate command ID
-  const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Generate task ID
+  const taskId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Get WebSocket connection for this client
-  const wsHandler = require('../configs/ws.handler');
-  const clientConnection = wsHandler.getClientConnection(agent.uuid);
-
-  if (!clientConnection) {
-    return next(new AppError('Client WebSocket connection not found', 400));
-  }
-
-  // Prepare command payload based on platform (Qt client expects 'cmd' and 'taskId')
-  let commandPayload = {
-    cmd: 'execute',
-    taskId: commandId,
+  // Create task in database (always create, regardless of online status)
+  const task = new Task({
+    taskId: taskId,
+    agentUuid: agentId,
     command: command,
     params: params,
+    createdBy: createdBy,
+    platform: agent.operatingSystem || 'unknown',
+    queue: {
+      state: 'pending',
+      attempts: 0,
+      priority: 0
+    }
+  });
+
+  await task.save();
+  console.log('Task created:', taskId);
+
+  // Broadcast task creation to admin sessions
+  const wsHandler = require('../configs/ws.handler');
+  wsHandler.broadcastToAdminSessions({
+    type: 'task_created',
+    task: task.toObject(),
     timestamp: new Date().toISOString()
-  };
+  });
 
-  // Platform-specific command formatting
-  switch (agent.operatingSystem) {
-    case 'windows':
-      commandPayload.shell = 'cmd';
-      break;
-    case 'mac':
-      commandPayload.shell = 'bash';
-      break;
-    case 'android':
-      commandPayload.shell = 'sh';
-      break;
-    default:
-      commandPayload.shell = 'sh';
-  }
+  // Check if agent is online and has WebSocket connection
+  const isOnline = agent.status === 'online' && new Date(agent.lastHeartbeat) > new Date(Date.now() - 2 * 60 * 1000);
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
 
-  // Send command to client via WebSocket
-  try {
-    console.log('Sending command to client:', commandPayload);
-    clientConnection.send(JSON.stringify(commandPayload));
-    
-    // Store command in database for tracking
-    await Client.findOneAndUpdate({ uuid: agentId }, {
-      $push: {
-        commandHistory: {
-          id: commandId,
-          command: command,
-          params: params,
-          timestamp: new Date(),
+  if (isOnline && clientConnection) {
+    // Agent is online - send command immediately
+    try {
+      // Prepare command payload
+      let commandPayload = {
+        cmd: 'execute',
+        taskId: taskId,
+        command: command,
+        params: params,
+        timestamp: new Date().toISOString()
+      };
+
+      // Platform-specific command formatting
+      switch (agent.operatingSystem) {
+        case 'windows':
+          commandPayload.shell = 'cmd';
+          break;
+        case 'mac':
+          commandPayload.shell = 'bash';
+          break;
+        case 'android':
+          commandPayload.shell = 'sh';
+          break;
+        default:
+          commandPayload.shell = 'sh';
+      }
+
+      console.log('Sending command to online client:', commandPayload);
+      clientConnection.send(JSON.stringify(commandPayload));
+      
+      // Update task as sent
+      await Task.findOneAndUpdate(
+        { taskId: taskId },
+        { 
+          $set: { 
+            'queue.state': 'sent',
+            sentAt: new Date(),
+            'queue.attempts': 1,
+            'queue.lastAttemptAt': new Date()
+          }
+        }
+      );
+
+      // Broadcast task update to admin sessions
+      const updatedTask = await Task.findOne({ taskId }).lean();
+      wsHandler.broadcastToAdminSessions({
+        type: 'task_updated',
+        task: updatedTask,
+        timestamp: new Date().toISOString()
+      });
+
+      console.log('Command sent successfully to client:', agent.uuid);
+
+      res.status(200).json({
+        status: 'success',
+        message: `Command "${command}" sent to agent`,
+        data: {
+          taskId: taskId,
+          agentId,
+          command,
+          params,
           status: 'sent'
         }
-      }
-    });
-
-    console.log('Command sent successfully to client:', agent.uuid);
-
+      });
+    } catch (wsError) {
+      console.error('Failed to send command to client:', wsError);
+      // Revert task to pending state
+      await Task.findOneAndUpdate(
+        { taskId: taskId },
+        { 
+          $set: { 
+            'queue.state': 'pending',
+            'queue.reason': 'WebSocket send failed'
+          }
+        }
+      );
+      return next(new AppError('Failed to send command to agent', 500));
+    }
+  } else {
+    // Agent is offline - command will be queued
+    console.log('Agent is offline, command queued:', taskId);
+    
     res.status(200).json({
       status: 'success',
-      message: `Command "${command}" sent to agent`,
+      message: `Command "${command}" queued for agent (offline)`,
       data: {
-        commandId: commandId,
+        taskId: taskId,
         agentId,
         command,
         params,
-        status: 'sent'
+        status: 'queued'
       }
     });
-  } catch (wsError) {
-    console.error('Failed to send command to client:', wsError);
-    return next(new AppError('Failed to send command to agent', 500));
   }
 });
 

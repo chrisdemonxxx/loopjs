@@ -149,6 +149,34 @@ app.use((err, req, res, next) => {
 // WebSocket logic
 wss.on('connection', wsHandler);
 
+// Background job to mark clients as offline after timeout
+const markOfflineClients = async () => {
+    try {
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+        const result = await Client.updateMany(
+            { 
+                status: 'online',
+                lastHeartbeat: { $lt: twoMinutesAgo }
+            },
+            { 
+                $set: { 
+                    status: 'offline',
+                    disconnectedAt: new Date()
+                }
+            }
+        );
+        
+        if (result.modifiedCount > 0) {
+            console.log(`Marked ${result.modifiedCount} clients as offline due to timeout`);
+        }
+    } catch (error) {
+        console.error('Error marking offline clients:', error);
+    }
+};
+
+// Run the offline check every 30 seconds
+setInterval(markOfflineClients, 30 * 1000);
+
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${PORT} on all network interfaces`);
     console.log(`Local access: http://localhost:${PORT}`);

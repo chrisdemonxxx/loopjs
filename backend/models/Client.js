@@ -153,6 +153,42 @@ const clientSchema = new mongoose.Schema({
         enum: ['online', 'offline'],
         default: 'offline',
     },
+    // Client identity and deduplication
+    machineFingerprint: {
+        type: String,
+        unique: true,
+        sparse: true, // Allow null values for existing records
+    },
+    firstSeen: {
+        type: Date,
+        default: Date.now,
+    },
+    connectedAt: {
+        type: Date,
+    },
+    disconnectedAt: {
+        type: Date,
+    },
+    uptimeSeconds: {
+        type: Number,
+        default: 0,
+    },
+    bootTime: {
+        type: Date,
+    },
+    // Command metrics
+    commandSuccess: {
+        type: Number,
+        default: 0,
+    },
+    commandFailed: {
+        type: Number,
+        default: 0,
+    },
+    avgLatencyMs: {
+        type: Number,
+        default: 0,
+    },
     // Keep legacy fields for backward compatibility
     ip: {
         type: String,
@@ -163,6 +199,12 @@ const clientSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
+
+// Add indexes for performance and uniqueness
+clientSchema.index({ uuid: 1 }, { unique: true });
+clientSchema.index({ machineFingerprint: 1 }, { unique: true, sparse: true });
+clientSchema.index({ status: 1, lastHeartbeat: -1 });
+clientSchema.index({ machineFingerprint: 1, uuid: 1 });
 
 const Client = mongoose.model('Client', clientSchema);
 

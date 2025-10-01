@@ -5,6 +5,7 @@ import Terminal, { TerminalRef } from '../components/Terminal';
 import TaskScheduler from '../components/TaskScheduler';
 import Settings from '../components/Settings';
 import AgentSection from '../components/AgentSection';
+import LogsPage from './LogsPage';
 
 interface DashboardPageProps {
   tableData: Agent[];
@@ -28,10 +29,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   terminalRef
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [taskStats, setTaskStats] = useState({
+    total: 0,
+    pending: 0,
+    sent: 0,
+    completed: 0,
+    failed: 0,
+    successRate: 0,
+    avgExecutionTimeMs: 0
+  });
 
   // Calculate stats from real data
   const onlineAgents = tableData.filter(agent => agent.status === 'online');
   const offlineAgents = tableData.filter(agent => agent.status === 'offline');
+
+  // Fetch task stats
+  const fetchTaskStats = async () => {
+    try {
+      const response = await fetch('/api/task/stats', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTaskStats(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch task stats:', error);
+    }
+  };
+
+  // Fetch stats on component mount
+  useEffect(() => {
+    fetchTaskStats();
+  }, []);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -77,11 +109,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-bodydark2">Offline Clients</p>
-                    <p className="text-2xl font-bold text-red-600">{offlineAgents.length}</p>
+                    <p className="text-sm font-medium text-bodydark2">Pending Tasks</p>
+                    <p className="text-2xl font-bold text-yellow-600">{taskStats.pending}</p>
                   </div>
-                  <div className="p-3 rounded-full bg-red-100">
-                    <span className="text-2xl">🔴</span>
+                  <div className="p-3 rounded-full bg-yellow-100">
+                    <span className="text-2xl">⏳</span>
                   </div>
                 </div>
               </div>
@@ -89,11 +121,64 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-bodydark2">Active Tasks</p>
-                    <p className="text-2xl font-bold text-purple-600">0</p>
+                    <p className="text-sm font-medium text-bodydark2">Success Rate</p>
+                    <p className="text-2xl font-bold text-purple-600">{taskStats.successRate.toFixed(1)}%</p>
                   </div>
                   <div className="p-3 rounded-full bg-purple-100">
-                    <span className="text-2xl">⚡</span>
+                    <span className="text-2xl">📊</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Task Queue Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-bodydark2">Total Tasks</p>
+                    <p className="text-2xl font-bold text-gray-600">{taskStats.total}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-gray-100">
+                    <span className="text-2xl">📋</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-bodydark2">Completed</p>
+                    <p className="text-2xl font-bold text-green-600">{taskStats.completed}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-green-100">
+                    <span className="text-2xl">✅</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-bodydark2">Failed</p>
+                    <p className="text-2xl font-bold text-red-600">{taskStats.failed}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-red-100">
+                    <span className="text-2xl">❌</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-bodydark2">Avg Duration</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {taskStats.avgExecutionTimeMs > 0 ? `${(taskStats.avgExecutionTimeMs / 1000).toFixed(1)}s` : '-'}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-full bg-blue-100">
+                    <span className="text-2xl">⏱️</span>
                   </div>
                 </div>
               </div>
@@ -229,6 +314,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           registerPending={onRegisterPending}
         />;
       
+      case 'logs':
+        return <LogsPage />;
+      
       case 'tasks':
         return <TaskScheduler agents={tableData} />;
       
@@ -287,6 +375,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               { id: 'clients', label: 'Clients', icon: '👥' },
               { id: 'agent', label: 'Agent', icon: '🤖' },
               { id: 'terminal', label: 'Terminal', icon: '💻' },
+              { id: 'logs', label: 'Logs', icon: '📝' },
               { id: 'tasks', label: 'Tasks', icon: '📋' },
               { id: 'settings', label: 'Settings', icon: '⚙️' }
             ].map((tab) => (

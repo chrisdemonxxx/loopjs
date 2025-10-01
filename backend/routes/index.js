@@ -9,6 +9,8 @@ const RefreshToken = require('../models/RefreshToken');
 const commandRoute = require('./command.route');
 const infoRoute = require('./info.route');
 const agentRoute = require('./agent.route');
+const taskRoute = require('./task.route');
+const metricsRoute = require('./metrics.route');
 const telegramRoute = require('./telegram');
 const authorize = require('../middleware/rbac');
 const audit = require('../middleware/audit');
@@ -21,6 +23,8 @@ const { protect } = require('../middleware/security');
 
 router.use('/command', protect, commandRoute);
 router.use('/agent', agentRoute); // Remove global protection - individual routes will handle auth
+router.use('/task', protect, taskRoute); // Task management routes
+router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
 
 // Allow specific client endpoints without authentication (must come before general /info route)

@@ -17,6 +17,80 @@ const getClientConnection = (uuid) => {
 // Export the helper function
 module.exports.getClientConnection = getClientConnection;
 
+// Process pending tasks for a client when they come online
+const processPendingTasks = async (clientUuid, ws) => {
+    try {
+        console.log(`Processing pending tasks for client ${clientUuid}`);
+        
+        // Get pending tasks for this client (limit to 5 at a time)
+        const pendingTasks = await Task.find({
+            agentUuid: clientUuid,
+            'queue.state': 'pending'
+        }).sort({ createdAt: 1 }).limit(5);
+        
+        console.log(`Found ${pendingTasks.length} pending tasks for client ${clientUuid}`);
+        
+        for (const task of pendingTasks) {
+            try {
+                // Prepare command payload
+                let commandPayload = {
+                    cmd: 'execute',
+                    taskId: task.taskId,
+                    command: task.command,
+                    params: task.params || {},
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Send command to client
+                console.log(`Sending queued command to client ${clientUuid}:`, commandPayload);
+                ws.send(JSON.stringify(commandPayload));
+                
+                // Update task as sent
+                await Task.findOneAndUpdate(
+                    { taskId: task.taskId },
+                    { 
+                        $set: { 
+                            'queue.state': 'sent',
+                            sentAt: new Date(),
+                            'queue.attempts': (task.queue.attempts || 0) + 1,
+                            'queue.lastAttemptAt': new Date()
+                        }
+                    }
+                );
+
+                // Broadcast task update to admin sessions
+                const updatedTask = await Task.findOne({ taskId: task.taskId }).lean();
+                broadcastToAdminSessions({
+                    type: 'task_updated',
+                    task: updatedTask,
+                    timestamp: new Date().toISOString()
+                });
+                
+                console.log(`Queued task ${task.taskId} sent to client ${clientUuid}`);
+                
+                // Small delay between commands to avoid overwhelming the client
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+            } catch (taskError) {
+                console.error(`Error sending queued task ${task.taskId}:`, taskError);
+                // Mark task as failed
+                await Task.findOneAndUpdate(
+                    { taskId: task.taskId },
+                    { 
+                        $set: { 
+                            'queue.state': 'failed',
+                            'queue.reason': 'Failed to send queued command',
+                            errorMessage: taskError.message
+                        }
+                    }
+                );
+            }
+        }
+    } catch (error) {
+        console.error(`Error processing pending tasks for client ${clientUuid}:`, error);
+    }
+};
+
 // Platform detection utilities
 function detectOperatingSystem(platformString, userAgent) {
     if (!platformString && !userAgent) return 'unknown';
@@ -283,8 +357,13 @@ const wsHandler = (ws, req) => {
                     };
                     
                     console.log('Calling websocketHandlers.handleClientRegistration with normalized data:', normalizedData);
-                    await websocketHandlers.handleClientRegistration(normalizedData, ws);
+                    const client = await websocketHandlers.handleClientRegistration(normalizedData, ws);
                     console.log('Integration layer registration completed successfully');
+                    
+                    // Process pending tasks for this client
+                    if (client && client.uuid) {
+                        await processPendingTasks(client.uuid, ws);
+                    }
                 } catch (error) {
                     console.log('Integration layer error:', error.message);
                     console.log('Using basic registration instead');
@@ -363,14 +442,20 @@ const wsHandler = (ws, req) => {
                         console.log(`Heartbeat processed for client ${uuid}`);
                     } catch (error) {
                         console.log('Integration layer heartbeat error:', error.message);
-                        // Fallback to direct database update
+                        // Fallback to direct database update with system info
+                        const systemInfo = data.systemInfo || {};
+                        const uptimeSeconds = systemInfo.uptime || 0;
+                        const bootTime = systemInfo.bootTime ? new Date(systemInfo.bootTime) : null;
+                        
                         await Client.findOneAndUpdate(
                             { uuid: uuid },
                             { 
                                 $set: { 
                                     lastHeartbeat: new Date(),
                                     status: 'online',
-                                    lastActiveTime: new Date()
+                                    lastActiveTime: new Date(),
+                                    uptimeSeconds: uptimeSeconds,
+                                    ...(bootTime && { bootTime: bootTime })
                                 }
                             }
                         );
@@ -384,13 +469,37 @@ const wsHandler = (ws, req) => {
                 // This is an output message from a client
                 const { taskId, output, status } = data;
                 
-                // Update task in database if taskId exists
-                if (taskId && taskId.startsWith('cmd_')) {
-                    // This is a direct command, not a stored task
-                    console.log(`Command output from client ${ws.uuid}: ${output}`);
-                } else {
-                    // This is a stored task
-                    await Task.findByIdAndUpdate(taskId, { output: output });
+                console.log(`Command output from client ${ws.uuid} for task ${taskId}: ${output}`);
+                
+                // Update task in database
+                if (taskId) {
+                    const updateData = {
+                        output: output,
+                        completedAt: new Date(),
+                        executionTimeMs: Date.now() - (new Date().getTime() - 60000) // Rough estimate
+                    };
+                    
+                    if (status === 'success') {
+                        updateData['queue.state'] = 'completed';
+                    } else {
+                        updateData['queue.state'] = 'failed';
+                        updateData.errorMessage = output;
+                    }
+                    
+                    await Task.findOneAndUpdate(
+                        { taskId: taskId },
+                        { $set: updateData }
+                    );
+                    
+                    console.log(`Task ${taskId} updated with status: ${status}`);
+
+                    // Broadcast task update to admin sessions
+                    const updatedTask = await Task.findOne({ taskId }).lean();
+                    broadcastToAdminSessions({
+                        type: 'task_updated',
+                        task: updatedTask,
+                        timestamp: new Date().toISOString()
+                    });
                 }
                 
                 // Broadcast output to admin sessions
