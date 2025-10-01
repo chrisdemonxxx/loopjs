@@ -106,7 +106,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
   const { command, params = {} } = req.body;
   const agentId = req.params.id;
   
-  const agent = await Client.findById(agentId);
+  const agent = await Client.findOne({ uuid: agentId });
   
   if (!agent) {
     return next(new AppError('No agent found with that ID', 404));
