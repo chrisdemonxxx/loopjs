@@ -1,41 +1,304 @@
-# LoopJS
+# LoopJS - Command & Control Panel System
 
-A modern client-server application for remote system management.
+[![Deploy Status](https://github.com/your-username/loopjs/workflows/Deploy%20All%20Services/badge.svg)](https://github.com/your-username/loopjs/actions)
+[![Production](https://img.shields.io/badge/status-production-green)](https://loopjs.vidai.sbs/)
+[![Backend](https://img.shields.io/badge/backend-cloud%20run-blue)](https://loopjs-backend-361659024403.us-central1.run.app)
 
-## Architecture
+## 🎯 Overview
 
-- **Backend**: Node.js server with Express and WebSockets
-- **Frontend**: React web application
-- **Clients**: Multiple desktop client implementations
+LoopJS is a comprehensive Command & Control (C2) panel system designed for system administration and remote management. It consists of a web-based control panel, a Node.js backend API, and a Qt C++ desktop client application.
 
-## Development
+### 🌐 Live Demo
+- **Frontend**: [https://loopjs.vidai.sbs/](https://loopjs.vidai.sbs/)
+- **Backend API**: [https://loopjs-backend-361659024403.us-central1.run.app](https://loopjs-backend-361659024403.us-central1.run.app)
+- **Health Check**: [https://loopjs-backend-361659024403.us-central1.run.app/health](https://loopjs-backend-361659024403.us-central1.run.app/health)
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    WebSocket    ┌─────────────────┐    HTTP/API    ┌─────────────────┐
+│   Qt Client     │◄──────────────►│   Backend API   │◄──────────────►│   Frontend      │
+│   (C++/Qt)      │                 │   (Node.js)     │                 │   (React)       │
+└─────────────────┘                 └─────────────────┘                 └─────────────────┘
+         │                                   │                                   │
+         │                                   │                                   │
+         ▼                                   ▼                                   ▼
+┌─────────────────┐                 ┌─────────────────┐                 ┌─────────────────┐
+│   System Info   │                 │   MongoDB       │                 │   C2 Panel      │
+│   Monitoring    │                 │   Database      │                 │   Dashboard     │
+└─────────────────┘                 └─────────────────┘                 └─────────────────┘
+```
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js
-- Docker
-- Google Cloud SDK
-- CMake (for clients)
-- Qt (for Qt client)
+- **Node.js**: 18+ for backend and frontend
+- **Qt 6.9.3**: MinGW 64-bit for client
+- **MongoDB**: Database for backend
+- **Google Cloud**: For production deployment
 
-### Setup
-1. Clone the repository
-2. Set up environment variables
-3. Install dependencies in both frontend and backend directories
-4. Build the appropriate client for your platform
+### Development Setup
 
-### Deployment
-The project uses GitHub Actions for CI/CD, automatically deploying to Google Cloud Run when changes are pushed to the main branch.
+#### Backend
+```bash
+cd backend
+npm install
+npm run dev  # Runs on http://localhost:8080
+```
 
-## Structure
-- `frontend/`: React web application
-- `backend/`: Node.js server
-- `clients/`: Desktop client implementations
-  - `qt-client/`: Qt-based desktop application
-  - `stealth-client/`: Advanced client with stealth features
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run dev  # Runs on http://localhost:5173
+```
 
-## Deployment Guide
+#### Client
+```bash
+cd clients/qt-client
+.\build-standalone.bat  # Creates standalone executable
+```
 
-See the [Quick Fix Guide](./docs/QUICK_FIX_GUIDE.md) for a quick way to get your deployment working, or the [Deployment Setup](./docs/DEPLOYMENT_SETUP.md) for more comprehensive instructions.
+## 📦 Components
 
-## License
-MIT
+### 🔧 Backend (`backend/`)
+- **Framework**: Node.js + Express
+- **Database**: MongoDB with Mongoose
+- **WebSocket**: Real-time client communication
+- **Authentication**: JWT-based security
+- **Deployment**: Google Cloud Run
+
+**Key Features**:
+- RESTful API endpoints
+- WebSocket server for real-time updates
+- Client registration and management
+- Task execution and monitoring
+- Audit logging and security
+
+### 🎨 Frontend (`frontend/`)
+- **Framework**: React + TypeScript + Vite
+- **UI**: Tailwind CSS with custom hacker theme
+- **State**: React Context + Hooks
+- **Deployment**: Google Cloud Run with Nginx
+
+**Key Features**:
+- Modern C2 panel interface
+- Real-time client monitoring
+- Command execution interface
+- System information display
+- User management and authentication
+
+### 💻 Client (`clients/qt-client/`)
+- **Framework**: Qt 6.9.3 C++
+- **Compiler**: MinGW 64-bit
+- **Build**: CMake with static linking
+- **Deployment**: Standalone executable
+
+**Key Features**:
+- System information gathering
+- WebSocket communication
+- Command execution
+- Self-updating capabilities
+- Stealth operation mode
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+# Backend
+MONGODB_URI=mongodb://localhost:27017/loopjs
+JWT_SECRET=your-jwt-secret
+SESSION_SECRET=your-session-secret
+NODE_ENV=production
+
+# Frontend
+VITE_BACKEND_URL=https://loopjs-backend-361659024403.us-central1.run.app
+VITE_WS_URL=wss://loopjs-backend-361659024403.us-central1.run.app/ws
+```
+
+### Production URLs
+- **Frontend**: https://loopjs.vidai.sbs/
+- **Backend**: https://loopjs-backend-361659024403.us-central1.run.app
+- **WebSocket**: wss://loopjs-backend-361659024403.us-central1.run.app/ws
+
+## 🚀 Deployment
+
+### Automated Deployment (GitHub Actions)
+```bash
+# Push to main branch triggers deployment
+git push origin main
+```
+
+### Manual Deployment
+```bash
+# Deploy backend
+gcloud run deploy loopjs-backend --source ./backend --region us-central1
+
+# Deploy frontend
+gcloud run deploy loopjs-frontend --source ./frontend --region us-central1
+```
+
+### Client Deployment
+```bash
+# Build standalone client
+cd clients/qt-client
+.\build-standalone.bat
+
+# Create single executable
+.\create-final-single-exe.ps1
+```
+
+## 📊 API Documentation
+
+### Authentication
+```bash
+# Login
+POST /api/auth/login
+{
+  "username": "admin",
+  "password": "password"
+}
+
+# Response
+{
+  "status": "success",
+  "data": {
+    "token": "jwt-token",
+    "user": { "id": "user-id", "username": "admin" }
+  }
+}
+```
+
+### Client Management
+```bash
+# Get all clients
+GET /api/info/get-user-list
+
+# Register client
+POST /api/info/register-client
+{
+  "uuid": "client-uuid",
+  "computerName": "DESKTOP-ABC123",
+  "ipAddress": "192.168.1.100"
+}
+```
+
+### WebSocket Messages
+```javascript
+// Client registration
+{
+  "type": "register",
+  "data": {
+    "uuid": "client-uuid",
+    "computerName": "DESKTOP-ABC123",
+    "ipAddress": "192.168.1.100",
+    "platform": "windows",
+    "capabilities": ["command_execution", "file_transfer"]
+  }
+}
+
+// Command execution
+{
+  "type": "command",
+  "data": {
+    "uuid": "client-uuid",
+    "command": "dir C:\\",
+    "id": "command-id"
+  }
+}
+```
+
+## 🔐 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **CORS Protection**: Configured for specific domains
+- **Input Validation**: All inputs sanitized and validated
+- **Audit Logging**: Complete activity tracking
+- **SSL/TLS**: Encrypted communication
+- **Rate Limiting**: API request throttling
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Client Not Showing in C2 Panel
+```bash
+# Check API endpoint
+curl https://loopjs-backend-361659024403.us-central1.run.app/api/info/get-user-list
+
+# Verify frontend configuration
+grep -r "get-user-list" frontend/src/
+```
+
+#### WebSocket Connection Failed
+```bash
+# Test WebSocket connection
+wscat -c wss://loopjs-backend-361659024403.us-central1.run.app/ws
+
+# Check CORS configuration
+curl -H "Origin: https://loopjs.vidai.sbs" https://loopjs-backend-361659024403.us-central1.run.app/health
+```
+
+#### SSL/TLS Issues
+```bash
+# Include TLS backends in client
+copy "C:\Qt\6.9.3\mingw_64\plugins\tls\qschannelbackend.dll" dist\tls\
+copy "C:\Qt\6.9.3\mingw_64\plugins\tls\qcertonlybackend.dll" dist\tls\
+```
+
+## 📈 Monitoring
+
+### Health Checks
+- **Backend**: `GET /health`
+- **Frontend**: Root endpoint
+- **WebSocket**: Connection test
+
+### Logs
+```bash
+# Backend logs
+gcloud run services logs read loopjs-backend --region us-central1
+
+# Frontend logs
+gcloud run services logs read loopjs-frontend --region us-central1
+```
+
+### Metrics
+- **CPU Usage**: Cloud Run metrics
+- **Memory Usage**: Cloud Run metrics
+- **Request Count**: Cloud Run metrics
+- **Error Rate**: Cloud Run metrics
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support
+
+- **Documentation**: See `PROJECT_MEMORY.md` for detailed information
+- **Deployment Guide**: See `DEPLOYMENT_GUIDE.md` for deployment instructions
+- **Client Build Guide**: See `CLIENT_BUILD_GUIDE.md` for client build instructions
+- **Issues**: Report issues on GitHub
+- **Discussions**: Use GitHub Discussions for questions
+
+## 🎯 Roadmap
+
+- [ ] Enhanced client capabilities
+- [ ] Mobile client support
+- [ ] Advanced monitoring features
+- [ ] Plugin system
+- [ ] Multi-tenant support
+- [ ] Advanced security features
+
+---
+
+**Status**: Production Ready ✅  
+**Version**: 1.0.0  
+**Last Updated**: October 1, 2025

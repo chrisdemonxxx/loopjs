@@ -1,0 +1,94 @@
+# LoopJS Project Rules and Memory
+
+## Project Overview
+LoopJS is a Command & Control (C2) panel system with:
+- **Backend**: Node.js/Express API with WebSocket support
+- **Frontend**: React/TypeScript C2 Panel  
+- **Client**: Qt C++ desktop application
+- **Infrastructure**: Google Cloud Platform with automated deployment
+
+## Production URLs & Configuration
+- **Frontend**: https://loopjs.vidai.sbs/
+- **Backend**: https://loopjs-backend-361659024403.us-central1.run.app
+- **WebSocket**: wss://loopjs-backend-361659024403.us-central1.run.app/ws
+- **Project ID**: code-assist-470813
+- **Region**: us-central1
+
+## Key Configuration Files
+- **Frontend Config**: `frontend/src/config.ts` - API and WebSocket URLs
+- **Backend Config**: `backend/index.js` - Server configuration
+- **Client Config**: `clients/qt-client/CMakeLists.txt` - Build configuration
+
+## Deployment Automation
+- **GitHub Actions**: `.github/workflows/deploy-all.yml`
+- **Google Cloud Build**: `backend/cloudbuild.yaml`
+- **Build Scripts**: `clients/qt-client/build-standalone.bat`
+
+## Common Issues & Solutions
+1. **Client not showing in C2 panel**: Check API endpoint `/info/get-user-list`
+2. **SSL/TLS issues**: Include SChannel backend DLLs in client deployment
+3. **WebSocket connection failed**: Verify URL configuration and CORS
+4. **Build failures**: Use existing build scripts or install CMake
+
+## Development Commands
+```bash
+# Backend
+cd backend && npm run dev  # Port 8080
+
+# Frontend  
+cd frontend && npm run dev  # Port 5173
+
+# Client
+cd clients/qt-client && .\build-standalone.bat
+```
+
+## Security Configuration
+- **JWT Authentication**: Token-based auth
+- **CORS**: Domain-specific configuration
+- **SSL/TLS**: Encrypted communication
+- **Secrets**: Stored in Google Secret Manager
+
+## Database Schema
+- **Client Model**: UUID, computerName, ipAddress, platform, status, lastSeen
+- **Task Model**: UUID, command, status, result, timestamps
+
+## WebSocket Message Types
+- **Client**: register, heartbeat, command_result
+- **Admin**: auth, web_client, command
+- **Server**: auth_success, register_success, client_status_update
+
+## Build Outputs
+- **Standalone**: `dist/` directory with all DLLs
+- **Single Executable**: Self-extracting archive
+- **Package Size**: ~34 MB with all dependencies
+
+## Monitoring & Health Checks
+- **Backend Health**: `GET /health`
+- **Frontend Health**: Root endpoint
+- **WebSocket Test**: Connection validation
+- **Logs**: Google Cloud Run logs
+
+## File Structure
+```
+loopjs/
+├── backend/           # Node.js API server
+├── frontend/          # React C2 panel
+├── clients/qt-client/ # Qt C++ client
+├── .github/workflows/ # GitHub Actions
+├── PROJECT_MEMORY.md  # Complete project documentation
+├── DEPLOYMENT_GUIDE.md # Deployment instructions
+├── CLIENT_BUILD_GUIDE.md # Client build guide
+└── README.md          # Project overview
+```
+
+## Important Notes
+- Always use production URLs for deployment
+- Client requires Qt 6.9.3 MinGW 64-bit
+- Backend requires MongoDB connection
+- Frontend requires backend URL configuration
+- All services deployed to Google Cloud Run
+- Automated deployment via GitHub Actions
+- Health checks and rollback configured
+- SSL/TLS support via Windows SChannel
+- JWT authentication for security
+- Real-time communication via WebSocket

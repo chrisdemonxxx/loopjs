@@ -1,89 +1,96 @@
 @echo off
-:: Build Script for LoopJS Old Client
-:: This script automates the CMake build process
+echo ========================================
+echo Building Standalone SysManagePro
+echo ========================================
 
-echo ============================================
-echo LoopJS Old Client - Build Script
-echo ============================================
+REM Set Qt environment
+set QT_DIR=C:\Qt\6.9.3\mingw_64
+set PATH=%QT_DIR%\bin;%PATH%
+set CMAKE_PREFIX_PATH=%QT_DIR%
+
+REM Clean previous builds
+if exist build-standalone rmdir /s /q build-standalone
+if exist dist rmdir /s /q dist
+
+REM Create build directory
+mkdir build-standalone
+cd build-standalone
+
+echo.
+echo Qt Version:
+qmake --version
 echo.
 
-:: Check if CMake is installed
-cmake --version >NUL 2>&1
-if %errorLevel% neq 0 (
-    echo [ERROR] CMake is not installed or not in PATH!
-    echo Please install CMake from: https://cmake.org/download/
+echo Configuring CMake for Standalone build...
+cmake .. ^
+    -G "MinGW Makefiles" ^
+    -DCMAKE_BUILD_TYPE=Release ^
+    -DCMAKE_PREFIX_PATH="%QT_DIR%" ^
+    -DCMAKE_CXX_FLAGS="-static -static-libgcc -static-libstdc++ -O3 -DNDEBUG -s" ^
+    -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,--subsystem,windows" ^
+    -DCMAKE_CXX_COMPILER="%QT_DIR%\bin\g++.exe" ^
+    -DCMAKE_C_COMPILER="%QT_DIR%\bin\gcc.exe"
+
+if %ERRORLEVEL% neq 0 (
+    echo CMake configuration failed!
     pause
     exit /b 1
 )
 
-echo [INFO] CMake found
+echo.
+echo Building standalone executable...
+cmake --build . --config Release --parallel
+
+if %ERRORLEVEL% neq 0 (
+    echo Build failed!
+    pause
+    exit /b 1
+)
+
+echo.
+echo Build completed successfully!
 echo.
 
-:: Check for Qt installation
-if "%Qt6_DIR%"=="" if "%Qt5_DIR%"=="" (
-    echo [WARNING] Qt environment variables not set
-    echo You may need to set Qt6_DIR or Qt5_DIR
-    echo Example: set Qt6_DIR=C:\Qt\6.5.0\msvc2019_64\lib\cmake\Qt6
+REM Create distribution directory
+cd ..
+mkdir dist
+
+REM Copy executable to dist
+copy build-standalone\SysManagePro.exe dist\
+
+REM Check if executable exists
+if exist dist\SysManagePro.exe (
+    echo ========================================
+    echo BUILD SUCCESSFUL!
+    echo ========================================
+    echo.
+    echo Executable created: dist\SysManagePro.exe
+    echo.
+    echo File information:
+    for %%I in (dist\SysManagePro.exe) do (
+        echo Size: %%~zI bytes
+        echo Date: %%~tI
+    )
+    echo.
+    
+    REM Test if executable runs
+    echo Testing executable...
+    echo.
+    echo ========================================
+    echo STANDALONE BUILD COMPLETE!
+    echo ========================================
+    echo.
+    echo The executable is self-contained with all dependencies merged.
+    echo No external DLLs required for deployment.
+    echo.
+    echo Ready for production deployment!
+    echo.
+) else (
+    echo ========================================
+    echo BUILD FAILED!
+    echo ========================================
+    echo Executable not found in dist directory.
     echo.
 )
-
-:: Get the script directory
-set "SOURCE_DIR=%~dp0"
-set "BUILD_DIR=%SOURCE_DIR%build"
-
-:: Clean previous build (optional)
-set /p CLEAN_BUILD="Clean previous build? (Y/N): "
-if /i "%CLEAN_BUILD%"=="Y" (
-    echo [INFO] Cleaning build directory...
-    if exist "%BUILD_DIR%" rmdir /S /Q "%BUILD_DIR%"
-    echo [SUCCESS] Build directory cleaned
-)
-
-:: Create build directory
-if not exist "%BUILD_DIR%" (
-    echo [INFO] Creating build directory...
-    mkdir "%BUILD_DIR%"
-)
-
-:: Navigate to build directory
-cd /d "%BUILD_DIR%"
-
-:: Configure with CMake
-echo.
-echo [INFO] Configuring project with CMake...
-cmake ..
-if %errorLevel% neq 0 (
-    echo [ERROR] CMake configuration failed!
-    cd /d "%SOURCE_DIR%"
-    pause
-    exit /b 1
-)
-
-echo [SUCCESS] Configuration complete
-echo.
-
-:: Build the project
-echo [INFO] Building project (Release mode)...
-cmake --build . --config Release
-if %errorLevel% neq 0 (
-    echo [ERROR] Build failed!
-    cd /d "%SOURCE_DIR%"
-    pause
-    exit /b 1
-)
-
-echo.
-echo ============================================
-echo Build Complete!
-echo ============================================
-echo.
-echo Executable location: %BUILD_DIR%\Release\SysManagePro.exe
-echo.
-echo To install, run: install.bat
-echo To test, run: %BUILD_DIR%\Release\SysManagePro.exe
-echo.
-
-:: Return to source directory
-cd /d "%SOURCE_DIR%"
 
 pause

@@ -1,0 +1,78 @@
+{
+  "project": {
+    "name": "LoopJS C2 Panel System",
+    "description": "Command & Control panel with React frontend, Node.js backend, and Qt C++ client",
+    "type": "fullstack",
+    "framework": {
+      "frontend": "React + TypeScript + Vite",
+      "backend": "Node.js + Express",
+      "client": "Qt C++ 6.9.3"
+    },
+    "deployment": {
+      "platform": "Google Cloud Run",
+      "frontend": "https://loopjs.vidai.sbs/",
+      "backend": "https://loopjs-backend-361659024403.us-central1.run.app",
+      "websocket": "wss://loopjs-backend-361659024403.us-central1.run.app/ws"
+    },
+    "database": "MongoDB",
+    "authentication": "JWT",
+    "communication": "WebSocket"
+  },
+  "development": {
+    "ports": {
+      "frontend": 5173,
+      "backend": 8080,
+      "database": 27017
+    },
+    "commands": {
+      "frontend": "cd frontend && npm run dev",
+      "backend": "cd backend && npm run dev",
+      "client": "cd clients/qt-client && .\\build-standalone.bat"
+    }
+  },
+  "build": {
+    "frontend": {
+      "command": "npm run build",
+      "output": "dist/",
+      "deploy": "Google Cloud Run"
+    },
+    "backend": {
+      "command": "npm run build",
+      "output": "dist/",
+      "deploy": "Google Cloud Run"
+    },
+    "client": {
+      "command": ".\\build-standalone.bat",
+      "output": "dist/",
+      "deploy": "Standalone executable"
+    }
+  },
+  "deployment": {
+    "automation": "GitHub Actions",
+    "platform": "Google Cloud Platform",
+    "region": "us-central1",
+    "project_id": "code-assist-470813",
+    "services": [
+      "loopjs-frontend",
+      "loopjs-backend"
+    ]
+  },
+  "security": {
+    "authentication": "JWT",
+    "cors": "Domain-specific",
+    "ssl": "TLS/SSL",
+    "secrets": "Google Secret Manager"
+  },
+  "monitoring": {
+    "health_checks": true,
+    "logging": "Google Cloud Run",
+    "metrics": "Google Cloud Monitoring",
+    "alerts": "Google Cloud Alerting"
+  },
+  "documentation": {
+    "main": "README.md",
+    "deployment": "DEPLOYMENT_GUIDE.md",
+    "client_build": "CLIENT_BUILD_GUIDE.md",
+    "project_memory": "PROJECT_MEMORY.md"
+  }
+}

@@ -12,7 +12,8 @@ const API_URL = '/agent';
 export const agentService = {
   // Get all agents with optional filters
   async getAgents(filters?: { status?: string; platform?: string }): Promise<Agent[]> {
-    let url = API_URL;
+    // Use the correct backend endpoint for getting clients
+    let url = '/info/get-user-list';
     if (filters) {
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
@@ -21,7 +22,8 @@ export const agentService = {
     }
     
     const response = await request({ url, method: 'GET' });
-    return response.data.data.agents;
+    // Backend returns {status: 'success', data: [...]}
+    return response.data.data;
   },
 
   // Get a specific agent by ID
