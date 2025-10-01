@@ -178,12 +178,16 @@ const webPanelIntegration = {
    * @returns {Object} Formatted client data for web panel
    */
   formatClientForWebPanel: (client) => {
+    // Determine online status based on lastHeartbeat (within 5 minutes = online)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const isOnline = client.lastHeartbeat && new Date(client.lastHeartbeat) > fiveMinutesAgo;
+    
     return {
       uuid: client.uuid,
       computerName: client.computerName || 'Unknown',
       ipAddress: client.ipAddress || client.ip || 'Unknown',
       country: client.country || 'Unknown',
-      status: client.status || 'offline',
+      status: isOnline ? 'online' : 'offline',
       lastActiveTime: client.lastActiveTime ? 
         client.lastActiveTime.toISOString().split('T')[0] : 
         (client.lastSeen ? client.lastSeen.toISOString().split('T')[0] : 'Never'),
@@ -192,6 +196,7 @@ const webPanelIntegration = {
       hostname: client.hostname,
       platform: client.platform,
       lastSeen: client.lastSeen,
+      lastHeartbeat: client.lastHeartbeat,
       createdAt: client.createdAt
     };
   },
