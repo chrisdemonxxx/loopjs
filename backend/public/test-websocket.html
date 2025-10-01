@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #log {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+    .error { color: red; }
+    .success { color: green; }
+    .info { color: blue; }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebSocket Connection Test</h1>
+  
+  <div>
+    <label for="wsUrl">WebSocket URL:</label>
+    <input type="text" id="wsUrl" value="ws://localhost:8080/ws">
+  </div>
+  
+  <div>
+    <label for="token">JWT Token:</label>
+    <input type="text" id="token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNCIsInVzZXJuYW1lIjoidGVzdC11c2VyIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU4Mjc4MDYyLCJleHAiOjE3NTgyODE2NjJ9.AgoAirN-mHc0duMbC-bgSBmcmRRiedKvc4EgPYUD9cw">
+  </div>
+  
+  <div>
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+    <button id="generateTokenBtn">Generate New Token</button>
+  </div>
+  
+  <h3>Message</h3>
+  <div>
+    <input type="text" id="messageInput" placeholder="Enter message or JSON" value='{"type":"web_client","action":"get_clients"}'>
+    <button id="sendBtn" disabled>Send</button>
+  </div>
+  
+  <h3>Log</h3>
+  <div id="log"></div>
+  
+  <script>
+    let ws = null;
+    
+    // DOM elements
+    const wsUrlInput = document.getElementById('wsUrl');
+    const tokenInput = document.getElementById('token');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const generateTokenBtn = document.getElementById('generateTokenBtn');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const logDiv = document.getElementById('log');
+    
+    // Log function
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.classList.add(type);
+      entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    
+    // Connect to WebSocket
+    connectBtn.addEventListener('click', () => {
+      const url = wsUrlInput.value.trim();
+      if (!url) {
+        log('Please enter a WebSocket URL', 'error');
+        return;
+      }
+      
+      try {
+        ws = new WebSocket(url);
+        
+        ws.onopen = () => {
+          log('Connected to WebSocket server', 'success');
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = false;
+          sendBtn.disabled = false;
+          
+          // Send authentication message
+          const token = tokenInput.value.trim();
+          if (token) {
+            const authMessage = {
+              type: 'auth',
+              token: token
+            };
+            log(`Sending authentication message with token: ${token.substring(0, 20)}...`, 'info');
+            ws.send(JSON.stringify(authMessage));
+          } else {
+            log('No token provided for authentication', 'error');
+          }
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            log(`Received: ${JSON.stringify(data, null, 2)}`, data.type === 'auth_failed' ? 'error' : 'success');
+            
+            // If authentication succeeded, enable sending messages
+            if (data.type === 'auth_success') {
+              log('Authentication successful!', 'success');
+            }
+          } catch (e) {
+            log(`Received: ${event.data}`, 'info');
+          }
+        };
+        
+        ws.onerror = (error) => {
+          log(`WebSocket error: ${error.message || 'Unknown error'}`, 'error');
+        };
+        
+        ws.onclose = (event) => {
+          log(`Disconnected: Code ${event.code}, Reason: ${event.reason || 'No reason provided'}`, 'info');
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          sendBtn.disabled = true;
+        };
+        
+      } catch (error) {
+        log(`Error creating WebSocket: ${error.message}`, 'error');
+      }
+    });
+    
+    // Disconnect from WebSocket
+    disconnectBtn.addEventListener('click', () => {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    });
+    
+    // Generate new JWT token
+    generateTokenBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: 'admin',
+            password: 'admin'
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.accessToken) {
+            tokenInput.value = data.accessToken;
+            log('Generated new token from login API', 'success');
+          } else {
+            log('Login successful but no token returned', 'error');
+          }
+        } else {
+          const errorData = await response.json();
+          log(`Login failed: ${errorData.error || response.statusText}`, 'error');
+        }
+      } catch (error) {
+        log(`Error generating token: ${error.message}`, 'error');
+      }
+    });
+    
+    // Send message
+    sendBtn.addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('WebSocket is not connected', 'error');
+        return;
+      }
+      
+      const message = messageInput.value.trim();
+      if (!message) {
+        log('Please enter a message to send', 'error');
+        return;
+      }
+      
+      try {
+        // Try to parse as JSON
+        let parsedMessage;
+        try {
+          parsedMessage = JSON.parse(message);
+          ws.send(JSON.stringify(parsedMessage));
+          log(`Sent: ${JSON.stringify(parsedMessage, null, 2)}`, 'info');
+        } catch (e) {
+          // Send as plain text
+          ws.send(message);
+          log(`Sent: ${message}`, 'info');
+        }
+      } catch (error) {
+        log(`Error sending message: ${error.message}`, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
