@@ -21,7 +21,7 @@ HEADERS += \
 
 # Release build optimization
 CONFIG(release, debug|release) {
-    DEFINES += QT_NO_DEBUG_OUTPUT
+    # DEFINES += QT_NO_DEBUG_OUTPUT  # Commented out to enable debug logging
     QMAKE_CXXFLAGS_RELEASE += -O3
 }
 

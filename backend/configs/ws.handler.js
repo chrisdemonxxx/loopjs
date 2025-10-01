@@ -324,8 +324,17 @@ const wsHandler = (ws, req) => {
                     };
                     
                     // Register client using integration layer
-                    await websocketHandlers.registerClient(normalizedData);
+                    const registeredClient = await websocketHandlers.registerClient(normalizedData);
                     console.log('Integration layer registration completed');
+                    
+                    // Broadcast the new client to admin sessions
+                    const { webPanelIntegration } = require('./integration');
+                    const formattedClient = webPanelIntegration.formatClientForWebPanel(registeredClient);
+                    broadcastToAdminSessions({
+                        type: 'client_status_update',
+                        client: formattedClient
+                    });
+                    console.log('Broadcasted new client to admin sessions');
                 } catch (integrationError) {
                     console.error('Integration layer registration failed:', integrationError.message);
                     
@@ -357,14 +366,23 @@ const wsHandler = (ws, req) => {
                             { upsert: true, new: true }
                         );
                         
-                        console.log('Direct database registration completed:', client.uuid);
-                    } catch (dbError) {
-                        console.error('Database registration error:', dbError.message);
-                    }
+                    console.log('Direct database registration completed:', client.uuid);
+                    
+                    // Broadcast the new client to admin sessions
+                    const { webPanelIntegration } = require('./integration');
+                    const formattedClient = webPanelIntegration.formatClientForWebPanel(client);
+                    broadcastToAdminSessions({
+                        type: 'client_status_update',
+                        client: formattedClient
+                    });
+                    console.log('Broadcasted new client to admin sessions');
+                } catch (dbError) {
+                    console.error('Database registration error:', dbError.message);
                 }
-                
-                return; // Exit early after handling registration
             }
+            
+            return; // Exit early after handling registration
+        }
             
             // Handle admin session identification
             if (data.type === 'web_client') {
