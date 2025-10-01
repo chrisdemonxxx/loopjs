@@ -78,6 +78,11 @@ router.post('/:agentId/command', protect, async (req, res) => {
         console.log(`Connected clients keys:`, Array.from(connectedClients.keys()));
         console.log(`Connected clients size:`, connectedClients.size);
         
+        // Debug: Check if any client has matching UUID
+        for (const [key, ws] of connectedClients.entries()) {
+            console.log(`Client key: ${key}, UUID: ${ws.uuid}, Type: ${ws.clientType}`);
+        }
+        
         const targetClient = connectedClients.get(agentId);
         console.log(`Target client found:`, !!targetClient);
         if (targetClient) {
