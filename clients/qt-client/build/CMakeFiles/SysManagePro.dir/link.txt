@@ -1,3 +1,0 @@
-C:\Qt\Tools\CMake_64\bin\cmake.exe -E rm -f CMakeFiles\SysManagePro.dir/objects.a
-C:\Qt\Tools\mingw1310_64\bin\ar.exe qc CMakeFiles\SysManagePro.dir/objects.a @CMakeFiles\SysManagePro.dir\objects1.rsp
-C:\Qt\Tools\mingw1310_64\bin\c++.exe -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\SysManagePro.dir/objects.a -Wl,--no-whole-archive -o SysManagePro.exe -Wl,--out-implib,libSysManagePro.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\SysManagePro.dir\linkLibs.rsp
