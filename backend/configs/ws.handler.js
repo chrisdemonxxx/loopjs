@@ -205,6 +205,7 @@ const wsHandler = (ws, req) => {
             
             // For clients, first message should be registration
             if (!isAuthenticated && (data.type === 'register' || data.type === 'agent_register')) {
+                console.log('Processing client registration:', data);
                 isAuthenticated = true;
                 clientType = 'client';
                 clientId = data.uuid || data.agentId;
@@ -216,6 +217,7 @@ const wsHandler = (ws, req) => {
                 if (data.uuid || data.agentId) {
                     connectedClients.set(clientId, ws);
                     console.log('Client connection stored:', clientId);
+                    console.log('Total connected clients:', connectedClients.size);
                 }
             }
             
@@ -333,6 +335,12 @@ const wsHandler = (ws, req) => {
                 if (uuid) {
                     console.log(`Received heartbeat from client ${uuid}`);
                     
+                    // Check if client is registered
+                    if (!connectedClients.has(uuid)) {
+                        console.log(`Heartbeat from unregistered client ${uuid}, ignoring`);
+                        return;
+                    }
+                    
                     // Use integration layer for heartbeat handling if available
                     try {
                         const { websocketHandlers } = require('./integration');
@@ -426,11 +434,13 @@ const wsHandler = (ws, req) => {
                 return;
             }
 
-            // Handle client messages
-            if (data.uuid) {
+            // Handle client messages - only process if client is already registered
+            if (data.uuid && connectedClients.has(data.uuid)) {
                 ws.uuid = data.uuid;
                 ws.clientType = 'client';
-                connectedClients.set(data.uuid, ws);
+            } else if (data.uuid && !connectedClients.has(data.uuid)) {
+                console.log(`Received message from unregistered client ${data.uuid}, ignoring`);
+                return; // Ignore messages from unregistered clients
             } else {
                 return; // Ignore messages without a UUID
             }
