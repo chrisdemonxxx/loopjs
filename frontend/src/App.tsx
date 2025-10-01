@@ -43,11 +43,14 @@ export default function App() {
     console.log('Initializing WebSocket with token:', token);
     
     const handleMessage = (data: any) => {
+      console.log('WebSocket message received:', data);
       wsIntegration.handleMessage(data, {
         onClientUpdate: (clients: any[]) => {
+          console.log('onClientUpdate called with clients:', clients);
           if (Array.isArray(clients)) {
             if (clients.length === 1) {
               // Single client update - convert Client to Agent format
+              console.log('Single client update:', clients[0]);
               setTableData(prevData => {
                 const clientData = clients[0];
                 const agentData: Agent = {
@@ -99,6 +102,7 @@ export default function App() {
               toast.success(`Client ${clients[0].computerName || clients[0].name} is now ${clients[0].status}`);
             } else {
               // Full client list update - convert all clients to agents
+              console.log('Full client list update with', clients.length, 'clients');
               const agentList: Agent[] = clients.map(clientData => ({
                 _id: clientData._id,
                 id: clientData.uuid || clientData.id,
@@ -135,6 +139,7 @@ export default function App() {
                 geoLocation: clientData.geoLocation,
                 systemInfo: clientData.systemInfo
               }));
+              console.log('Setting table data with', agentList.length, 'agents');
               setTableData(agentList);
             }
           }
@@ -158,6 +163,11 @@ export default function App() {
         if (data.type === 'auth_success') {
           console.log('Authentication successful, sending web_client identification');
           ws.send(JSON.stringify({ type: 'web_client' }));
+          // Force refresh client list after authentication
+          setTimeout(() => {
+            console.log('Force refreshing client list after authentication');
+            getUserList();
+          }, 1000);
         }
         
         handleMessage(data);
@@ -189,11 +199,15 @@ export default function App() {
   const getUserList = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching client list from API...');
       const agents = await agentService.getAgents();
+      console.log('API returned agents:', agents);
       if (agents) {
         setTableData(agents);
+        console.log('Set table data with', agents.length, 'agents from API');
       } else {
         setTableData([]);
+        console.log('No agents data returned from server');
         toast.error('No agents data returned from server.');
       }
     } catch (error: any) {
