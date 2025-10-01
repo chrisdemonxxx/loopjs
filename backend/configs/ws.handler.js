@@ -292,9 +292,11 @@ const wsHandler = (ws, req) => {
                 
                 // Send current client list to new admin session
                 const clients = await Client.find({});
+                const { webPanelIntegration } = require('./integration');
+                const formattedClients = webPanelIntegration.formatClientListForWebPanel(clients);
                 ws.send(JSON.stringify({
                     type: 'client_list_update',
-                    clients: clients
+                    clients: formattedClients
                 }));
                 return;
             }
@@ -500,9 +502,11 @@ const wsHandler = (ws, req) => {
             }
 
             // Broadcast client status update to all admin sessions
+            const { webPanelIntegration } = require('./integration');
+            const formattedClient = webPanelIntegration.formatClientForWebPanel(updatedClient);
             broadcastToAdminSessions({
                 type: 'client_status_update',
-                client: updatedClient
+                client: formattedClient
             });
 
             // Check for any pending tasks for this client
@@ -567,9 +571,11 @@ const wsHandler = (ws, req) => {
             
             if (updatedClient) {
                 // Broadcast client status update to admin sessions
+                const { webPanelIntegration } = require('./integration');
+                const formattedClient = webPanelIntegration.formatClientForWebPanel(updatedClient);
                 broadcastToAdminSessions({
                     type: 'client_status_update',
-                    client: updatedClient
+                    client: formattedClient
                 });
             }
         }
