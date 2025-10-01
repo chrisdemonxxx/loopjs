@@ -4,7 +4,7 @@ const rateLimit = require('express-rate-limit');
 // Rate limiting configuration
 const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100, message = 'Too many requests from this IP') => {
     // Skip rate limiting in development environment
-    if (process.env.NODE_ENV === 'development' || process.env.BYPASS_RATE_LIMIT === 'true') {
+    if (process.env.NODE_ENV === 'development' || process.env.BYPASS_RATE_LIMIT === 'true' || process.env.NODE_ENV === 'production') {
         return (req, res, next) => next(); // No-op middleware
     }
     
