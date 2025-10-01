@@ -324,7 +324,7 @@ const wsHandler = (ws, req) => {
                     };
                     
                     // Register client using integration layer
-                    const registeredClient = await websocketHandlers.registerClient(normalizedData);
+                    const registeredClient = await websocketHandlers.handleClientRegistration(normalizedData, ws);
                     console.log('Integration layer registration completed');
                     
                     // Broadcast the new client to admin sessions
