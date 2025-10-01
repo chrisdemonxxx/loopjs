@@ -7,13 +7,21 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+// MongoDB connection (optional - app works without it)
+if (process.env.MONGODB_URI && process.env.MONGODB_URI.includes('mongodb')) {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000 // Fail fast if MongoDB is unavailable
+  })
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => {
+    console.warn('⚠️ MongoDB connection failed, continuing without database:', err.message);
+    // App continues to work without MongoDB
+  });
+} else {
+  console.log('ℹ️ No MongoDB URI configured, running without database');
+}
 
 // Enable CORS for all origins (for client connections)
 app.use(cors({
