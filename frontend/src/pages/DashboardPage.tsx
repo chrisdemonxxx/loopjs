@@ -13,7 +13,7 @@ interface DashboardPageProps {
   onActionClicked: (agent: Agent) => void;
   onTasksClicked: (agent: Agent) => void;
   onLogout: () => void;
-  onSendCommand: (agentId: string, command: string) => void;
+  onSendCommand: (agentId: string, command: string, correlationId: string) => void;  // Update signature
   onRegisterPending: (taskId: string, agentId: string, historyId: string) => void;
   terminalRef: React.RefObject<TerminalRef>;
 }

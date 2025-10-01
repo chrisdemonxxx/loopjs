@@ -112,7 +112,7 @@ passport.deserializeUser((id, done) => User.findById(id, done));
 
 // Routes
 app.use('/api', apiRoutes);
-app.use('/admin', require('./routes/admin'));
+app.use('/admin', require('./middleware/security').protect, require('./routes/admin'));  // Protect admin routes
 app.use('/debug', require('./routes/debug'));
 app.use('/', healthRoutes);
 

@@ -24,6 +24,7 @@ export default function App() {
   const terminalRef = useRef<TerminalRef>(null);
   const taskIdToHistoryId = useRef<Map<string, string>>(new Map());
   const taskIdToAgentId = useRef<Map<string, string>>(new Map());
+  const wsRef = useRef<WebSocket | null>(null);  // Add ref for WebSocket
 
   // Check for existing authentication on app startup
   useEffect(() => {
@@ -51,19 +52,19 @@ export default function App() {
     const handleMessage = (data: any) => {
       console.log('WebSocket message received:', data);
       
-      // Handle command responses
-      if (data.type === 'output' && data.taskId) {
-        console.log('Command output received:', data.taskId, 'Output:', data.output);
+      // Handle command responses with correlationId
+      if (data.type === 'output' && data.correlationId) {
+        console.log('Command output received:', data.correlationId, 'Output:', data.output);
         if (terminalRef.current) {
-          terminalRef.current.applyOutput(data.taskId, data.output, data.status || 'success');
+          terminalRef.current.applyOutput(data.correlationId, data.output, data.status || 'success');
         }
         return;
       }
-
+      
       // Handle command sent confirmation
-      if (data.type === 'command_sent' && data.taskId) {
-        console.log('Command sent confirmation:', data.taskId);
-        // The taskId mapping is already registered by handleRegisterPending
+      if (data.type === 'command_sent' && data.taskId && data.correlationId) {
+        console.log('Command sent confirmation:', data.taskId, 'CorrelationId:', data.correlationId);
+        // Optionally map taskId to correlationId if needed, but since output uses correlationId directly, may not be necessary
         return;
       }
       
@@ -175,48 +176,46 @@ export default function App() {
       });
     };
     
-    const ws = wsIntegration.createConnection(token, handleMessage);
+    wsRef.current = wsIntegration.createConnection(token, handleMessage);
     
     // Add onmessage handler to send web_client identification after auth_success
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        // If authentication was successful, send web_client identification
-        if (data.type === 'auth_success') {
-          console.log('Authentication successful, sending web_client identification');
-          ws.send(JSON.stringify({ type: 'web_client' }));
-          // Force refresh client list after authentication
-          setTimeout(() => {
-            console.log('Force refreshing client list after authentication');
-            getUserList();
-          }, 1000);
+    if (wsRef.current) {
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // If authentication was successful, send web_client identification
+          if (data.type === 'auth_success') {
+            console.log('Authentication successful, sending web_client identification');
+            wsRef.current.send(JSON.stringify({ type: 'web_client' }));
+            // Force refresh client list after authentication
+            setTimeout(() => {
+              console.log('Force refreshing client list after authentication');
+              getUserList();
+            }, 1000);
+          }
+          
+          handleMessage(data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
         }
-        
-        handleMessage(data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-    
-    // We don't need to override onopen here since wsIntegration.createConnection already handles auth
-    // The auth message is sent in wsIntegration.createConnection
-    // We'll handle web_client identification in the onmessage handler after auth_success
+      };
+      
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+        toast.error('WebSocket connection error.');
+      };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-      toast.error('WebSocket connection error.');
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket');
-      // Attempt to reconnect after 3 seconds
-      setTimeout(() => {
-        if (isAuthenticated) {
-          initWebSocket();
-        }
-      }, 3000);
-    };
+      wsRef.current.onclose = () => {
+        console.log('Disconnected from WebSocket');
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          if (isAuthenticated) {
+            initWebSocket();
+          }
+        }, 3000);
+      };
+    }
   };
 
   const getUserList = async () => {
@@ -256,20 +255,21 @@ export default function App() {
     setTasksModalStatus(true);
   };
 
-  const handleSendCommand = (agentId: string, command: string) => {
-    console.log('Sending command to agent:', agentId, 'Command:', command);
+  const handleSendCommand = (agentId: string, command: string, correlationId: string) => {
+    console.log('Sending command to agent:', agentId, 'Command:', command, 'CorrelationId:', correlationId);
     
     // Send command via WebSocket
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       const commandMessage = {
         type: 'command',
         targetId: agentId,
         command: command,
+        correlationId: correlationId,  // Include correlationId
         timestamp: new Date().toISOString()
       };
       
       console.log('Sending WebSocket command:', commandMessage);
-      ws.send(JSON.stringify(commandMessage));
+      wsRef.current.send(JSON.stringify(commandMessage));
     } else {
       console.error('WebSocket not connected');
       toast.error('WebSocket not connected. Cannot send command.');

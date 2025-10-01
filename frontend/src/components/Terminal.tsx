@@ -3,7 +3,7 @@ import { Agent } from '../services/agentService';
 
 interface TerminalProps {
   agents: Agent[];
-  onSendCommand: (agentId: string, command: string) => void;
+  onSendCommand: (agentId: string, command: string, correlationId: string) => void;  // Update signature
   registerPending?: (taskId: string, agentId: string, historyId: string) => void;
 }
 
@@ -100,9 +100,9 @@ Ready for commands...`,
     if (!currentCommand.trim() || !selectedAgent || !isConnected) return;
 
     const agent = agents.find(a => a.id === selectedAgent);
-    const taskId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const correlationId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;  // Generate correlationId
     const commandEntry: CommandHistory = {
-      id: taskId,
+      id: correlationId,
       timestamp: new Date(),
       agent: agent?.name || 'Unknown',
       command: currentCommand,
@@ -115,11 +115,11 @@ Ready for commands...`,
 
     // Register pending command for output mapping
     if (registerPending) {
-      registerPending(taskId, selectedAgent, taskId);
+      registerPending(correlationId, selectedAgent, correlationId);
     }
 
-    // Send command to backend
-    onSendCommand(selectedAgent, currentCommand);
+    // Send command to backend with correlationId
+    onSendCommand(selectedAgent, currentCommand, correlationId);
 
     // Set a timeout for command execution (30 seconds)
     const timeoutId = setTimeout(() => {

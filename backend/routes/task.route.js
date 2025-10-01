@@ -1,11 +1,11 @@
 const express = require('express');
 const taskController = require('../controllers/task.controller');
-const auth = require('../middleware/auth');
+const { protect } = require('../middleware/security');
 
 const router = express.Router();
 
 // All task routes require authentication
-router.use(auth);
+router.use(protect);
 
 // Task management routes
 router.get('/', taskController.getTasks);

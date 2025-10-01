@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import SoundSettings from './SoundSettings';
+import request from '../axios';
+import toast from 'react-hot-toast';
 import { 
   FiSettings, 
   FiShield, 
@@ -37,6 +39,8 @@ import {
 } from 'react-icons/si';
 import HackerTeamCard from './HackerTeamCard';
 import '../styles/hacker-themes.css';
+import { request } from '../axiosInstance'; // Added import for request
+import { toast } from 'react-toastify'; // Added import for toast
 
 // CSS-in-JS styles for hacker themes
 const hackerThemeStyles = `
@@ -204,29 +208,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ activeTab }) => {
     setClearing(table);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await request({
+        url: '/admin/clear-database',
+        method: 'POST',
+        data: { type: table }
+      });
       
-      // Clear from localStorage based on table
-      switch (table) {
-        case 'users':
-          localStorage.removeItem('users');
-          break;
-        case 'clients':
-          localStorage.removeItem('clients');
-          break;
-        case 'tasks':
-          localStorage.removeItem('tasks');
-          break;
-        case 'all':
-          localStorage.clear();
-          break;
+      if (response.data.success) {
+        toast.success(`Successfully cleared ${table} data`);
+      } else {
+        toast.error(`Failed to clear ${table} data`);
       }
-      
-      // Show success message
-      alert(`Successfully cleared ${table} data`);
     } catch (error) {
-      alert(`Failed to clear ${table} data`);
+      toast.error(`Failed to clear ${table} data: ${error.message}`);
     } finally {
       setClearing(null);
     }

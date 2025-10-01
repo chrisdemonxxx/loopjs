@@ -1,11 +1,11 @@
 const express = require('express');
 const metricsController = require('../controllers/metrics.controller');
-const auth = require('../middleware/auth');
+const { protect } = require('../middleware/security');
 
 const router = express.Router();
 
 // All metrics routes require authentication
-router.use(auth);
+router.use(protect);
 
 // Metrics endpoints
 router.get('/system', metricsController.getSystemMetrics);

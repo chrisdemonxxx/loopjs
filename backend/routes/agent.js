@@ -73,28 +73,30 @@ router.post('/:agentId/command', protect, async (req, res) => {
         const { getConnectedClients } = require('../configs/ws.handler');
         const connectedClients = getConnectedClients();
         
-        // Find the target client
-        const targetClient = Array.from(connectedClients.values()).find(client => 
-            client.uuid === agentId && client.clientType === 'client'
-        );
+        // Get the target client directly from the Map
+        const targetClient = connectedClients.get(agentId);
         
-        if (targetClient) {
+        if (targetClient && targetClient.clientType === 'client') {
+            // Generate taskId for tracking
+            const taskId = `api_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
             // Send command to target client via WebSocket
             const commandMessage = {
                 cmd: 'execute',
                 command: command,
-                taskId: `api_cmd_${Date.now()}`,
+                taskId: taskId,
                 timestamp: new Date().toISOString()
             };
             
             targetClient.send(JSON.stringify(commandMessage));
-            console.log(`Command sent to client ${agentId}: ${command}`);
+            console.log(`Command sent to client ${agentId}: ${command} (taskId: ${taskId})`);
             
             res.json({
                 status: 'success',
                 data: {
                     agentId: agentId,
                     command: command,
+                    taskId: taskId,
                     result: `Command '${command}' sent to agent ${agentId}`,
                     timestamp: new Date().toISOString(),
                     message: 'Command sent successfully'
