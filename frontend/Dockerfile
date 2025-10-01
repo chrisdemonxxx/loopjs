@@ -6,10 +6,10 @@ COPY package*.json ./
 
 RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
-COPY . .
-
-# Fix permissions for node_modules binaries
+# Fix permissions for node_modules binaries BEFORE copying source
 RUN chmod -R +x node_modules/.bin
+
+COPY . .
 
 RUN npm run build
 
