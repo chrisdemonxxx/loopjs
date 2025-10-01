@@ -219,22 +219,28 @@ Write-Host "="*60 -ForegroundColor $(if ($allChecksPassed) { "Green" } else { "Y
 
 Write-Host "`n📋 Deployment Status:" -ForegroundColor Cyan
 if ($backendUrl) {
-    Write-Host "  • Backend URL:   $backendUrl" -ForegroundColor White
+    Write-Host "  - Backend URL:   $backendUrl" -ForegroundColor White
     $wsUrl = $backendUrl -replace "^https://", "wss://"
     $wsUrl = "$wsUrl/ws"
-    Write-Host "  • WebSocket URL: $wsUrl" -ForegroundColor White
+    Write-Host "  - WebSocket URL: $wsUrl" -ForegroundColor White
 }
-Write-Host "  • Frontend Domain: https://loopjs.vidai.sbs/" -ForegroundColor White
-Write-Host "  • Health Status: $(if ($allChecksPassed) { '✅ Healthy' } else { '⚠️  Issues detected' })" -ForegroundColor $(if ($allChecksPassed) { "Green" } else { "Yellow" })
+Write-Host "  - Frontend Domain: https://loopjs.vidai.sbs/" -ForegroundColor White
+$healthStatus = if ($allChecksPassed) { '✅ Healthy' } else { '⚠️  Issues detected' }
+$healthColor = if ($allChecksPassed) { "Green" } else { "Yellow" }
+Write-Host "  - Health Status: $healthStatus" -ForegroundColor $healthColor
 
 if (-not $allChecksPassed) {
     Write-Host "`n📝 Troubleshooting:" -ForegroundColor Yellow
-    Write-Host "  • Check GitHub Actions: https://github.com/YOUR-USERNAME/loopjs/actions" -ForegroundColor White
-    Write-Host "  • View backend logs: gcloud run services logs read $ServiceName --region $Region" -ForegroundColor White
-    Write-Host "  • Verify secrets: gcloud secrets list" -ForegroundColor White
-    Write-Host "  • Re-run setup: .\scripts\setup-gcp.ps1" -ForegroundColor White
+    Write-Host "  - Check GitHub Actions: https://github.com/YOUR-USERNAME/loopjs/actions" -ForegroundColor White
+    Write-Host "  - View backend logs: gcloud run services logs read $ServiceName --region $Region" -ForegroundColor White
+    Write-Host "  - Verify secrets: gcloud secrets list" -ForegroundColor White
+    Write-Host "  - Re-run setup: .\scripts\setup-gcp.ps1" -ForegroundColor White
 }
 
 Write-Host ""
-exit $(if ($allChecksPassed) { 0 } else { 1 })
 
+if ($allChecksPassed) {
+    exit 0
+} else {
+    exit 1
+}

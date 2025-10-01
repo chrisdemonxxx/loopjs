@@ -1,115 +1,180 @@
-# LoopJS AI Memory - Persistent Project Knowledge
+# LoopJS Project Memory - Complete Documentation & File Structure
 
-## Project Identity
-**Name**: LoopJS C2 Panel System  
-**Type**: Command & Control Panel  
-**Status**: Production Ready  
-**Version**: 1.0.0  
-**Last Updated**: October 1, 2025  
+## 🎯 Project Overview
+LoopJS is a Command & Control (C2) panel system with:
+- **Backend**: Node.js/Express API with WebSocket support
+- **Frontend**: React/TypeScript C2 Panel  
+- **Client**: Qt C++ desktop application
+- **Infrastructure**: Google Cloud Platform with automated deployment
 
-## Core Architecture
-```
-┌─────────────────┐    WebSocket    ┌─────────────────┐    HTTP/API    ┌─────────────────┐
-│   Qt Client     │◄──────────────►│   Backend API   │◄──────────────►│   Frontend      │
-│   (C++/Qt)      │                 │   (Node.js)     │                 │   (React)       │
-└─────────────────┘                 └─────────────────┘                 └─────────────────┘
-         │                                   │                                   │
-         │                                   │                                   │
-         ▼                                   ▼                                   ▼
-┌─────────────────┐                 ┌─────────────────┐                 ┌─────────────────┐
-│   System Info   │                 │   MongoDB       │                 │   C2 Panel      │
-│   Monitoring    │                 │   Database      │                 │   Dashboard     │
-└─────────────────┘                 └─────────────────┘                 └─────────────────┘
-```
-
-## Production Environment
-- **Frontend**: https://loopjs.vidai.sbs/
-- **Backend**: https://loopjs-backend-361659024403.us-central1.run.app
-- **WebSocket**: wss://loopjs-backend-361659024403.us-central1.run.app/ws
-- **Project ID**: code-assist-470813
-- **Region**: us-central1
-- **Platform**: Google Cloud Run
-
-## Component Details
+## 🏗️ Architecture & Components
 
 ### Backend (Node.js/Express)
 - **Location**: `backend/`
-- **Port**: 8080 (production), 3000 (development)
-- **Database**: MongoDB with Mongoose
+- **Port**: 3000 (development), 8080 (production)
+- **Database**: MongoDB
 - **WebSocket**: Real-time client communication
 - **Authentication**: JWT-based
 - **Deployment**: Google Cloud Run
-- **Key Files**: `index.js`, `cloudbuild.yaml`
 
 ### Frontend (React/TypeScript)
 - **Location**: `frontend/`
-- **Port**: 80 (production), 5173 (development)
+- **Port**: 5173 (development), 80 (production)
 - **Framework**: React + Vite + TypeScript
 - **UI**: Tailwind CSS with custom hacker theme
 - **Deployment**: Google Cloud Run with Nginx
-- **Key Files**: `src/config.ts`, `src/App.tsx`, `Dockerfile`
 
 ### Client (Qt C++)
 - **Location**: `clients/qt-client/`
 - **Framework**: Qt 6.9.3 with MinGW
 - **Features**: WebSocket communication, system monitoring
 - **Build**: CMake with static linking for standalone deployment
-- **Key Files**: `CMakeLists.txt`, `build-standalone.bat`
 
-## Configuration Constants
+## 🌐 Production URLs & Configuration
 
-### Frontend Configuration
+### Current Production Setup
+- **Frontend**: https://loopjs.vidai.sbs/
+- **Backend**: https://loopjs-backend-361659024403.us-central1.run.app
+- **WebSocket**: wss://loopjs-backend-361659024403.us-central1.run.app/ws
+- **Project ID**: code-assist-470813
+- **Region**: us-central1
+
+### Frontend Configuration (`frontend/src/config.ts`)
 ```typescript
-// frontend/src/config.ts
-const BACKEND_URL = 'https://loopjs-backend-361659024403.us-central1.run.app';
-export const WS_URL = 'wss://loopjs-backend-361659024403.us-central1.run.app/ws';
+const isLocal = window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' || 
+                window.location.port === '4174';
+
+const BACKEND_URL = isLocal ? 
+  'http://localhost:8080' : 
+  'https://loopjs-backend-361659024403.us-central1.run.app';
+
 export const API_URL = `${BACKEND_URL}/api`;
+export const WS_URL = isLocal ? 
+  'ws://localhost:8080/ws' : 
+  'wss://loopjs-backend-361659024403.us-central1.run.app/ws`;
 ```
 
 ### Backend Configuration
-- **MongoDB URI**: Stored in Google Secret Manager
+- **MongoDB**: Connected via environment variables
 - **JWT Secret**: Stored in Google Secret Manager
 - **Session Secret**: Stored in Google Secret Manager
-- **CORS**: Configured for loopjs.vidai.sbs
+- **CORS**: Configured for frontend domain
+
+## 🚀 Deployment Automation
+
+### GitHub Actions Workflows
+- **Location**: `.github/workflows/`
+- **Main Workflow**: `deploy-all.yml`
+- **Backend Workflow**: `deploy-backend.yml`
+- **Frontend Workflow**: `deploy-frontend.yml`
+
+### Google Cloud Build
+- **Backend**: `backend/cloudbuild.yaml`
+- **Frontend**: Uses Dockerfile + Nginx
+- **Features**: Health checks, zero-downtime deployment, rollback
+
+### Deployment Process
+1. **Push to main branch** triggers GitHub Actions
+2. **Backend deploys first** to Cloud Run
+3. **Frontend deploys second** with updated backend URL
+4. **Health checks** ensure successful deployment
+5. **Traffic promotion** with rollback on failure
+
+## 🔧 Key Configuration Files
+
+### Backend Configuration
+- `backend/index.js` - Main server file with CORS, WebSocket, and API setup
+- `backend/configs/ws.handler.js` - WebSocket message handling
+- `backend/models/Client.js` - Client data model
+- `backend/models/Task.js` - Task execution model
+- `backend/controllers/info.controller.js` - Client information endpoints
+- `backend/cloudbuild.yaml` - Google Cloud Build configuration
+- `backend/Dockerfile` - Container configuration
+
+### Frontend Configuration
+- `frontend/src/config.ts` - API and WebSocket URL configuration
+- `frontend/src/App.tsx` - Main React application
+- `frontend/src/services/agentService.ts` - Client management service
+- `frontend/src/utils/integration.ts` - Backend integration utilities
+- `frontend/Dockerfile` - Frontend container configuration
+- `frontend/nginx.conf` - Nginx configuration for production
 
 ### Client Configuration
-- **Qt Path**: `C:\Qt\6.9.3\mingw_64`
-- **Build Output**: `dist/` directory
+- `clients/qt-client/mainwindow.cpp/h` - Main Qt application logic
+- `clients/qt-client/CMakeLists.txt` - CMake build configuration
+- `clients/qt-client/config.json` - Client configuration
+- `clients/qt-client/build-standalone.bat` - Standalone build script
+- `clients/qt-client/create-final-single-exe.ps1` - Single executable creation
+
+### Backend API Endpoints
+- **Client List**: `GET /api/info/get-user-list`
+- **Client Registration**: `POST /api/info/register-client`
+- **Health Check**: `GET /health`
+- **WebSocket**: `/ws`
+
+### Frontend Service Configuration
+- **Agent Service**: `frontend/src/services/agentService.ts`
+- **API Integration**: `frontend/src/utils/integration.ts`
+- **WebSocket Integration**: Real-time client updates
+
+### Client Build Configuration
+- **CMake**: `clients/qt-client/CMakeLists.txt`
+- **Build Scripts**: `build-standalone.bat`, `create-final-single-exe.ps1`
 - **Dependencies**: Qt6Core, Qt6Gui, Qt6Widgets, Qt6WebSockets, Qt6Network
-- **SSL/TLS**: Windows SChannel backend
 
-## API Endpoints
+## 🛠️ Development Setup
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/verify` - Token verification
+### Backend Development
+```bash
+cd backend
+npm install
+npm run dev  # Runs on port 8080
+```
 
-### Client Management
-- `GET /api/info/get-user-list` - Get all clients
-- `POST /api/info/register-client` - Register new client
-- `GET /api/info/client/:uuid` - Get client details
+### Frontend Development
+```bash
+cd frontend
+npm install
+npm run dev  # Runs on port 5173
+```
 
-### Health & Monitoring
-- `GET /health` - Backend health check
-- `GET /api/status` - System status
+### Client Development
+```bash
+cd clients/qt-client
+# Use Qt Creator or CMake
+mkdir build && cd build
+cmake .. -G "MinGW Makefiles"
+cmake --build .
+```
 
-## WebSocket Communication
+## 🔐 Security & Authentication
 
-### Message Types
-- **Client**: register, heartbeat, command_result
-- **Admin**: auth, web_client, command
-- **Server**: auth_success, register_success, client_status_update
+### JWT Configuration
+- **Secret**: Stored in Google Secret Manager
+- **Expiration**: Configurable
+- **Refresh Tokens**: Supported
 
-### Connection Flow
-1. Client connects to WebSocket
-2. Client sends registration message
-3. Server validates and stores client info
-4. Server broadcasts client list to admin sessions
-5. Admin can send commands to clients
-6. Clients execute commands and send results
+### WebSocket Authentication
+- **Admin Sessions**: JWT-based
+- **Client Sessions**: UUID-based registration
+- **Message Validation**: Input sanitization
 
-## Database Schema
+### CORS Configuration
+- **Frontend Domain**: loopjs.vidai.sbs
+- **Development**: localhost:5173
+- **Methods**: GET, POST, PUT, DELETE
+- **Headers**: Authorization, Content-Type
+
+### Security Features
+- SSL/TLS encryption for all WebSocket connections
+- JWT token-based authentication for admin sessions
+- CORS configuration for cross-origin requests
+- Rate limiting and input validation
+- Process isolation for command execution
+- Google Secret Manager for sensitive data
+
+## 📊 Database Schema
 
 ### Client Model
 ```javascript
@@ -143,136 +208,176 @@ export const API_URL = `${BACKEND_URL}/api`;
 }
 ```
 
-## Deployment Automation
+### User Model
+- Authentication and admin management
 
-### GitHub Actions
-- **Location**: `.github/workflows/`
-- **Main Workflow**: `deploy-all.yml`
-- **Backend Workflow**: `deploy-backend.yml`
-- **Frontend Workflow**: `deploy-frontend.yml`
-- **Trigger**: Push to main branch
+### AuditLog Model
+- System audit trail
 
-### Google Cloud Build
-- **Backend**: `backend/cloudbuild.yaml`
-- **Frontend**: Uses Dockerfile + Nginx
-- **Features**: Health checks, zero-downtime deployment, rollback
+## 🔄 WebSocket Communication Protocol
 
-### Build Scripts
-- **Standalone**: `clients/qt-client/build-standalone.bat`
-- **Single Executable**: `clients/qt-client/create-final-single-exe.ps1`
-- **Self-Extracting**: `clients/qt-client/create-sfx-exe.ps1`
+### Client Messages
+- `register`: Client registration
+- `heartbeat`: Keep-alive
+- `capability_report`: Client capabilities
+- `output`: Command output
+- `command_result`: Command execution result
 
-## Common Issues & Solutions
+### Server Messages
+- `register_success`: Client registered successfully
+- `execute`: Execute command on client
+- `messagebox`: Show message box on client
+- `visit_page`: Open URL on client
+- `download`: Download file to client
+- `shutdown`: Shutdown client system
+- `restart`: Restart client system
+- `auth_success`: Authentication successful
+- `client_status_update`: Client status change
+- `client_list_update`: Full client list update
 
-### 1. Client Not Showing in C2 Panel
-**Problem**: Frontend shows 0 clients
-**Root Cause**: Wrong API endpoint or backend URL
-**Solution**: 
-1. Check `frontend/src/services/agentService.ts` uses `/info/get-user-list`
-2. Verify `frontend/src/config.ts` has correct backend URL
-3. Test API: `curl https://loopjs-backend-361659024403.us-central1.run.app/api/info/get-user-list`
+### Admin Messages
+- `auth`: Authentication
+- `web_client`: Admin session identification
+- `command`: Send command to client
 
-### 2. WebSocket Connection Failed
-**Problem**: WebSocket fails to connect
-**Root Cause**: Wrong WebSocket URL or CORS issues
-**Solution**:
-1. Verify WebSocket URL in `frontend/src/config.ts`
-2. Check CORS settings in backend
-3. Test WebSocket: `wscat -c wss://loopjs-backend-361659024403.us-central1.run.app/ws`
+### Server to Admin
+- `auth_success`: Authentication successful
+- `client_list_update`: Full client list update
+- `client_status_update`: Client status change
+- `output`: Command output from clients
 
-### 3. SSL/TLS Issues
-**Problem**: "No functional TLS backend was found"
-**Root Cause**: Missing SChannel backend DLLs
-**Solution**: Include SChannel backend DLLs in client deployment
-```batch
-copy "C:\Qt\6.9.3\mingw_64\plugins\tls\qschannelbackend.dll" dist\tls\
-copy "C:\Qt\6.9.3\mingw_64\plugins\tls\qcertonlybackend.dll" dist\tls\
-```
+## 🐛 Common Issues & Solutions
 
-### 4. Build Failures
-**Problem**: CMake or build errors
-**Root Cause**: Missing CMake or Qt installation
-**Solution**:
-1. Use existing build: `.\build-standalone.bat`
-2. Install CMake: `winget install Kitware.CMake`
-3. Check Qt installation path
+### SSL/TLS Issues
+- **Problem**: "No functional TLS backend was found"
+- **Solution**: Include SChannel backend DLLs in deployment
+- **Files**: `qschannelbackend.dll`, `qcertonlybackend.dll`
 
-## Development Commands
+### Client Not Showing in C2 Panel
+- **Problem**: Frontend shows 0 clients
+- **Solution**: Check API endpoint configuration
+- **Fix**: Update `agentService.ts` to use `/info/get-user-list`
 
-### Local Development
+### WebSocket Connection Issues
+- **Problem**: WebSocket fails to connect
+- **Solution**: Verify URL configuration and CORS settings
+- **Check**: Backend URL, WebSocket URL, authentication
+
+### Build Issues
+- **Problem**: CMake not found
+- **Solution**: Install CMake or use existing build
+- **Alternative**: Use `build-standalone.bat` script
+
+## 📝 Deployment Checklist
+
+### Before Deployment
+- [ ] Update backend URL in frontend config
+- [ ] Verify Google Cloud credentials
+- [ ] Check MongoDB connection
+- [ ] Test local development setup
+
+### During Deployment
+- [ ] Monitor GitHub Actions workflow
+- [ ] Check Cloud Run logs
+- [ ] Verify health checks
+- [ ] Test WebSocket connections
+
+### After Deployment
+- [ ] Test frontend at https://loopjs.vidai.sbs/
+- [ ] Verify client connections
+- [ ] Check C2 panel functionality
+- [ ] Monitor error logs
+
+## 🔧 Maintenance & Updates
+
+### Regular Tasks
+- Monitor Cloud Run metrics
+- Check MongoDB performance
+- Update dependencies
+- Review security logs
+
+### Scaling Considerations
+- Cloud Run auto-scaling configured
+- MongoDB Atlas for production
+- CDN for frontend assets
+- Load balancing for high traffic
+
+## 📞 Support & Troubleshooting
+
+### Log Locations
+- **Backend**: Google Cloud Run logs
+- **Frontend**: Browser console
+- **Client**: Application output
+
+### Debug Commands
 ```bash
-# Backend
-cd backend && npm run dev  # Port 8080
-
-# Frontend
-cd frontend && npm run dev  # Port 5173
-
-# Client
-cd clients/qt-client && .\build-standalone.bat
-```
-
-### Production Deployment
-```bash
-# Automated (GitHub Actions)
-git push origin main
-
-# Manual
-gcloud run deploy loopjs-backend --source ./backend --region us-central1
-gcloud run deploy loopjs-frontend --source ./frontend --region us-central1
-```
-
-### Testing
-```bash
-# Backend health
+# Check backend health
 curl https://loopjs-backend-361659024403.us-central1.run.app/health
 
-# Frontend
-curl https://loopjs.vidai.sbs/
-
-# WebSocket
+# Test WebSocket connection
 wscat -c wss://loopjs-backend-361659024403.us-central1.run.app/ws
+
+# Check client list
+curl https://loopjs-backend-361659024403.us-central1.run.app/api/info/get-user-list
 ```
 
-## Security Configuration
+### Contact Information
+- **Project**: LoopJS C2 Panel
+- **Repository**: GitHub repository
+- **Documentation**: This file and README files
 
-### Authentication
-- **JWT Tokens**: Secure token-based authentication
-- **Session Management**: Server-side session handling
-- **Password Hashing**: bcrypt for password security
+## 📚 Documentation Files
 
-### Communication
-- **SSL/TLS**: Encrypted WebSocket and HTTP communication
-- **CORS**: Domain-specific cross-origin resource sharing
-- **Input Validation**: All inputs sanitized and validated
+### Root Level Documentation
+- `PROJECT_MEMORY.md` - Complete project memory with architecture, URLs, deployment info
+- `DEPLOYMENT_GUIDE.md` - Production deployment guide with commands and troubleshooting
+- `CLIENT_BUILD_GUIDE.md` - Qt client build guide with scripts and deployment packages
+- `DEPLOYMENT_FIXES_SUMMARY.md` - GitHub & GCloud automation fixes and current status
+- `README.md` - Main project overview
+- `README-DEPLOYMENT.md` - Deployment instructions
 
-### Access Control
-- **Role-based Access**: Admin and user roles
-- **Audit Logging**: Complete activity tracking
-- **Rate Limiting**: API request throttling
+### Documentation Directory (`docs/`)
+- `DEPLOYMENT_SETUP.md` - Comprehensive deployment setup guide
+- `GITHUB_CLEANUP_PLAN.md` - Repository cleanup and organization plan
+- `QUICK_FIX_GUIDE.md` - Quick start guide for getting deployments working
 
-## Monitoring & Logs
+### Backend Documentation (`backend/`)
+- `README.md` - Backend overview
+- `README-DEPLOYMENT.md` - Backend deployment guide
+- `README-WORDFUL.md` - Wordful deployment specific guide
+- `DEPLOYMENT_CHECKLIST.md` - Backend deployment checklist
+- `MONGODB_SETUP.md` - MongoDB configuration guide
+- `MONITORING_GUIDE.md` - System monitoring and health checks
+- `VERIFICATION_GUIDE.md` - Deployment verification steps
+- `WORDFUL_DEPLOYMENT.md` - Wordful platform deployment guide
 
-### Health Checks
-- **Backend**: `GET /health`
-- **Frontend**: Root endpoint
-- **WebSocket**: Connection test
+### Client Documentation (`clients/`)
+- `README.md` - Client implementations overview
+- `qt-client/README.md` - Qt client specific documentation
+- `stealth-client/README.md` - Stealth client documentation
 
-### Logs
-```bash
-# Backend logs
-gcloud run services logs read loopjs-backend --region us-central1
+### Frontend Documentation (`frontend/`)
+- `README.md` - Frontend overview and setup
 
-# Frontend logs
-gcloud run services logs read loopjs-frontend --region us-central1
-```
+### Scripts Documentation (`scripts/`)
+- `README.md` - Automation scripts overview
 
-### Metrics
-- **CPU Usage**: Cloud Run metrics
-- **Memory Usage**: Cloud Run metrics
-- **Request Count**: Cloud Run metrics
-- **Error Rate**: Cloud Run metrics
+## 🚀 Build and Deployment Process
 
-## File Structure
+### Build Process
+1. **Backend**: Docker container → Google Cloud Run
+2. **Frontend**: React build → Nginx container → Google Cloud Run
+3. **Client**: Qt CMake build → Standalone executable with DLLs
+4. **Automation**: GitHub Actions → Cloud Build → Cloud Run deployment
+
+### Deployment Automation
+- `.github/workflows/deploy-all.yml` - Main deployment workflow
+- `.github/workflows/deploy-backend.yml` - Backend specific deployment
+- `.github/workflows/deploy-frontend.yml` - Frontend specific deployment
+- `scripts/deploy-all.ps1` - PowerShell deployment script
+- `scripts/verify-deployment.ps1` - Deployment verification script
+
+## 📁 File Structure Summary
 ```
 loopjs/
 ├── backend/                 # Node.js API server
@@ -302,15 +407,18 @@ loopjs/
 │   ├── settings.json       # Project settings
 │   ├── context.md          # Project context
 │   └── ai-memory.md        # This file
+├── docs/                   # Documentation
+├── scripts/                # Automation scripts
 ├── PROJECT_MEMORY.md       # Complete project documentation
 ├── DEPLOYMENT_GUIDE.md     # Deployment instructions
 ├── CLIENT_BUILD_GUIDE.md   # Client build guide
+├── DEPLOYMENT_FIXES_SUMMARY.md # GitHub automation fixes
 ├── README.md               # Project overview
 ├── .cursorrules            # Cursor AI rules
 └── .cursorignore           # Cursor ignore rules
 ```
 
-## Key Development Patterns
+## 🎯 Key Development Patterns
 
 ### Frontend Patterns
 - **State Management**: React Context + Hooks
@@ -333,7 +441,29 @@ loopjs/
 - **File Operations**: File system access
 - **Network**: HTTP and WebSocket clients
 
-## Important Notes
+## 🔍 Monitoring & Logs
+
+### Health Checks
+- **Backend**: `GET /health`
+- **Frontend**: Root endpoint
+- **WebSocket**: Connection test
+
+### Logs
+```bash
+# Backend logs
+gcloud run services logs read loopjs-backend --region us-central1
+
+# Frontend logs
+gcloud run services logs read loopjs-frontend --region us-central1
+```
+
+### Metrics
+- **CPU Usage**: Cloud Run metrics
+- **Memory Usage**: Cloud Run metrics
+- **Request Count**: Cloud Run metrics
+- **Error Rate**: Cloud Run metrics
+
+## 🎯 Important Notes
 - Always use production URLs for deployment
 - Client requires Qt 6.9.3 MinGW 64-bit
 - Backend requires MongoDB connection
@@ -345,3 +475,19 @@ loopjs/
 - JWT authentication for security
 - Real-time communication via WebSocket
 - Project is production-ready and actively maintained
+
+## 📞 Reference Files
+- `/workspace/PROJECT_MEMORY.md` - Main project memory
+- `/workspace/DEPLOYMENT_GUIDE.md` - Deployment guide
+- `/workspace/CLIENT_BUILD_GUIDE.md` - Client build guide
+- `/workspace/DEPLOYMENT_FIXES_SUMMARY.md` - GitHub automation fixes
+- `/workspace/docs/QUICK_FIX_GUIDE.md` - Quick start guide
+- `/workspace/docs/DEPLOYMENT_SETUP.md` - Comprehensive setup guide
+- `/workspace/backend/` - Backend documentation directory
+- `/workspace/clients/` - Client documentation directory
+
+---
+
+**Last Updated**: October 1, 2025
+**Version**: 1.0.0
+**Status**: Production Ready

@@ -4,7 +4,7 @@ echo Packaging Standalone SysManagePro
 echo ========================================
 
 REM Check if existing build exists
-if not exist build\SysManagePro.exe (
+if not exist build\release\SysManagePro.exe (
     echo ========================================
     echo ERROR: No existing build found!
     echo ========================================
@@ -26,11 +26,11 @@ REM Create distribution directory
 mkdir dist
 
 echo.
-echo Found existing build: build\SysManagePro.exe
+echo Found existing build: build\release\SysManagePro.exe
 echo.
 
 REM Copy executable to dist
-copy build\SysManagePro.exe dist\
+copy build\release\SysManagePro.exe dist\
 
 REM Set Qt environment
 set QT_DIR=C:\Qt\6.9.3\mingw_64
