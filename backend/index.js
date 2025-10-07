@@ -78,6 +78,16 @@ const wss = new WebSocket.Server({ server, path: "/ws" });
 const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
+// Set fallback values for required environment variables
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
+  console.warn('JWT_SECRET not set, using development fallback');
+}
+if (!process.env.SESSION_SECRET) {
+  process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
+  console.warn('SESSION_SECRET not set, using development fallback');
+}
+
 // MongoDB connection (optional)
 if (MONGO_URI) {
   mongoose.connect(MONGO_URI)

@@ -56,7 +56,6 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --set-env-vars="NODE_ENV=production,JWT_SECRET=loopjs-dev-secret-key-2024,SESSION_SECRET=loopjs-session-secret-2024" \
             --verbosity=debug
 
       - name: Get Backend URL
