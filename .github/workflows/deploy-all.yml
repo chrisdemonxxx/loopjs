@@ -31,18 +31,32 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Verify Authentication and Permissions
+        run: |
+          echo "Checking authentication..."
+          gcloud auth list
+          echo "Checking project access..."
+          gcloud projects describe ${{ env.PROJECT_ID }}
+          echo "Checking Cloud Run permissions..."
+          gcloud run services list --region ${{ env.REGION }} || echo "No existing services or permission issue"
+
       - name: Deploy Backend to Cloud Run
         run: |
+          echo "Starting backend deployment..."
+          echo "Project ID: ${{ env.PROJECT_ID }}"
+          echo "Region: ${{ env.REGION }}"
+          
           gcloud run deploy loopjs-backend \
             --source ./backend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-secrets="MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest" \
             --memory 512Mi \
             --cpu 1 \
             --max-instances 10 \
-            --timeout 300
+            --timeout 300 \
+            --set-env-vars="NODE_ENV=production,JWT_SECRET=loopjs-dev-secret-key-2024,SESSION_SECRET=loopjs-session-secret-2024" \
+            --verbosity=debug
 
       - name: Get Backend URL
         id: url
@@ -83,6 +97,10 @@ jobs:
 
       - name: Deploy Frontend to Cloud Run
         run: |
+          echo "Starting frontend deployment..."
+          echo "Project ID: ${{ env.PROJECT_ID }}"
+          echo "Region: ${{ env.REGION }}"
+          
           gcloud run deploy loopjs-frontend \
             --source ./frontend \
             --region ${{ env.REGION }} \
@@ -92,7 +110,8 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --port 8080
+            --port 8080 \
+            --verbosity=debug
 
       - name: Get Frontend URL
         id: url
