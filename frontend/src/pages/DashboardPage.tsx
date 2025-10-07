@@ -305,11 +305,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className={`min-h-screen theme-${mode}`}>
-      {/* Import premium styles */}
-      <style>{`
-        @import url('./styles/premium-themes.css');
-      `}</style>
-      
       {/* Header */}
       <div className="premium-card m-6 mb-0">
         <div className="flex items-center justify-between h-16 px-6">
