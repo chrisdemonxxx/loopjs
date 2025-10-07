@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { wsIntegration } from './utils/integration';
 import { TerminalRef } from './components/Terminal';
 import { WS_URL } from './config';
+import './styles/premium-themes.css';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
