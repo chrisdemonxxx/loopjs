@@ -115,14 +115,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="premium-card p-8">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h1 className="text-3xl font-bold mb-2" style={{color: 'var(--text-primary)'}}>
                     🎯 Command & Control Dashboard
                   </h1>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p style={{color: 'var(--text-secondary)'}}>
                     Monitor and control your connected clients in real-time
                   </p>
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm" style={{color: 'var(--text-tertiary)'}}>
                   Theme: {mode}
                 </div>
               </div>
@@ -154,7 +154,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             {/* Online Clients */}
             <div className="premium-card p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-semibold" style={{color: 'var(--text-primary)'}}>
                   🟢 Online Clients ({onlineAgents.length})
                 </h2>
                 {offlineAgents.length > 0 && (
@@ -180,10 +180,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               ) : (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-medium mb-2" style={{color: 'var(--text-primary)'}}>
                     No Online Clients
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p style={{color: 'var(--text-secondary)'}}>
                     Start the client application to see it appear here
                   </p>
                 </div>
@@ -193,7 +193,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             {/* Offline Clients */}
             {showOfflineClients && offlineAgents.length > 0 && (
               <div className="premium-card p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                <h2 className="text-xl font-semibold mb-6" style={{color: 'var(--text-primary)'}}>
                   🔴 Offline Clients ({offlineAgents.length})
                 </h2>
                 
@@ -314,8 +314,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 <span className="text-white font-bold text-lg">💀</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">C2 Panel</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Command & Control Panel</p>
+                <h1 className="text-xl font-bold" style={{color: 'var(--text-primary)'}}>C2 Panel</h1>
+                <p className="text-xs" style={{color: 'var(--text-secondary)'}}>Command & Control Panel</p>
               </div>
             </div>
           </div>
@@ -323,7 +323,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">OPERATIONAL</span>
+              <span className="text-sm" style={{color: 'var(--text-secondary)'}}>OPERATIONAL</span>
             </div>
             <ProfileDropdown onLogout={onLogout} />
           </div>
@@ -348,9 +348,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300'
+                  ? 'border-indigo-500'
+                  : 'border-transparent hover:border-gray-300'
               }`}
+              style={{
+                color: activeTab === tab.id ? 'var(--premium-primary)' : 'var(--text-secondary)'
+              }}
             >
               <span className="mr-2">{tab.icon}</span>
               {tab.label}
