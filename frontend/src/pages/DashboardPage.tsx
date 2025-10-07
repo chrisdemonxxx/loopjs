@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import UserTable from '../components/UserTable';
 import Terminal, { TerminalRef } from '../components/Terminal';
+import EnhancedTerminal from '../components/EnhancedTerminal';
 import TaskScheduler from '../components/TaskScheduler';
 import Settings from '../components/Settings';
 import AgentSection from '../components/AgentSection';
 import LogsPage from './LogsPage';
+import AIInsightsPanel from '../components/AIInsightsPanel';
+import ClientCard from '../components/ClientCard';
+import ProfileDropdown from '../components/ProfileDropdown';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface DashboardPageProps {
   tableData: Agent[];
@@ -16,6 +21,10 @@ interface DashboardPageProps {
   onSendCommand: (agentId: string, command: string, correlationId: string) => void;  // Update signature
   onRegisterPending: (taskId: string, agentId: string, historyId: string) => void;
   terminalRef: React.RefObject<TerminalRef>;
+  naturalLanguageHistory: any[];
+  setNaturalLanguageHistory: React.Dispatch<React.SetStateAction<any[]>>;
+  wsConnectionStatus?: 'disconnected' | 'connecting' | 'connected' | 'error';
+  learningStats?: any;
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ 
@@ -26,8 +35,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   onLogout,
   onSendCommand,
   onRegisterPending,
-  terminalRef
+  terminalRef,
+  naturalLanguageHistory,
+  setNaturalLanguageHistory,
+  wsConnectionStatus,
+  learningStats
 }) => {
+  const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [taskStats, setTaskStats] = useState({
     total: 0,
@@ -38,6 +52,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     successRate: 0,
     avgExecutionTimeMs: 0
   });
+  const [showOfflineClients, setShowOfflineClients] = useState(false);
 
   // Calculate stats from real data
   const onlineAgents = tableData.filter(agent => agent.status === 'online');
@@ -65,224 +80,153 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     fetchTaskStats();
   }, []);
 
+  // Handle client actions
+  const handleClientAction = (action: string, client: Agent) => {
+    console.log(`Client action: ${action} for ${client.computerName}`);
+    
+    switch (action) {
+      case 'reboot':
+        onSendCommand(client.uuid, 'shutdown /r /t 0', `reboot_${Date.now()}`);
+        break;
+      case 'screenshot':
+        onSendCommand(client.uuid, 'screenshot', `screenshot_${Date.now()}`);
+        break;
+      case 'system-info':
+        onSendCommand(client.uuid, 'systeminfo', `systeminfo_${Date.now()}`);
+        break;
+      case 'custom-command':
+        // This would open a modal for custom command input
+        const command = prompt('Enter custom command:');
+        if (command) {
+          onSendCommand(client.uuid, command, `custom_${Date.now()}`);
+        }
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Header */}
-            <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-              <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
-                🎯 Command & Control Dashboard
-              </h1>
-              <p className="text-bodydark2">
-                Monitor and control your connected clients in real-time
-              </p>
+            <div className="premium-card p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    🎯 Command & Control Dashboard
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Monitor and control your connected clients in real-time
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Theme: {mode}
+                </div>
+              </div>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Total Clients</p>
-                    <p className="text-2xl font-bold text-blue-600">{tableData.length}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100">
-                    <span className="text-2xl">🖥️</span>
-                  </div>
-                </div>
+            <div className="premium-stats-grid">
+              <div className="premium-stat-card">
+                <div className="premium-stat-value">{tableData.length}</div>
+                <div className="premium-stat-label">Total Clients</div>
               </div>
               
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Online Clients</p>
-                    <p className="text-2xl font-bold text-green-600">{onlineAgents.length}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100">
-                    <span className="text-2xl">🟢</span>
-                  </div>
-                </div>
+              <div className="premium-stat-card">
+                <div className="premium-stat-value text-green-600">{onlineAgents.length}</div>
+                <div className="premium-stat-label">Online Clients</div>
               </div>
               
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Pending Tasks</p>
-                    <p className="text-2xl font-bold text-yellow-600">{taskStats.pending}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-yellow-100">
-                    <span className="text-2xl">⏳</span>
-                  </div>
-                </div>
+              <div className="premium-stat-card">
+                <div className="premium-stat-value text-yellow-600">{taskStats.pending}</div>
+                <div className="premium-stat-label">Pending Tasks</div>
               </div>
               
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Success Rate</p>
-                    <p className="text-2xl font-bold text-purple-600">{taskStats.successRate.toFixed(1)}%</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <span className="text-2xl">📊</span>
-                  </div>
-                </div>
+              <div className="premium-stat-card">
+                <div className="premium-stat-value text-purple-600">{taskStats.successRate.toFixed(1)}%</div>
+                <div className="premium-stat-label">Success Rate</div>
               </div>
             </div>
 
-            {/* Task Queue Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Total Tasks</p>
-                    <p className="text-2xl font-bold text-gray-600">{taskStats.total}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-gray-100">
-                    <span className="text-2xl">📋</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Completed</p>
-                    <p className="text-2xl font-bold text-green-600">{taskStats.completed}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100">
-                    <span className="text-2xl">✅</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Failed</p>
-                    <p className="text-2xl font-bold text-red-600">{taskStats.failed}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-red-100">
-                    <span className="text-2xl">❌</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-bodydark2">Avg Duration</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {taskStats.avgExecutionTimeMs > 0 ? `${(taskStats.avgExecutionTimeMs / 1000).toFixed(1)}s` : '-'}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100">
-                    <span className="text-2xl">⏱️</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Client Status Chart */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                  Client Status Distribution
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-bodydark2">Online</span>
-                    </div>
-                    <span className="text-sm font-medium text-black dark:text-white">
-                      {onlineAgents.length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-bodydark2">Offline</span>
-                    </div>
-                    <span className="text-sm font-medium text-black dark:text-white">
-                      {offlineAgents.length}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: tableData.length > 0 
-                          ? `${(onlineAgents.length / tableData.length) * 100}%` 
-                          : '0%' 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-                <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                  Quick Actions
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    onClick={() => setActiveTab('terminal')}
-                    className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            {/* Online Clients */}
+            <div className="premium-card p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  🟢 Online Clients ({onlineAgents.length})
+                </h2>
+                {offlineAgents.length > 0 && (
+                  <button
+                    onClick={() => setShowOfflineClients(!showOfflineClients)}
+                    className="premium-button text-sm"
                   >
-                    <div className="text-2xl mb-2">💻</div>
-                    <div className="text-sm font-medium text-black dark:text-white">Terminal</div>
+                    {showOfflineClients ? 'Hide' : 'Show'} Offline ({offlineAgents.length})
                   </button>
-                  <button 
-                    onClick={() => setActiveTab('tasks')}
-                    className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
-                  >
-                    <div className="text-2xl mb-2">📸</div>
-                    <div className="text-sm font-medium text-black dark:text-white">Tasks</div>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('clients')}
-                    className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
-                  >
-                    <div className="text-2xl mb-2">👥</div>
-                    <div className="text-sm font-medium text-black dark:text-white">Clients</div>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('settings')}
-                    className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
-                  >
-                    <div className="text-2xl mb-2">⚙️</div>
-                    <div className="text-sm font-medium text-black dark:text-white">Settings</div>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-              <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                Recent Activity
-              </h3>
-              <div className="space-y-3">
-                {onlineAgents.length > 0 ? (
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-black dark:text-white">
-                      {onlineAgents.length} client(s) connected and ready
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    <span className="text-sm text-bodydark2">
-                      No clients currently connected
-                    </span>
-                  </div>
                 )}
               </div>
+              
+              {onlineAgents.length > 0 ? (
+                <div className="premium-client-grid">
+                  {onlineAgents.map((client) => (
+                    <ClientCard
+                      key={client.uuid}
+                      client={client}
+                      onAction={handleClientAction}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No Online Clients
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Start the client application to see it appear here
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Offline Clients */}
+            {showOfflineClients && offlineAgents.length > 0 && (
+              <div className="premium-card p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  🔴 Offline Clients ({offlineAgents.length})
+                </h2>
+                
+                <div className="premium-client-grid">
+                  {offlineAgents.map((client) => (
+                    <div key={client.uuid} className="premium-client-card opacity-75">
+                      <div className="premium-client-header">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                          <div>
+                            <h3 className="premium-client-name">{client.computerName}</h3>
+                            <p className="text-sm text-gray-500 font-mono">{client.uuid}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="premium-client-info">
+                        <div className="premium-client-info-item">
+                          <span className="text-sm text-gray-500">Last Seen:</span>
+                          <span className="text-sm text-red-400">
+                            {new Date(client.lastActiveTime).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="premium-client-info-item">
+                          <span className="text-sm text-gray-500">IP:</span>
+                          <span className="text-sm text-gray-400">{client.ipAddress}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -307,12 +251,30 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         );
 
       case 'terminal':
-        return <Terminal 
-          ref={terminalRef}
-          agents={onlineAgents} 
-          onSendCommand={onSendCommand} 
-          registerPending={onRegisterPending}
-        />;
+        return (
+          <div className="space-y-6">
+            {/* Enhanced Terminal Component */}
+            <EnhancedTerminal
+              selectedAgent={onlineAgents.length > 0 ? onlineAgents[0] : null}
+              onCommandSent={(command) => {
+                console.log('Enhanced terminal command sent:', command);
+                if (command && onlineAgents.length > 0) {
+                  // Handle the new command format
+                  if (command.command && command.id) {
+                    onSendCommand(onlineAgents[0].uuid, command.command, command.id);
+                  } else if (command.type === 'command' && command.correlationId) {
+                    // Handle old format for backward compatibility
+                    onSendCommand(onlineAgents[0].uuid, command.command, command.correlationId);
+                  }
+                }
+              }}
+              terminalRef={terminalRef}
+              naturalLanguageHistory={naturalLanguageHistory}
+              setNaturalLanguageHistory={setNaturalLanguageHistory}
+              agents={onlineAgents}
+            />
+          </div>
+        );
       
       case 'logs':
         return <LogsPage />;
@@ -326,78 +288,84 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       case 'agent':
         return <AgentSection />;
       
+      case 'ai-insights':
+        return (
+          <div className="h-screen">
+            <AIInsightsPanel 
+              commandHistory={naturalLanguageHistory}
+              learningStats={learningStats}
+            />
+          </div>
+        );
+      
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-red-950/20 to-black text-white">
+    <div className={`min-h-screen theme-${mode}`}>
+      {/* Import premium styles */}
+      <style>{`
+        @import url('./styles/premium-themes.css');
+      `}</style>
+      
       {/* Header */}
-      <div className="bg-black/80 backdrop-blur-xl border-b border-red-500/30 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">💀</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">C2 Panel</h1>
-                  <p className="text-xs text-red-400">Command & Control Panel</p>
-                </div>
+      <div className="premium-card m-6 mb-0">
+        <div className="flex items-center justify-between h-16 px-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">💀</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">C2 Panel</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Command & Control Panel</p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex space-x-2">
-                <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium">
-                  OPERATIONAL
-                </button>
-                <button 
-                  onClick={onLogout}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  DISCONNECT
-                </button>
-              </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">OPERATIONAL</span>
             </div>
+            <ProfileDropdown onLogout={onLogout} />
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-black/60 backdrop-blur-xl border-b border-red-500/20 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Overview', icon: '📊' },
-              { id: 'clients', label: 'Clients', icon: '👥' },
-              { id: 'agent', label: 'Agent', icon: '🤖' },
-              { id: 'terminal', label: 'Terminal', icon: '💻' },
-              { id: 'logs', label: 'Logs', icon: '📝' },
-              { id: 'tasks', label: 'Tasks', icon: '📋' },
-              { id: 'settings', label: 'Settings', icon: '⚙️' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-red-500 text-red-400'
-                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <div className="premium-card mx-6 mb-6">
+        <nav className="flex space-x-8 px-6">
+          {[
+            { id: 'overview', label: 'Overview', icon: '📊' },
+            { id: 'clients', label: 'Clients', icon: '👥' },
+            { id: 'agent', label: 'Agent', icon: '🤖' },
+            { id: 'terminal', label: 'AI Terminal', icon: '💻' },
+            ...(localStorage.getItem('userRole') === 'admin' ? [{ id: 'ai-insights', label: 'AI Insights', icon: '🧠' }] : []),
+            { id: 'logs', label: 'Logs', icon: '📝' },
+            { id: 'tasks', label: 'Tasks', icon: '📋' },
+            { id: 'settings', label: 'Settings', icon: '⚙️' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300'
+              }`}
+            >
+              <span className="mr-2">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-6 pb-8">
         {renderTabContent()}
       </div>
     </div>

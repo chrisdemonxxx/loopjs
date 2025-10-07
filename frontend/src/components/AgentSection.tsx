@@ -555,53 +555,71 @@ const AgentSection: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
-          🤖 Agent Management
-        </h1>
-        <p className="text-bodydark2">
-          Generate polymorphic MSI agents with advanced evasion techniques
-        </p>
+    <div className="space-y-6 relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">🚀</div>
+          <h2 className="text-3xl font-bold text-white mb-4">Advanced Agent Builder</h2>
+          <p className="text-xl text-gray-300 mb-6">Coming Soon</p>
+          <div className="bg-gray-800/50 rounded-lg p-4 max-w-md mx-auto">
+            <p className="text-gray-400 text-sm">
+              We're working on an advanced polymorphic agent builder with MSI packaging, 
+              evasion techniques, and stealth capabilities. Stay tuned!
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
-        <div className="border-b border-stroke dark:border-strokedark">
-          <nav className="flex space-x-8 px-6">
-            {[
-              { id: 'generate', label: '🚀 Generate', icon: '🚀' },
-              { id: 'config', label: '⚙️ Configuration', icon: '⚙️' },
-              { id: 'builds', label: '📦 Builds', icon: '📦' },
-              { id: 'templates', label: '📋 Templates', icon: '📋' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-bodydark2 hover:text-black dark:hover:text-white hover:border-gray-300'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+      {/* Original Content (Preserved but Disabled) */}
+      <div className="opacity-30 pointer-events-none">
+        {/* Header */}
+        <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
+            🤖 Agent Management
+          </h1>
+          <p className="text-bodydark2">
+            Generate polymorphic MSI agents with advanced evasion techniques
+          </p>
         </div>
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'generate' && renderGenerateTab()}
-          {activeTab === 'config' && renderConfigTab()}
-          {activeTab === 'builds' && renderBuildsTab()}
-          {activeTab === 'templates' && (
-            <div className="text-center py-12">
-              <FiSettings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-bodydark2">Templates coming soon...</p>
-            </div>
-          )}
+        {/* Tab Navigation */}
+        <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
+          <div className="border-b border-stroke dark:border-strokedark">
+            <nav className="flex space-x-8 px-6">
+              {[
+                { id: 'generate', label: '🚀 Generate', icon: '🚀' },
+                { id: 'config', label: '⚙️ Configuration', icon: '⚙️' },
+                { id: 'builds', label: '📦 Builds', icon: '📦' },
+                { id: 'templates', label: '📋 Templates', icon: '📋' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-bodydark2 hover:text-black dark:hover:text-white hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'generate' && renderGenerateTab()}
+            {activeTab === 'config' && renderConfigTab()}
+            {activeTab === 'builds' && renderBuildsTab()}
+            {activeTab === 'templates' && (
+              <div className="text-center py-12">
+                <FiSettings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-bodydark2">Templates coming soon...</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

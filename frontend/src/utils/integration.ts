@@ -84,22 +84,24 @@ export const apiIntegration = {
 export const wsIntegration = {
   // Create and manage WebSocket connection
   createConnection: (token: string, onMessage: (data: any) => void): WebSocket => {
+    console.log('[WS INTEGRATION] Creating WebSocket connection to:', WS_URL);
     const ws = new WebSocket(WS_URL);
     
     ws.onopen = () => {
+      console.log('[WS INTEGRATION] WebSocket connection opened');
       // Authenticate the connection
       const authMessage = {
         type: 'auth',
         token
       };
-      console.log('Sending WebSocket auth message with token:', token);
+      console.log('[WS INTEGRATION] Sending WebSocket auth message with token:', token);
       try {
         const messageString = JSON.stringify(authMessage);
-        console.log('Stringified message:', messageString);
+        console.log('[WS INTEGRATION] Stringified message:', messageString);
         ws.send(messageString);
-        console.log('WebSocket message sent successfully');
+        console.log('[WS INTEGRATION] WebSocket auth message sent successfully');
       } catch (error) {
-        console.error('Error sending WebSocket message:', error);
+        console.error('[WS INTEGRATION] Error sending WebSocket message:', error);
       }
     };
     
@@ -113,10 +115,19 @@ export const wsIntegration = {
     
     ws.onmessage = (event) => {
       try {
+        console.log('[WS INTEGRATION] WebSocket message received:', event.data);
         const data = JSON.parse(event.data);
+        console.log('[WS INTEGRATION] Parsed message:', data);
+        
+        // If authentication was successful, send web_client identification
+        if (data.type === 'auth_success') {
+          console.log('[WS INTEGRATION] Authentication successful, sending web_client identification');
+          ws.send(JSON.stringify({ type: 'web_client' }));
+        }
+        
         onMessage(data);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('[WS INTEGRATION] Error parsing WebSocket message:', error);
       }
     };
     

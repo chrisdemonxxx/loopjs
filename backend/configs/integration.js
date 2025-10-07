@@ -260,11 +260,53 @@ const webPanelIntegration = {
       }
     }
     
+    // Format OS version
+    let osVersion = 'Unknown';
+    if (client.osVersion && client.osVersion !== 'Unknown') {
+      osVersion = client.osVersion;
+    } else if (client.platform) {
+      // Extract OS version from platform string
+      const platformLower = client.platform.toLowerCase();
+      if (platformLower.includes('windows 11')) {
+        osVersion = 'Windows 11';
+      } else if (platformLower.includes('windows 10')) {
+        osVersion = 'Windows 10';
+      } else if (platformLower.includes('windows')) {
+        osVersion = 'Windows';
+      } else if (platformLower.includes('linux')) {
+        osVersion = 'Linux';
+      } else if (platformLower.includes('macos') || platformLower.includes('darwin')) {
+        osVersion = 'macOS';
+      }
+    }
+    
+    // Format antivirus info
+    let antivirus = 'Unknown';
+    if (client.systemInfo && client.systemInfo.antivirus && Array.isArray(client.systemInfo.antivirus)) {
+      antivirus = client.systemInfo.antivirus.join(', ') || 'None detected';
+    } else if (client.systemInfo && client.systemInfo.antivirus) {
+      antivirus = client.systemInfo.antivirus;
+    }
+    
+    // Format admin privilege
+    let isAdmin = false;
+    if (client.systemInfo && client.systemInfo.isAdmin !== undefined) {
+      isAdmin = client.systemInfo.isAdmin;
+    }
+    
+    // Format country with better accuracy
+    let country = 'Unknown';
+    if (client.geoLocation && client.geoLocation.country) {
+      country = client.geoLocation.country;
+    } else if (client.country && client.country !== 'Unknown') {
+      country = client.country;
+    }
+    
     return {
       uuid: client.uuid,
       computerName: client.computerName || 'Unknown',
       ipAddress: client.ipAddress || client.ip || 'Unknown',
-      country: client.country || 'Unknown',
+      country: country,
       status: isOnline ? 'online' : 'offline',
       lastActiveTime: client.lastActiveTime ? 
         client.lastActiveTime.toISOString().split('T')[0] : 
@@ -272,6 +314,11 @@ const webPanelIntegration = {
       uptime: uptimeDisplay,
       bootTime: client.bootTime ? client.bootTime.toISOString() : null,
       additionalSystemDetails: client.additionalSystemDetails || client.platform || 'Unknown',
+      // Enhanced fields
+      osVersion: osVersion,
+      antivirus: antivirus,
+      isAdmin: isAdmin,
+      hwid: client.machineFingerprint || client.uuid,
       // Legacy fields for backward compatibility
       hostname: client.hostname,
       platform: client.platform,

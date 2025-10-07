@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type ThemeMode = 'light' | 'dark' | 'system' | 'hacker' | 'matrix' | 'cyberpunk' | 'redteam' | 'neon-city' | 'ghost-protocol' | 'quantum' | 'neural-net' | 'dark-web' | 'glass' | 'hologram';
+type ThemeMode = 'light' | 'dark' | 'hacker-elite' | 'premium-cyber';
 type ColorScheme = 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'neon' | 'terminal' | 'blood' | 'matrix-green' | 'cyber-purple' | 'neon-pink' | 'quantum-blue' | 'holographic';
 
 interface ThemeProperties {
@@ -118,14 +118,14 @@ const colorSchemes = {
 // Advanced theme properties with unique visual identities
 const themeProperties: Record<ThemeMode, ThemeProperties> = {
   light: {
-    name: 'Light Mode',
+    name: 'Light Premium',
     icon: '☀️',
     background: 'bg-white',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#F3F4F6',
-    accentColor: '#10B981',
-    textColor: '#1F2937',
-    borderColor: '#E5E7EB',
+    primaryColor: '#6366f1',
+    secondaryColor: '#f8fafc',
+    accentColor: '#10b981',
+    textColor: '#0f172a',
+    borderColor: '#e2e8f0',
     animation: 'none',
     effect: 'none',
     glassMorphism: false,
@@ -133,206 +133,56 @@ const themeProperties: Record<ThemeMode, ThemeProperties> = {
     particleEffect: false
   },
   dark: {
-    name: 'Dark Mode',
+    name: 'Dark Premium',
     icon: '🌙',
-    background: 'bg-gray-900',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#1F2937',
-    accentColor: '#10B981',
-    textColor: '#F9FAFB',
-    borderColor: '#374151',
+    background: 'bg-slate-900',
+    primaryColor: '#6366f1',
+    secondaryColor: '#1e293b',
+    accentColor: '#10b981',
+    textColor: '#f8fafc',
+    borderColor: '#334155',
     animation: 'none',
     effect: 'none',
     glassMorphism: false,
     glowEffect: false,
     particleEffect: false
   },
-  system: {
-    name: 'System Default',
-    icon: '⚙️',
-    background: 'bg-gray-100 dark:bg-gray-900',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#F3F4F6 dark:bg-gray-800',
-    accentColor: '#10B981',
-    textColor: '#1F2937 dark:text-gray-100',
-    borderColor: '#E5E7EB dark:border-gray-700',
-    animation: 'none',
-    effect: 'none',
-    glassMorphism: false,
-    glowEffect: false,
-    particleEffect: false
-  },
-  hacker: {
-    name: 'Classic Hacker',
+  'hacker-elite': {
+    name: 'Hacker Elite',
     icon: '💚',
-    background: 'bg-gradient-to-br from-black via-green-900 to-black',
-    primaryColor: '#00FF41',
-    secondaryColor: '#001100',
-    accentColor: '#00CC33',
-    textColor: '#00FF41',
-    borderColor: '#00FF41/30',
+    background: 'bg-black',
+    primaryColor: '#00ff41',
+    secondaryColor: '#0a0a0a',
+    accentColor: '#00cc33',
+    textColor: '#00ff41',
+    borderColor: '#00ff41',
     animation: 'matrix-rain',
     effect: 'terminal-cursor',
     glassMorphism: true,
     glowEffect: true,
     particleEffect: true
   },
-  matrix: {
-    name: 'Matrix Rain',
-    icon: '🔋',
-    background: 'bg-gradient-to-br from-black via-#001a00 to-#000d00',
-    primaryColor: '#00FF41',
-    secondaryColor: '#001a00',
-    accentColor: '#00CC33',
-    textColor: '#00FF41',
-    borderColor: '#00FF41/40',
-    animation: 'matrix-rain-intense',
-    effect: 'digital-rain',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  cyberpunk: {
-    name: 'Cyberpunk 2077',
-    icon: '🌆',
-    background: 'bg-gradient-to-br from-#0f0f23 via-#1a1a2e to-#16213e',
-    primaryColor: '#FF00FF',
+  'premium-cyber': {
+    name: 'Premium Cyber',
+    icon: '🚀',
+    background: 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900',
+    primaryColor: '#00d4ff',
     secondaryColor: '#1a1a2e',
-    accentColor: '#00FFFF',
-    textColor: '#FF00FF',
-    borderColor: '#FF00FF/40',
-    animation: 'neon-pulse',
-    effect: 'cyber-grid',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: false
-  },
-  redteam: {
-    name: 'Red Team',
-    icon: '🔴',
-    background: 'bg-gradient-to-br from-#200000 via-#400000 to-#200000',
-    primaryColor: '#FF0040',
-    secondaryColor: '#400000',
-    accentColor: '#FF6B6B',
-    textColor: '#FF0040',
-    borderColor: '#FF0040/40',
-    animation: 'pulse-red',
-    effect: 'blood-splatter',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  'neon-city': {
-    name: 'Neon City',
-    icon: '🏙️',
-    background: 'bg-gradient-to-br from-#0a0a0a via-#1a0a2e to-#16213e',
-    primaryColor: '#00FFFF',
-    secondaryColor: '#1a0a2e',
-    accentColor: '#FF00FF',
-    textColor: '#00FFFF',
-    borderColor: '#00FFFF/40',
-    animation: 'neon-flicker',
-    effect: 'city-lights',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  'ghost-protocol': {
-    name: 'Ghost Protocol',
-    icon: '👻',
-    background: 'bg-gradient-to-br from-#000000 via-#1a1a1a to-#2d2d2d',
-    primaryColor: '#FFFFFF',
-    secondaryColor: '#1a1a1a',
-    accentColor: '#E0E0E0',
-    textColor: '#FFFFFF',
-    borderColor: '#FFFFFF/30',
-    animation: 'ghost-fade',
-    effect: 'stealth-mode',
-    glassMorphism: true,
-    glowEffect: false,
-    particleEffect: false
-  },
-  quantum: {
-    name: 'Quantum Realm',
-    icon: '⚛️',
-    background: 'bg-gradient-to-br from-#0d1421 via-#1a252f to-#2d3748',
-    primaryColor: '#64FFDA',
-    secondaryColor: '#1a252f',
-    accentColor: '#00BFA5',
-    textColor: '#64FFDA',
-    borderColor: '#64FFDA/40',
-    animation: 'quantum-fluctuate',
-    effect: 'particle-wave',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  'neural-net': {
-    name: 'Neural Network',
-    icon: '🧠',
-    background: 'bg-gradient-to-br from-#1a1a2e via-#16213e to-#0f3460',
-    primaryColor: '#E94560',
-    secondaryColor: '#16213e',
-    accentColor: '#F67280',
-    textColor: '#E94560',
-    borderColor: '#E94560/40',
-    animation: 'neural-pulse',
-    effect: 'synapse-connections',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  'dark-web': {
-    name: 'Dark Web',
-    icon: '🕸️',
-    background: 'bg-gradient-to-br from-#000000 via-#1c1c1c to-#383838',
-    primaryColor: '#FF6B6B',
-    secondaryColor: '#1c1c1c',
-    accentColor: '#FF5252',
-    textColor: '#FF6B6B',
-    borderColor: '#FF6B6B/40',
-    animation: 'spider-crawl',
-    effect: 'web-network',
-    glassMorphism: false,
-    glowEffect: true,
-    particleEffect: true
-  },
-  glass: {
-    name: 'Glass Morphism',
-    icon: '🔮',
-    background: 'bg-gradient-to-br from-rgba(255,255,255,0.1) via-rgba(255,255,255,0.05) to-rgba(255,255,255,0.1)',
-    primaryColor: '#FFFFFF',
-    secondaryColor: 'rgba(255,255,255,0.1)',
-    accentColor: '#E0E0E0',
-    textColor: '#FFFFFF',
-    borderColor: 'rgba(255,255,255,0.2)',
-    animation: 'none',
-    effect: 'frosted-glass',
-    glassMorphism: true,
-    glowEffect: false,
-    particleEffect: false
-  },
-  hologram: {
-    name: 'Holographic',
-    icon: '🌈',
-    background: 'bg-gradient-to-br from-#000428 via-#004e92 to-#000428',
-    primaryColor: '#00D4FF',
-    secondaryColor: '#004e92',
-    accentColor: '#00B8D4',
-    textColor: '#00D4FF',
-    borderColor: '#00D4FF/40',
-    animation: 'hologram-shimmer',
+    accentColor: '#0099cc',
+    textColor: '#00d4ff',
+    borderColor: '#00d4ff',
+    animation: 'cyber-grid',
     effect: 'holographic-display',
     glassMorphism: true,
     glowEffect: true,
-    particleEffect: true
+    particleEffect: false
   }
 };
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('theme-mode');
-    return (saved as ThemeMode) || 'system';
+    return (saved as ThemeMode) || 'dark';
   });
   
   const [colorScheme, setColorScheme] = useState<ColorScheme>(() => {
@@ -345,10 +195,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Determine if dark mode should be active
   useEffect(() => {
     const updateDarkMode = () => {
-      if (mode === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setIsDark(systemPrefersDark);
-      } else if (['hacker', 'matrix', 'cyberpunk', 'redteam'].includes(mode)) {
+      if (['hacker-elite', 'premium-cyber'].includes(mode)) {
         setIsDark(true); // Hacker themes are always dark
       } else {
         setIsDark(mode === 'dark');
@@ -356,17 +203,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     };
 
     updateDarkMode();
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (mode === 'system') {
-        updateDarkMode();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [mode]);
 
   // Apply theme to document
@@ -382,8 +218,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
 
     // Apply theme-specific classes
-    root.classList.remove('theme-hacker', 'theme-matrix', 'theme-cyberpunk', 'theme-redteam');
-    if (['hacker', 'matrix', 'cyberpunk', 'redteam'].includes(mode)) {
+    root.classList.remove('theme-hacker-elite', 'theme-premium-cyber');
+    if (['hacker-elite', 'premium-cyber'].includes(mode)) {
       root.classList.add(`theme-${mode}`);
     }
 
@@ -407,7 +243,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const toggleMode = () => {
-    const modes: ThemeMode[] = ['light', 'dark', 'hacker', 'matrix', 'cyberpunk', 'redteam', 'system'];
+    const modes: ThemeMode[] = ['light', 'dark', 'hacker-elite', 'premium-cyber'];
     const currentIndex = modes.indexOf(mode);
     const nextIndex = (currentIndex + 1) % modes.length;
     setMode(modes[nextIndex]);

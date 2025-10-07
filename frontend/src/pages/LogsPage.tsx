@@ -12,6 +12,7 @@ import {
   Search,
   RefreshCw
 } from 'lucide-react';
+import { FiTerminal, FiPaperclip } from 'react-icons/fi';
 import request from '../axios';
 import toast from 'react-hot-toast';
 
@@ -86,15 +87,21 @@ const LogsPage: React.FC = () => {
       params.append('offset', pagination.offset.toString());
 
       const response = await request({
-        url: `/task?${params.toString()}`,
+        url: `/api/task?${params.toString()}`,
         method: 'GET'
       });
 
-      setTasks(response.data.tasks);
-      setPagination(response.data.pagination);
+      if (response.data && response.data.data) {
+        setTasks(response.data.data.tasks || []);
+        setPagination(response.data.data.pagination || { hasMore: false });
+      } else {
+        setTasks([]);
+        setPagination({ hasMore: false });
+      }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
       toast.error('Failed to fetch tasks');
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -107,11 +114,13 @@ const LogsPage: React.FC = () => {
       if (filters.agentUuid) params.append('agentUuid', filters.agentUuid);
 
       const response = await request({
-        url: `/task/stats?${params.toString()}`,
+        url: `/api/task/stats?${params.toString()}`,
         method: 'GET'
       });
 
-      setStats(response.data);
+      if (response.data && response.data.data) {
+        setStats(response.data.data);
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
@@ -308,67 +317,58 @@ const LogsPage: React.FC = () => {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Command Logs</h1>
-          <p className="text-gray-600">Monitor and manage command execution</p>
+      <div className="premium-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <FiTerminal className="w-6 h-6 text-indigo-600" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Command Logs
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Monitor and manage command execution logs
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => { fetchTasks(); fetchStats(); }}
+              className="premium-button flex items-center space-x-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => { fetchTasks(); fetchStats(); }}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Refresh</span>
-        </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Tasks</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <Clock className="w-8 h-8 text-gray-400" />
-          </div>
+      <div className="premium-stats-grid">
+        <div className="premium-stat-card">
+          <div className="premium-stat-value">{stats.total}</div>
+          <div className="premium-stat-label">Total Commands</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-            </div>
-            <AlertCircle className="w-8 h-8 text-yellow-400" />
-          </div>
+        <div className="premium-stat-card">
+          <div className="premium-stat-value text-yellow-600">{stats.pending}</div>
+          <div className="premium-stat-label">In Queue</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-            </div>
-            <CheckCircle className="w-8 h-8 text-green-400" />
-          </div>
+        <div className="premium-stat-card">
+          <div className="premium-stat-value text-green-600">{stats.completed}</div>
+          <div className="premium-stat-label">Executed</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Failed</p>
-              <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
-            </div>
-            <XCircle className="w-8 h-8 text-red-400" />
-          </div>
+        <div className="premium-stat-card">
+          <div className="premium-stat-value text-red-600">{stats.failed}</div>
+          <div className="premium-stat-label">Failed</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="premium-card p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

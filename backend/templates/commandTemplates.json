@@ -1,0 +1,992 @@
+{
+  "templates": {
+    "browser_installation": {
+      "name": "Browser Installation",
+      "description": "Install browsers using package managers with fallback to direct download",
+      "category": "automation",
+      "complexity": "medium",
+      "estimatedDuration": 180,
+      "steps": [
+        {
+          "step": 1,
+          "action": "check_package_managers",
+          "description": "Check available package managers",
+          "command": "if (Get-Command winget -ErrorAction SilentlyContinue) { Write-Host 'Winget available' } elseif (Get-Command choco -ErrorAction SilentlyContinue) { Write-Host 'Chocolatey available' } else { Write-Host 'No package managers found' }",
+          "dependsOn": null,
+          "estimatedTime": 5,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 2,
+          "action": "install_via_winget",
+          "description": "Install browser using winget",
+          "command": "winget install --id ${wingetPackageId} -e --silent --accept-package-agreements --accept-source-agreements",
+          "dependsOn": [1],
+          "estimatedTime": 60,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "wingetPackageId": "Google.Chrome"
+          }
+        },
+        {
+          "step": 3,
+          "action": "fallback_choco",
+          "description": "Fallback to Chocolatey if winget fails",
+          "command": "choco install ${chocoPackageName} -y --no-progress",
+          "dependsOn": [2],
+          "estimatedTime": 90,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "chocoPackageName": "googlechrome"
+          }
+        },
+        {
+          "step": 4,
+          "action": "direct_download",
+          "description": "Direct download if package managers fail",
+          "command": "$downloadDir = Join-Path $env:USERPROFILE 'Downloads'; New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null; $installer = Join-Path $downloadDir '${installerName}'; Invoke-WebRequest -Uri '${downloadUrl}' -OutFile $installer -UseBasicParsing -MaximumRedirection 10 -TimeoutSec 120 -ErrorAction Stop; Start-Process -FilePath $installer -ArgumentList '/S','/quiet' -Wait -NoNewWindow",
+          "dependsOn": [3],
+          "estimatedTime": 120,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "downloadUrl": "https://dl.google.com/chrome/install/375.126/chrome_installer.exe",
+            "installerName": "chrome_installer.exe"
+          }
+        },
+        {
+          "step": 5,
+          "action": "verify_installation",
+          "description": "Verify browser installation",
+          "command": "if (Test-Path '${browserPath}') { Write-Host 'Browser installed successfully' } else { throw 'Browser installation failed' }",
+          "dependsOn": [4],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "browserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+          }
+        }
+      ],
+      "parameters": [
+        {
+          "name": "browserName",
+          "type": "string",
+          "description": "Name of the browser to install",
+          "required": true,
+          "defaultValue": "chrome"
+        },
+        {
+          "name": "wingetPackageId",
+          "type": "string",
+          "description": "Winget package ID for the browser",
+          "required": false,
+          "defaultValue": "Google.Chrome"
+        },
+        {
+          "name": "chocoPackageName",
+          "type": "string",
+          "description": "Chocolatey package name for the browser",
+          "required": false,
+          "defaultValue": "googlechrome"
+        },
+        {
+          "name": "downloadUrl",
+          "type": "string",
+          "description": "Direct download URL for the browser installer",
+          "required": false,
+          "defaultValue": "https://dl.google.com/chrome/install/375.126/chrome_installer.exe"
+        },
+        {
+          "name": "installerName",
+          "type": "string",
+          "description": "Name of the installer file",
+          "required": false,
+          "defaultValue": "chrome_installer.exe"
+        },
+        {
+          "name": "browserPath",
+          "type": "string",
+          "description": "Expected installation path for verification",
+          "required": false,
+          "defaultValue": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        }
+      ]
+    },
+    "brave_installation": {
+      "name": "Brave Browser Installation",
+      "description": "Install Brave browser with package manager preference",
+      "category": "automation",
+      "complexity": "medium",
+      "estimatedDuration": 180,
+      "steps": [
+        {
+          "step": 1,
+          "action": "install_via_winget",
+          "description": "Install Brave using winget",
+          "command": "winget install --id Brave.Brave -e --silent --accept-package-agreements --accept-source-agreements",
+          "dependsOn": null,
+          "estimatedTime": 60,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 2,
+          "action": "fallback_choco",
+          "description": "Fallback to Chocolatey if winget fails",
+          "command": "choco install brave -y --no-progress",
+          "dependsOn": [1],
+          "estimatedTime": 90,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 3,
+          "action": "direct_download",
+          "description": "Direct download if package managers fail",
+          "command": "$downloadDir = Join-Path $env:USERPROFILE 'Downloads'; New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null; $installer = Join-Path $downloadDir 'brave_installer.exe'; Invoke-WebRequest -Uri 'https://brave.com/download' -OutFile $installer -UseBasicParsing -MaximumRedirection 10 -TimeoutSec 120 -ErrorAction Stop; Start-Process -FilePath $installer -ArgumentList '/S','/quiet' -Wait -NoNewWindow",
+          "dependsOn": [2],
+          "estimatedTime": 120,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false
+        },
+        {
+          "step": 4,
+          "action": "verify_installation",
+          "description": "Verify Brave installation",
+          "command": "if (Test-Path 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe') { Write-Host 'Brave installed successfully' } else { throw 'Brave installation failed' }",
+          "dependsOn": [3],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": []
+    },
+    "opera_installation": {
+      "name": "Opera Browser Installation",
+      "description": "Install Opera browser with package manager preference",
+      "category": "automation",
+      "complexity": "medium",
+      "estimatedDuration": 180,
+      "steps": [
+        {
+          "step": 1,
+          "action": "install_via_winget",
+          "description": "Install Opera using winget",
+          "command": "winget install --id Opera.Opera -e --silent --accept-package-agreements --accept-source-agreements",
+          "dependsOn": null,
+          "estimatedTime": 60,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 2,
+          "action": "fallback_choco",
+          "description": "Fallback to Chocolatey if winget fails",
+          "command": "choco install opera -y --no-progress",
+          "dependsOn": [1],
+          "estimatedTime": 90,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 3,
+          "action": "direct_download",
+          "description": "Direct download if package managers fail",
+          "command": "$downloadDir = Join-Path $env:USERPROFILE 'Downloads'; New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null; $installer = Join-Path $downloadDir 'opera_installer.exe'; Invoke-WebRequest -Uri 'https://download.opera.com/download/get/?partner=www&product=opera&os=windows&arch=x64' -OutFile $installer -UseBasicParsing -MaximumRedirection 10 -TimeoutSec 120 -ErrorAction Stop; Start-Process -FilePath $installer -ArgumentList '/S','/quiet' -Wait -NoNewWindow",
+          "dependsOn": [2],
+          "estimatedTime": 120,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false
+        },
+        {
+          "step": 4,
+          "action": "verify_installation",
+          "description": "Verify Opera installation",
+          "command": "if (Test-Path 'C:\\Program Files\\Opera\\opera.exe') { Write-Host 'Opera installed successfully' } else { throw 'Opera installation failed' }",
+          "dependsOn": [3],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": []
+    },
+    "software_installation": {
+      "name": "Software Installation",
+      "description": "Download, install, and configure software with comprehensive error handling",
+      "category": "automation",
+      "complexity": "medium",
+      "estimatedDuration": 300,
+      "steps": [
+        {
+          "step": 1,
+          "action": "download_installer",
+          "description": "Download software installer from specified URL",
+          "command": "Invoke-WebRequest -Uri \"${downloadUrl}\" -OutFile \"${tempPath}\\${installerName}\"",
+          "dependsOn": null,
+          "estimatedTime": 60,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "downloadUrl": "https://example.com/software.exe",
+            "tempPath": "C:\\temp",
+            "installerName": "software.exe"
+          }
+        },
+        {
+          "step": 2,
+          "action": "verify_download",
+          "description": "Verify downloaded file integrity",
+          "command": "if (Test-Path \"${tempPath}\\${installerName}\") { Write-Host \"Download verified\" } else { throw \"Download failed\" }",
+          "dependsOn": [1],
+          "estimatedTime": 5,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 3,
+          "action": "install_software",
+          "description": "Install software silently",
+          "command": "Start-Process -FilePath \"${tempPath}\\${installerName}\" -ArgumentList \"${installArgs}\" -Wait -NoNewWindow",
+          "dependsOn": [2],
+          "estimatedTime": 120,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "installArgs": "/S /D=C:\\Program Files\\Software"
+          }
+        },
+        {
+          "step": 4,
+          "action": "verify_installation",
+          "description": "Verify software installation",
+          "command": "if (Get-Command \"${softwareCommand}\" -ErrorAction SilentlyContinue) { Write-Host \"Installation verified\" } else { throw \"Installation failed\" }",
+          "dependsOn": [3],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "softwareCommand": "software.exe"
+          }
+        },
+        {
+          "step": 5,
+          "action": "cleanup",
+          "description": "Clean up temporary files",
+          "command": "Remove-Item \"${tempPath}\\${installerName}\" -Force -ErrorAction SilentlyContinue",
+          "dependsOn": [4],
+          "estimatedTime": 5,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "downloadUrl",
+          "type": "string",
+          "description": "URL to download the software installer",
+          "required": true,
+          "defaultValue": "https://example.com/software.exe"
+        },
+        {
+          "name": "installerName",
+          "type": "string",
+          "description": "Name of the installer file",
+          "required": true,
+          "defaultValue": "software.exe"
+        },
+        {
+          "name": "installArgs",
+          "type": "string",
+          "description": "Command line arguments for silent installation",
+          "required": false,
+          "defaultValue": "/S"
+        },
+        {
+          "name": "softwareCommand",
+          "type": "string",
+          "description": "Command name to verify installation",
+          "required": false,
+          "defaultValue": "software.exe"
+        }
+      ],
+      "functions": [
+        {
+          "name": "Test-SoftwareInstalled",
+          "description": "Check if software is already installed",
+          "parameters": [
+            {
+              "name": "softwareName",
+              "type": "string"
+            }
+          ],
+          "body": "Get-Command $softwareName -ErrorAction SilentlyContinue"
+        }
+      ]
+    },
+    "system_diagnostics": {
+      "name": "System Diagnostics",
+      "description": "Comprehensive system health check and reporting",
+      "category": "diagnostics",
+      "complexity": "high",
+      "estimatedDuration": 180,
+      "steps": [
+        {
+          "step": 1,
+          "action": "collect_system_info",
+          "description": "Collect basic system information",
+          "command": "Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, TotalPhysicalMemory, CsProcessors",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 2,
+          "action": "check_services",
+          "description": "Check critical Windows services",
+          "command": "Get-Service | Where-Object { $_.Status -ne 'Running' -and $_.StartType -eq 'Automatic' } | Select-Object Name, Status, StartType",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 3,
+          "action": "check_disk_space",
+          "description": "Check disk space usage",
+          "command": "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, @{Name='Size(GB)';Expression={[math]::Round($_.Size/1GB,2)}}, @{Name='FreeSpace(GB)';Expression={[math]::Round($_.FreeSpace/1GB,2)}}, @{Name='PercentFree';Expression={[math]::Round(($_.FreeSpace/$_.Size)*100,2)}}",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 4,
+          "action": "check_memory",
+          "description": "Check memory usage",
+          "command": "Get-WmiObject -Class Win32_OperatingSystem | Select-Object @{Name='TotalMemory(GB)';Expression={[math]::Round($_.TotalVisibleMemorySize/1MB,2)}}, @{Name='FreeMemory(GB)';Expression={[math]::Round($_.FreePhysicalMemory/1MB,2)}}, @{Name='MemoryUsage(%)';Expression={[math]::Round((($_.TotalVisibleMemorySize-$_.FreePhysicalMemory)/$_.TotalVisibleMemorySize)*100,2)}}",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 5,
+          "action": "check_network",
+          "description": "Check network connectivity",
+          "command": "Test-NetConnection -ComputerName 8.8.8.8 -Port 53 -InformationLevel Quiet",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 6,
+          "action": "check_event_logs",
+          "description": "Check recent error events",
+          "command": "Get-EventLog -LogName System -EntryType Error -Newest 10 | Select-Object TimeGenerated, Source, Message",
+          "dependsOn": null,
+          "estimatedTime": 20,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 7,
+          "action": "check_processes",
+          "description": "Check for high CPU/memory processes",
+          "command": "Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 Name, CPU, WorkingSet",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 8,
+          "action": "generate_report",
+          "description": "Generate comprehensive diagnostic report",
+          "command": "Write-Host \"System Diagnostic Report Generated\" -ForegroundColor Green",
+          "dependsOn": [1, 2, 3, 4, 5, 6, 7],
+          "estimatedTime": 30,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "reportPath",
+          "type": "string",
+          "description": "Path to save the diagnostic report",
+          "required": false,
+          "defaultValue": "C:\\temp\\system_diagnostics.txt"
+        },
+        {
+          "name": "includeEventLogs",
+          "type": "boolean",
+          "description": "Include event log analysis",
+          "required": false,
+          "defaultValue": true
+        }
+      ]
+    },
+    "security_audit": {
+      "name": "Security Audit",
+      "description": "Comprehensive security assessment and compliance check",
+      "category": "security",
+      "complexity": "high",
+      "estimatedDuration": 240,
+      "steps": [
+        {
+          "step": 1,
+          "action": "check_firewall",
+          "description": "Check Windows Firewall status",
+          "command": "Get-NetFirewallProfile | Select-Object Name, Enabled",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 2,
+          "action": "check_antivirus",
+          "description": "Check antivirus software status",
+          "command": "Get-WmiObject -Namespace root\\SecurityCenter2 -Class AntiVirusProduct | Select-Object displayName, productState",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 3,
+          "action": "check_users",
+          "description": "Audit user accounts and groups",
+          "command": "Get-LocalUser | Select-Object Name, Enabled, LastLogon, PasswordLastSet",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 4,
+          "action": "check_permissions",
+          "description": "Check critical file permissions",
+          "command": "Get-Acl C:\\Windows\\System32 | Select-Object Owner, Access",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 5,
+          "action": "check_services",
+          "description": "Check security-related services",
+          "command": "Get-Service | Where-Object { $_.Name -like '*security*' -or $_.Name -like '*firewall*' -or $_.Name -like '*defender*' } | Select-Object Name, Status, StartType",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 6,
+          "action": "check_open_ports",
+          "description": "Check for open network ports",
+          "command": "Get-NetTCPConnection | Where-Object { $_.State -eq 'Listen' } | Select-Object LocalAddress, LocalPort, OwningProcess",
+          "dependsOn": null,
+          "estimatedTime": 20,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 7,
+          "action": "check_registry",
+          "description": "Check security-related registry settings",
+          "command": "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' | Select-Object EnableLUA, ConsentPromptBehaviorAdmin",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 8,
+          "action": "generate_report",
+          "description": "Generate security audit report",
+          "command": "Write-Host \"Security Audit Report Generated\" -ForegroundColor Green",
+          "dependsOn": [1, 2, 3, 4, 5, 6, 7],
+          "estimatedTime": 30,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "reportPath",
+          "type": "string",
+          "description": "Path to save the security audit report",
+          "required": false,
+          "defaultValue": "C:\\temp\\security_audit.txt"
+        },
+        {
+          "name": "includeRegistry",
+          "type": "boolean",
+          "description": "Include registry security checks",
+          "required": false,
+          "defaultValue": true
+        }
+      ]
+    },
+    "file_operations": {
+      "name": "File Operations",
+      "description": "Batch file processing and management operations",
+      "category": "automation",
+      "complexity": "medium",
+      "estimatedDuration": 120,
+      "steps": [
+        {
+          "step": 1,
+          "action": "search_files",
+          "description": "Search for target files",
+          "command": "Get-ChildItem -Path \"${searchPath}\" -Recurse -Include \"${filePattern}\" | Select-Object FullName, Length, LastWriteTime",
+          "dependsOn": null,
+          "estimatedTime": 30,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "searchPath": "C:\\Users",
+            "filePattern": "*.pdf"
+          }
+        },
+        {
+          "step": 2,
+          "action": "filter_files",
+          "description": "Apply filters to found files",
+          "command": "Get-ChildItem -Path \"${searchPath}\" -Recurse -Include \"${filePattern}\" | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-${daysOld}) } | Select-Object FullName, Length, LastWriteTime",
+          "dependsOn": [1],
+          "estimatedTime": 20,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "daysOld": 30
+          }
+        },
+        {
+          "step": 3,
+          "action": "process_files",
+          "description": "Process filtered files",
+          "command": "Get-ChildItem -Path \"${searchPath}\" -Recurse -Include \"${filePattern}\" | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-${daysOld}) } | ForEach-Object { Write-Host \"Processing: $($_.FullName)\" }",
+          "dependsOn": [2],
+          "estimatedTime": 40,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false
+        },
+        {
+          "step": 4,
+          "action": "move_files",
+          "description": "Move processed files to destination",
+          "command": "Get-ChildItem -Path \"${searchPath}\" -Recurse -Include \"${filePattern}\" | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-${daysOld}) } | Move-Item -Destination \"${destinationPath}\" -Force",
+          "dependsOn": [3],
+          "estimatedTime": 30,
+          "riskLevel": "high",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "destinationPath": "C:\\backup"
+          }
+        }
+      ],
+      "parameters": [
+        {
+          "name": "searchPath",
+          "type": "string",
+          "description": "Path to search for files",
+          "required": true,
+          "defaultValue": "C:\\Users"
+        },
+        {
+          "name": "filePattern",
+          "type": "string",
+          "description": "File pattern to search for (e.g., *.pdf, *.txt)",
+          "required": true,
+          "defaultValue": "*.pdf"
+        },
+        {
+          "name": "daysOld",
+          "type": "number",
+          "description": "Files older than this many days",
+          "required": false,
+          "defaultValue": 30
+        },
+        {
+          "name": "destinationPath",
+          "type": "string",
+          "description": "Destination path for processed files",
+          "required": true,
+          "defaultValue": "C:\\backup"
+        }
+      ]
+    },
+    "network_operations": {
+      "name": "Network Operations",
+      "description": "Network configuration, diagnostics, and management",
+      "category": "network",
+      "complexity": "medium",
+      "estimatedDuration": 90,
+      "steps": [
+        {
+          "step": 1,
+          "action": "scan_network",
+          "description": "Scan network configuration",
+          "command": "Get-NetAdapter | Select-Object Name, Status, LinkSpeed",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 2,
+          "action": "test_connectivity",
+          "description": "Test network connectivity",
+          "command": "Test-NetConnection -ComputerName \"${targetHost}\" -Port ${targetPort} -InformationLevel Detailed",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true,
+          "variables": {
+            "targetHost": "8.8.8.8",
+            "targetPort": 53
+          }
+        },
+        {
+          "step": 3,
+          "action": "check_ports",
+          "description": "Check open ports",
+          "command": "Get-NetTCPConnection | Where-Object { $_.State -eq 'Listen' } | Select-Object LocalAddress, LocalPort, OwningProcess",
+          "dependsOn": null,
+          "estimatedTime": 15,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 4,
+          "action": "check_dns",
+          "description": "Check DNS configuration",
+          "command": "Get-DnsClientServerAddress | Select-Object InterfaceAlias, ServerAddresses",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 5,
+          "action": "generate_report",
+          "description": "Generate network report",
+          "command": "Write-Host \"Network Operations Report Generated\" -ForegroundColor Green",
+          "dependsOn": [1, 2, 3, 4],
+          "estimatedTime": 20,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "targetHost",
+          "type": "string",
+          "description": "Target host for connectivity test",
+          "required": false,
+          "defaultValue": "8.8.8.8"
+        },
+        {
+          "name": "targetPort",
+          "type": "number",
+          "description": "Target port for connectivity test",
+          "required": false,
+          "defaultValue": 53
+        }
+      ]
+    },
+    "user_management": {
+      "name": "User Management",
+      "description": "User account creation, management, and security operations",
+      "category": "administration",
+      "complexity": "high",
+      "estimatedDuration": 150,
+      "steps": [
+        {
+          "step": 1,
+          "action": "check_existing_users",
+          "description": "Check existing user accounts",
+          "command": "Get-LocalUser | Select-Object Name, Enabled, LastLogon",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": true
+        },
+        {
+          "step": 2,
+          "action": "create_user",
+          "description": "Create new user account",
+          "command": "New-LocalUser -Name \"${username}\" -Password (ConvertTo-SecureString \"${password}\" -AsPlainText -Force) -FullName \"${fullName}\" -Description \"${description}\"",
+          "dependsOn": [1],
+          "estimatedTime": 15,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "username": "newuser",
+            "password": "TempPassword123!",
+            "fullName": "New User",
+            "description": "Automatically created user"
+          }
+        },
+        {
+          "step": 3,
+          "action": "add_to_group",
+          "description": "Add user to specified group",
+          "command": "Add-LocalGroupMember -Group \"${groupName}\" -Member \"${username}\"",
+          "dependsOn": [2],
+          "estimatedTime": 10,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "groupName": "Users"
+          }
+        },
+        {
+          "step": 4,
+          "action": "set_password_policy",
+          "description": "Set password policy for user",
+          "command": "Set-LocalUser -Name \"${username}\" -PasswordNeverExpires \$${passwordNeverExpires}",
+          "dependsOn": [3],
+          "estimatedTime": 10,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "passwordNeverExpires": false
+          }
+        },
+        {
+          "step": 5,
+          "action": "verify_user",
+          "description": "Verify user creation and configuration",
+          "command": "Get-LocalUser -Name \"${username}\" | Select-Object Name, Enabled, PasswordLastSet, PasswordNeverExpires",
+          "dependsOn": [4],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "username",
+          "type": "string",
+          "description": "Username for the new account",
+          "required": true,
+          "defaultValue": "newuser"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "description": "Password for the new account",
+          "required": true,
+          "defaultValue": "TempPassword123!"
+        },
+        {
+          "name": "fullName",
+          "type": "string",
+          "description": "Full name for the user",
+          "required": false,
+          "defaultValue": "New User"
+        },
+        {
+          "name": "groupName",
+          "type": "string",
+          "description": "Group to add the user to",
+          "required": false,
+          "defaultValue": "Users"
+        },
+        {
+          "name": "passwordNeverExpires",
+          "type": "boolean",
+          "description": "Whether password should never expire",
+          "required": false,
+          "defaultValue": false
+        }
+      ]
+    },
+    "backup_operations": {
+      "name": "Backup Operations",
+      "description": "Automated backup and data protection operations",
+      "category": "backup",
+      "complexity": "high",
+      "estimatedDuration": 300,
+      "steps": [
+        {
+          "step": 1,
+          "action": "prepare_backup",
+          "description": "Prepare backup environment",
+          "command": "if (!(Test-Path \"${backupPath}\")) { New-Item -ItemType Directory -Path \"${backupPath}\" -Force }",
+          "dependsOn": null,
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false,
+          "variables": {
+            "backupPath": "C:\\backup"
+          }
+        },
+        {
+          "step": 2,
+          "action": "backup_files",
+          "description": "Backup specified files and folders",
+          "command": "Copy-Item -Path \"${sourcePath}\" -Destination \"${backupPath}\" -Recurse -Force",
+          "dependsOn": [1],
+          "estimatedTime": 180,
+          "riskLevel": "medium",
+          "requiresConfirmation": true,
+          "parallelPossible": false,
+          "variables": {
+            "sourcePath": "C:\\ImportantData"
+          }
+        },
+        {
+          "step": 3,
+          "action": "compress_backup",
+          "description": "Compress backup for storage efficiency",
+          "command": "Compress-Archive -Path \"${backupPath}\" -DestinationPath \"${backupPath}.zip\" -Force",
+          "dependsOn": [2],
+          "estimatedTime": 60,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 4,
+          "action": "verify_backup",
+          "description": "Verify backup integrity",
+          "command": "if (Test-Path \"${backupPath}.zip\") { Write-Host \"Backup verified successfully\" } else { throw \"Backup verification failed\" }",
+          "dependsOn": [3],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        },
+        {
+          "step": 5,
+          "action": "cleanup_temp",
+          "description": "Clean up temporary backup files",
+          "command": "Remove-Item -Path \"${backupPath}\" -Recurse -Force -ErrorAction SilentlyContinue",
+          "dependsOn": [4],
+          "estimatedTime": 10,
+          "riskLevel": "low",
+          "requiresConfirmation": false,
+          "parallelPossible": false
+        }
+      ],
+      "parameters": [
+        {
+          "name": "sourcePath",
+          "type": "string",
+          "description": "Path to backup",
+          "required": true,
+          "defaultValue": "C:\\ImportantData"
+        },
+        {
+          "name": "backupPath",
+          "type": "string",
+          "description": "Backup destination path",
+          "required": true,
+          "defaultValue": "C:\\backup"
+        }
+      ]
+    }
+  },
+  "categories": {
+    "automation": {
+      "name": "Automation",
+      "description": "Automated tasks and workflows",
+      "templates": ["browser_installation", "brave_installation", "opera_installation", "software_installation", "file_operations"]
+    },
+    "diagnostics": {
+      "name": "Diagnostics",
+      "description": "System health and diagnostic operations",
+      "templates": ["system_diagnostics"]
+    },
+    "security": {
+      "name": "Security",
+      "description": "Security auditing and compliance",
+      "templates": ["security_audit"]
+    },
+    "network": {
+      "name": "Network",
+      "description": "Network operations and management",
+      "templates": ["network_operations"]
+    },
+    "administration": {
+      "name": "Administration",
+      "description": "System administration tasks",
+      "templates": ["user_management"]
+    },
+    "backup": {
+      "name": "Backup",
+      "description": "Backup and data protection",
+      "templates": ["backup_operations"]
+    }
+  },
+  "metadata": {
+    "version": "1.1.0",
+    "lastUpdated": "2025-01-07T00:00:00Z",
+    "totalTemplates": 10,
+    "totalCategories": 6,
+    "description": "Comprehensive command template library for Ollama C2 panel operations with browser installation templates"
+  }
+}

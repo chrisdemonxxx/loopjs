@@ -20,7 +20,10 @@
 #include <QStorageInfo>
 
 // PRODUCTION: Cloud backend WebSocket URL
-#define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
+// #define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
+
+// LOCAL DEVELOPMENT: Local backend WebSocket URL
+#define DEF_WS_URL QUrl("ws://localhost:8080/ws")
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_isRegistered(false)
@@ -282,7 +285,7 @@ void MainWindow::sendCapabilityReport()
 void MainWindow::sendHeartbeat()
 {
     if (!m_isRegistered) {
-        qDebug() << "💓 Heartbeat skipped - not registered";
+        qDebug() << QDateTime::currentDateTime().toString(Qt::ISODate) << " [Qt][Heartbeat] Skipped - not registered";
         return;
     }
     
@@ -294,7 +297,7 @@ void MainWindow::sendHeartbeat()
     QJsonDocument doc(json);
     m_webSocket.sendTextMessage(doc.toJson(QJsonDocument::Compact));
     
-    qDebug() << "💓 Heartbeat sent - Client UUID:" << m_clientUuid;
+    qDebug() << QDateTime::currentDateTime().toString(Qt::ISODate) << " [Qt][Heartbeat] Sent - UUID:" << m_clientUuid;
 }
 
 void MainWindow::onConnected()

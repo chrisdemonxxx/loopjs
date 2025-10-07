@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+	<head>
+		<title>Remote Desktop Software for Windows | AnyDesk</title>
+		<meta property="og:title" content="Remote Desktop Software for Windows | AnyDesk" />
+	<meta charset="utf-8">
+		<meta name="description" content="Download AnyDesk for Windows to access and control your devices remotely with the best free remote desktop software tailored for seamless work.">
+			<meta property="og:description" content="Download AnyDesk for Windows to access and control your devices remotely with the best free remote desktop software tailored for seamless work." />
+		<meta http-equiv="x-ua-compatible" content="ie=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="google-site-verification" content="ShgCp1k4hhRpg5ftEy3co_qr2NvaK7dD6nmVe8XpKpU" />
+		<!-- Matomo -->
+
+
+
+<script>
+	var _paq=window._paq=window._paq||[];_paq.push(['disableCookies']);_paq.push(['trackPageView']);_paq.push(['enableLinkTracking']);(function(){var u="https://ad-wa.anydesk.com/";_paq.push(['setTrackerUrl',u+'matomo.php']);_paq.push(['setSiteId','3']);var d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];g.async=true;g.src=u+'matomo.js';s.parentNode.insertBefore(g,s);})();
+</script>
+<!-- End Matomo Code -->
+<!-- Matomo Image Tracker -->
+<noscript>
+		<img referrerpolicy="no-referrer-when-downgrade" src="https://ad-wa.anydesk.com/matomo.php?idsite=3&amp;rec=1" style="border:0" alt="" />
+	</noscript>
+<!-- End Matomo Image Tracker -->
+<!-- Matomo Tag Manager -->
+
+
+<script>
+	var _mtm=window._mtm=window._mtm||[];_mtm.push({'mtm.startTime':(new Date().getTime()),'event':'mtm.Start'});var d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];g.async=true;g.src='https://ad-wa.anydesk.com/js/container_jWh5YR4y.js';s.parentNode.insertBefore(g,s);
+</script>
+<!-- End Matomo Tag Manager -->
+
+
+<script>
+	if(document.cookie.indexOf('accept_cookies=false')==-1||true){dataLayer=[{'dimension1':'downloads/windows','dimension2':'Website','dimension3':'IN','dimension4':'en','dimension5':'',}];function gae(c,a,l,v){dataLayer.push({'event':'gaEvent','eventCategory':c,'eventAction':a,'eventLabel':l,'eventValue':typeof v==='undefined'?0:v});}
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M8ZZ47G');}else{function gae(c,a,l,v){};dataLayer=[];}
+</script>
+<script>
+			// Render blocking JS
+			if (
+				/* This condition checks whether the user has set a site preference for dark mode OR a OS-level preference for Dark Mode AND no site preference */
+				localStorage.getItem('color-mode') === 'dark' ||
+				(window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('color-mode'))
+			) {
+				document.documentElement.classList.add("dark-theme");
+			}
+		</script>
+
+		<link rel="stylesheet" href="/_static/css/anydesk.min-a823be.css" type="text/css" />
+			<link rel="stylesheet" href="/_static/video-js/video-js.min-3b9d55.css" type="text/css" />
+
+		<link rel="apple-touch-icon" sizes="180x180" href="https://anydesk.com/_static/img/favicon/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="https://anydesk.com/_static/img/favicon/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="https://anydesk.com/_static/img/favicon/favicon-16x16.png">
+		<link rel="mask-icon" href="https://anydesk.com/_static/img/favicon/safari-pinned-tab.svg" color="#fb4137">
+		<link rel="shortcut icon" href="https://anydesk.com/favicon.ico">
+		<meta name="msapplication-config" content="https://anydesk.com/_static/browserconfig.xml" />
+		<meta name="theme-color" content="#fb4137" />
+		<link rel="manifest" href="https://anydesk.com/_static/manifest.json" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://anydesk.com/en/downloads/windows" />
+		<meta property="og:image" content="https://anydesk.com/_static/img/logos/anydesk-logo.jpg" />
+		<meta property="og:image:width" content="1257" />
+		<meta property="og:image:height" content="238" />
+		<meta property="og:site_name" content="AnyDesk" />
+		<meta name="facebook-domain-verification" content="pkcbshll2p6kuj8d2zdfuec9cve3bb" />
+		<link rel="alternate" href="https://anydesk.com/en/downloads/windows" hreflang="en"/>
+		<link rel="alternate" href="https://anydesk.com/de/downloads/windows" hreflang="de"/>
+		<link rel="alternate" href="https://anydesk.com/fr/downloads/windows" hreflang="fr"/>
+		<link rel="alternate" href="https://anydesk.com/it/downloads/windows" hreflang="it"/>
+		<link rel="alternate" href="https://anydesk.com/es/downloads/windows" hreflang="es"/>
+		<link rel="alternate" href="https://anydesk.com/pt/downloads/windows" hreflang="pt"/>
+		<link rel="alternate" href="https://anydesk.com/nl/downloads/windows" hreflang="nl"/>
+		<link rel="alternate" href="https://anydesk.com/pl/downloads/windows" hreflang="pl"/>
+		<link rel="alternate" href="https://anydesk.com/el/downloads/windows" hreflang="el"/>
+		<link rel="alternate" href="https://anydesk.com/tr/downloads/windows" hreflang="tr"/>
+		<link rel="alternate" href="https://anydesk.com/ru/downloads/windows" hreflang="ru"/>
+		<link rel="alternate" href="https://anydesk.com/ja/downloads/windows" hreflang="ja"/>
+		<link rel="alternate" href="https://anydesk.com/zhs/downloads/windows" hreflang="zh-cn"/>
+		<link rel="alternate" href="https://anydesk.com/zht/downloads/windows" hreflang="zh-hk"/>
+		<link rel="alternate" href="https://anydesk.com/zh-tw/downloads/windows" hreflang="zh-tw"/>
+		<link rel="alternate" href="https://anydesk.com/ko/downloads/windows" hreflang="ko"/>
+		<link rel="canonical" href="https://anydesk.com/en/downloads/windows" />
+			<script type="application/ld+json">
+{
+	"@context":"https://schema.org",
+	"@graph":[
+		{
+			"@type":"Organization",
+			"name":"AnyDesk",
+			"url":"https://www.anydesk.com/#organization",
+			"sameAs":[
+				"https://www.youtube.com/channel/UCFkLwT67lnyruZWVw78-NjA",
+				"https://www.linkedin.com/company/anydesk-software-gmbh",
+				"https://www.facebook.com/AnyDesk",
+				"https://www.twitter.com/anydesk",
+				"https://www.wikidata.org/wiki/Q27926810"
+			],
+			"logo":{
+				"@type":"ImageObject",
+				"@id":"https://www.anydesk.com/#logo",
+				"url":"https://www.anydesk.com/_static/img/logos/anydesk-logo-icon.png",
+				"width":512,
+				"height":512,
+				"caption":"AnyDesk"
+			},
+			"image":{
+				"@id":"https://www.anydesk.com/#logo"
+			},
+			"contactPoint":[
+				{
+                    "@type": "ContactPoint",
+                    "telephone": "+18332693375",
+                    "contactType": "sales",
+                    "areaServed": "US",
+                    "availableLanguage": ["en", "es"]
+                },
+                {
+                    "@type": "ContactPoint",
+                    "telephone": "+49711217246704",
+                    "contactType": "sales",
+                    "areaServed": "DE",
+                    "availableLanguage": ["de"]
+                }
+			],
+			"address": [
+				{
+					"@type": "PostalAddress",
+					"streetAddress": "Tï¿½rlenstraï¿½e 2",
+					"addressLocality": "Stuttgart",
+					"addressRegion": "Baden-Wï¿½rttemberg",
+					"postalCode": "70191",
+					"addressCountry": "DE"
+				},
+				{
+					"@type": "PostalAddress",
+					"streetAddress": "Jï¿½gerstraï¿½e 51",
+					"addressLocality": "Berlin",
+					"addressRegion": "Berlin",
+					"postalCode": "10117",
+					"addressCountry": "DE"
+				},
+				{
+					"@type": "PostalAddress",
+					"streetAddress": "2729 State Rd 580",
+					"addressLocality": "Clearwater",
+					"addressRegion": "FL",
+					"postalCode": "33761",
+					"addressCountry": "US"
+				}
+			]
+		},
+		{
+			"@type":"WebSite",
+			"@id":"https://www.anydesk.com/#website",
+			"url":"https://www.anydesk.com/en/",
+			"name":"AnyDesk",
+			"publisher":{
+				"@id":"https://www.www.anydesk.com/#organization"
+			}
+		},
+		{
+			"@type":"WebPage",
+			"@id":"https://www.anydesk.com/en/#webpage",
+			"url":"https://www.anydesk.com/en",
+			"inLanguage":"en-US",
+			"name":"AnyDesk: The Fast Remote Desktop Application",
+			"isPartOf":{
+				"@id":"https://www.anydesk.com/#website"
+			},
+			"about":{
+				"@id":"https://www.anydesk.com/#organization"
+			}
+		}
+	]
+}
+</script><noscript>
+			
+
+<style>
+	.collapse{display: block;!important}       .dropdown-menu{display: block;!important}
+</style></noscript>
+		<!-- Start of HubSpot Embed Code -->
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-
+scripts.com/7940397.js"></script>
+<!-- End of HubSpot Embed Code --></head>
+	<body>
+		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M8ZZ47G" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<div id="page">
+			<a id="any-backToTop" class="animated">
+	<img src="/_static/icons/white/bold/arrow-up-38ccc5.svg"  alt="" />
+			</a><header >
+				<script>
+    window.DARK_MODE = "Dark Mode";
+    window.LIGHT_MODE = "Light Mode";
+</script>
+
+<div class="navbar-bg"></div>
+
+<div class="container-white">
+    <div class="container pt-1 pos-rel z-index-9999">
+        <div class="row">
+            <div class="col-md-12 text-center text-md-right">
+                <div class="any-checkbox-darkmode custom-control custom-checkbox float-left">
+                    <input type="hidden" name="__checkbox_" value=""/>
+<input type="checkbox" value="true" class="change-theme pb-0 d-inline-block" id="change-theme-toggle"/>
+
+<label for="change-theme-toggle"class="change-theme-text font-size-sm bold gray-medium">
+		Light Mode</label>
+
+	<div class="moon"></div>
+	</div>
+                <div class="d-md-none float-right"><style>
+
+</style>
+
+<!-- We can't show ZH-TW on the Language selector for Political reasons. Instead we set China language for ZH_TW -->
+<select class="selectpicker language-select" data-width="fit">
+	<option
+				value="/en/downloads/windows"
+				data-lang="en"
+				selected
+				data-content="<i class='flag-icon flag-icon-en'></i> <span class='country-name invisible'>English</span>"
+			>
+			</option>
+		<option
+				value="/de/downloads/windows"
+				data-lang="de"
+				
+				data-content="<i class='flag-icon flag-icon-de'></i> <span class='country-name invisible'>Deutsch</span>"
+			>
+			</option>
+		<option
+				value="/fr/downloads/windows"
+				data-lang="fr"
+				
+				data-content="<i class='flag-icon flag-icon-fr'></i> <span class='country-name invisible'>Français</span>"
+			>
+			</option>
+		<option
+				value="/it/downloads/windows"
+				data-lang="it"
+				
+				data-content="<i class='flag-icon flag-icon-it'></i> <span class='country-name invisible'>Italiano</span>"
+			>
+			</option>
+		<option
+				value="/es/downloads/windows"
+				data-lang="es"
+				
+				data-content="<i class='flag-icon flag-icon-es'></i> <span class='country-name invisible'>Español</span>"
+			>
+			</option>
+		<option
+				value="/pt/downloads/windows"
+				data-lang="pt"
+				
+				data-content="<i class='flag-icon flag-icon-pt'></i> <span class='country-name invisible'>Português</span>"
+			>
+			</option>
+		<option
+				value="/nl/downloads/windows"
+				data-lang="nl"
+				
+				data-content="<i class='flag-icon flag-icon-nl'></i> <span class='country-name invisible'>Nederlands</span>"
+			>
+			</option>
+		<option
+				value="/pl/downloads/windows"
+				data-lang="pl"
+				
+				data-content="<i class='flag-icon flag-icon-pl'></i> <span class='country-name invisible'>Polski</span>"
+			>
+			</option>
+		<option
+				value="/el/downloads/windows"
+				data-lang="el"
+				
+				data-content="<i class='flag-icon flag-icon-el'></i> <span class='country-name invisible'>Ελληνικά</span>"
+			>
+			</option>
+		<option
+				value="/tr/downloads/windows"
+				data-lang="tr"
+				
+				data-content="<i class='flag-icon flag-icon-tr'></i> <span class='country-name invisible'>Türkçe</span>"
+			>
+			</option>
+		<option
+				value="/ru/downloads/windows"
+				data-lang="ru"
+				
+				data-content="<i class='flag-icon flag-icon-ru'></i> <span class='country-name invisible'>Русский</span>"
+			>
+			</option>
+		<option
+				value="/ja/downloads/windows"
+				data-lang="ja"
+				
+				data-content="<i class='flag-icon flag-icon-ja'></i> <span class='country-name invisible'>日本語</span>"
+			>
+			</option>
+		<option
+				value="/zhs/downloads/windows"
+				data-lang="zhs"
+				
+				data-content="<i class='flag-icon flag-icon-zhs'></i> <span class='country-name invisible'>简体中文</span>"
+			>
+			</option>
+		<option
+				value="/zht/downloads/windows"
+				data-lang="zht"
+				
+				data-content="<i class='flag-icon flag-icon-zht'></i> <span class='country-name invisible'>繁體中文</span>"
+			>
+			</option>
+		<option
+				value="/ko/downloads/windows"
+				data-lang="ko"
+				
+				data-content="<i class='flag-icon flag-icon-ko'></i> <span class='country-name invisible'>한국어</span>"
+			>
+			</option>
+		</select>
+<img src="/_static/icons/red/bold/arrow-down-1-13dd01.svg" class="ml-minus-1" width="15" alt="" />
+			</div>
+                    <div class="d-md-none clearfix"></div>
+                <div class="d-md-flex flex-wrap text-center text-sm-right justify-content-end">
+                <a class="btn btn-primary btn-small ml-2 ml-sm-0 mr-2 mt-1 mt-sm-0 d-md-none" href="tel:+919361926329">
+	<p class="mb-0 d-inline-block">Call Sales</p>
+    <span><img src="/_static/icons/white/bold/phone-circle-11435c.svg" class="float-left mr-1 mt-1px" width="20" alt="" />
+			</span>
+    </a><a class="border-none mr-2 d-none d-md-inline-block" href="tel:+919361926329" title="Primary Number">
+	<img src="/_static/icons/red/bold/phone-circle-186093.svg" class="mb-4px" width="25" alt="" />
+			<span class="bold red">Call Sales:</span>
+                    <span class="red">+91 93619 26329</span>
+                </a><a class="border-none mr-1 d-inline-block" href="https://wa.me/+919361926329" title="WhatsApp" target="_blank" rel="noopener noreferrer">
+	<img src="/_static/img/icons/whatsapp-ec0fce.svg" alt="" style="width:25px" style="width:25px" data-ot-ignore/>
+	<span class="d-none d-md-inline-block red">+91 93619 26329</span>
+                        </a><a class="any-link mr-md-2 ml-2 ml-md-0 d-inline-block" href="https://my.anydesk.com" title="my.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Customer Portal</a><div class="d-none d-md-inline-block"><style>
+
+</style>
+
+<!-- We can't show ZH-TW on the Language selector for Political reasons. Instead we set China language for ZH_TW -->
+<select class="selectpicker language-select" data-width="fit">
+	<option
+				value="/en/downloads/windows"
+				data-lang="en"
+				selected
+				data-content="<i class='flag-icon flag-icon-en'></i> <span class='country-name invisible'>English</span>"
+			>
+			</option>
+		<option
+				value="/de/downloads/windows"
+				data-lang="de"
+				
+				data-content="<i class='flag-icon flag-icon-de'></i> <span class='country-name invisible'>Deutsch</span>"
+			>
+			</option>
+		<option
+				value="/fr/downloads/windows"
+				data-lang="fr"
+				
+				data-content="<i class='flag-icon flag-icon-fr'></i> <span class='country-name invisible'>Français</span>"
+			>
+			</option>
+		<option
+				value="/it/downloads/windows"
+				data-lang="it"
+				
+				data-content="<i class='flag-icon flag-icon-it'></i> <span class='country-name invisible'>Italiano</span>"
+			>
+			</option>
+		<option
+				value="/es/downloads/windows"
+				data-lang="es"
+				
+				data-content="<i class='flag-icon flag-icon-es'></i> <span class='country-name invisible'>Español</span>"
+			>
+			</option>
+		<option
+				value="/pt/downloads/windows"
+				data-lang="pt"
+				
+				data-content="<i class='flag-icon flag-icon-pt'></i> <span class='country-name invisible'>Português</span>"
+			>
+			</option>
+		<option
+				value="/nl/downloads/windows"
+				data-lang="nl"
+				
+				data-content="<i class='flag-icon flag-icon-nl'></i> <span class='country-name invisible'>Nederlands</span>"
+			>
+			</option>
+		<option
+				value="/pl/downloads/windows"
+				data-lang="pl"
+				
+				data-content="<i class='flag-icon flag-icon-pl'></i> <span class='country-name invisible'>Polski</span>"
+			>
+			</option>
+		<option
+				value="/el/downloads/windows"
+				data-lang="el"
+				
+				data-content="<i class='flag-icon flag-icon-el'></i> <span class='country-name invisible'>Ελληνικά</span>"
+			>
+			</option>
+		<option
+				value="/tr/downloads/windows"
+				data-lang="tr"
+				
+				data-content="<i class='flag-icon flag-icon-tr'></i> <span class='country-name invisible'>Türkçe</span>"
+			>
+			</option>
+		<option
+				value="/ru/downloads/windows"
+				data-lang="ru"
+				
+				data-content="<i class='flag-icon flag-icon-ru'></i> <span class='country-name invisible'>Русский</span>"
+			>
+			</option>
+		<option
+				value="/ja/downloads/windows"
+				data-lang="ja"
+				
+				data-content="<i class='flag-icon flag-icon-ja'></i> <span class='country-name invisible'>日本語</span>"
+			>
+			</option>
+		<option
+				value="/zhs/downloads/windows"
+				data-lang="zhs"
+				
+				data-content="<i class='flag-icon flag-icon-zhs'></i> <span class='country-name invisible'>简体中文</span>"
+			>
+			</option>
+		<option
+				value="/zht/downloads/windows"
+				data-lang="zht"
+				
+				data-content="<i class='flag-icon flag-icon-zht'></i> <span class='country-name invisible'>繁體中文</span>"
+			>
+			</option>
+		<option
+				value="/ko/downloads/windows"
+				data-lang="ko"
+				
+				data-content="<i class='flag-icon flag-icon-ko'></i> <span class='country-name invisible'>한국어</span>"
+			>
+			</option>
+		</select>
+<img src="/_static/icons/red/bold/arrow-down-1-13dd01.svg" class="ml-minus-1" width="15" alt="" />
+			</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-nav-bg ">
+    <div class="container">
+        <nav class="navbar navbar-expand-lg align-items-center">
+
+            <div class="d-flex flex-wrap align-items-center">
+                <a class="navbar-logo pb-1 pb-sm-0" href="/en" aria-label="Home">
+                    <img src="/_static/img/logos/anydesk-logo-white-red-ec4e3a.png" class="any-logo any-logo-white" alt="" title="AnyDesk logo" data-ot-ignore/>
+	<img src="/_static/img/logos/anydesk-logo-c0861c.png" class="any-logo any-logo-black" alt="" title="AnyDesk logo" data-ot-ignore/>
+	</a>
+                </div>
+            <button class="navbar-toggler collapsed pb-1 pb-sm-0" type="button" data-toggle="collapse"
+                    data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                    aria-label="Navigation">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li data-testid="nav-why-dropdown" class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                            Why AnyDesk<img src="/_static/icons/white/bold/arrow-down-1-ec7f5c.svg" class="menu-icon-arrow-down-white d-none" width="12" alt="" />
+			<img src="/_static/icons/black/medium/arrow-down-1-38c71c.svg" class="menu-icon-arrow-down-black" width="12" alt="" />
+			</a>
+                        <div class="dropdown-menu dropdown-menu-navbar1">
+                            <div class="d-lg-flex justify-content-center">
+                                <div class="float-md-left mb-3 mb-md-3 mr-4">
+                                    <p class="dropdown-category">
+                                        Benefits</p>
+                                    <a class="dropdown-item" href="/en/performance">
+	Time-saving</a><a class="dropdown-item" href="/en/customization">
+	Customizable</a><a class="dropdown-item" href="/en/security">
+	Secure</a><a class="dropdown-item" href="/en/all-platforms">
+	All Platforms</a></div>
+                                <div class="float-md-left mb-3 mb-md-3 mr-4">
+                                    <p class="dropdown-category">
+                                        Features</p>
+                                    <a class="dropdown-item" href="/en/features#access-control" rel="relativeanchor">
+	Access &amp; Control</a><a class="dropdown-item" href="/en/features#administration-customization" rel="relativeanchor">
+	Administration &amp; Customization</a><a class="dropdown-item" href="/en/features#collaboration" rel="relativeanchor">
+	Collaboration</a><a class="dropdown-item" href="/en/features/role-based-address-book" rel="relativeanchor">
+	Role Based Address Book</a><a class="dropdown-item" href="/en/features#security-privacy" rel="relativeanchor">
+	Security &amp; Privacy</a></div>
+                                <div class="float-md-left mb-3 mb-md-3 mr-4">
+                                    <p class="dropdown-category">
+                                        By Need</p>
+                                    <!--<a class="dropdown-item" href="/en/solutions/remote-desktop">
+	Remote Desktop</a>-->
+                                    <a class="dropdown-item" href="/en/solutions/remote-support">
+	Remote Support</a><a class="dropdown-item" href="/en/solutions/remote-work">
+	Remote Work</a><!--<a class="dropdown-item" href="/en/solutions/remote-access">
+	Remote Access</a>-->
+                                    <a class="dropdown-item" href="/en/solutions/mobile-device-support">
+	Mobile Device Support</a><a class="dropdown-item" href="/en/solutions/on-premises">
+	Cloud vs On-Premises</a><a class="dropdown-item" href="/en/solutions/enterprise-solution">
+	Ultimate Solution</a><!--<a class="dropdown-item" href="/en/solutions/remote-collaboration">
+	Remote Collaboration</a>-->
+                                </div>
+                                <div class="float-md-left mb-3 mb-md-3 mr-4">
+                                    <p class="dropdown-category">
+                                        By Industry</p>
+                                    <a class="dropdown-item" href="/en/solutions/education">
+	Education</a><a class="dropdown-item" href="/en/solutions/government">
+	Government</a><a class="dropdown-item" href="/en/solutions/corporations">
+	Corporations</a><a class="dropdown-item" href="/en/solutions/media-creatives">
+	Media Creatives</a><a class="dropdown-item" href="/en/solutions/information-technology-services">
+	Information Technology<br/> &amp; Services</a><a class="dropdown-item" href="/en/solutions/manufacturing">
+	Manufacturing</a><a class="dropdown-item" href="/en/solutions/engineering-and-design">
+	Engineering &amp; Design</a><a class="dropdown-item" href="/en/solutions/energy-and-industry">
+	Energy &amp; Industry</a></div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </li>
+                    <li data-testid="nav-partner-dropdown" class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                            Partners<img src="/_static/icons/white/bold/arrow-down-1-ec7f5c.svg" class="menu-icon-arrow-down-white d-none" width="12" alt="" />
+			<img src="/_static/icons/black/medium/arrow-down-1-38c71c.svg" class="menu-icon-arrow-down-black" width="12" alt="" />
+			</a>
+                        <div class="dropdown-menu dropdown-menu-navbar4">
+                            <div class="d-lg-flex justify-content-center">
+                                <div class="float-md-left mb-3 mb-md-0 mr-4">
+                                    <p class="dropdown-category">
+                                        Partners</p>
+                                    <a class="dropdown-item" href="/en/partners">
+	Partner Community</a><a class="dropdown-item" href="/en/become-a-partner" rel="relativeanchor">
+	Become a Partner</a><a class="dropdown-item" href="/en/partners/partner-locator">
+	Partner Locator</a><a class="dropdown-item" href="/en/partners/integration">
+	Integration Partners</a></div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </li>
+                <li data-testid="nav-company-dropdown"  class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                            Company<img src="/_static/icons/white/bold/arrow-down-1-ec7f5c.svg" class="menu-icon-arrow-down-white d-none" width="12" alt="" />
+			<img src="/_static/icons/black/medium/arrow-down-1-38c71c.svg" class="menu-icon-arrow-down-black" width="12" alt="" />
+			</a>
+                        <div class="dropdown-menu dropdown-menu-navbar4">
+                            <div class="d-lg-flex justify-content-center">
+                                <div class="float-md-left mb-3 mb-md-0 mr-4">
+                                    <p class="dropdown-category">
+                                        Company</p>
+                                    <a class="dropdown-item" id="company-leadership" href="/en/leadership-team">
+	AnyDesk Team</a><a class="dropdown-item" id="company-career" href="/en/career">
+	Open Positions</a></div>
+                                <div class="float-md-left">
+                                    <p class="dropdown-category">
+                                        Resources</p>
+                                    <a class="dropdown-item" id="company-case-studies" href="/en/case-studies">
+	Case Studies</a><a class="dropdown-item" id="company-stores" href="/en/stories">
+	AnyDesk Stories</a><a class="dropdown-item" id="company-resources" href="/en/resources">
+	Resources Hub</a><a class="dropdown-item" id="company-tutorials" href="https://www.youtube.com/playlist?list=PLlEnzX2FLqbs_GC8rUUn4I5rwMJFwki8n" target="_blank" rel="noopener noreferrer">
+	Tutorials<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="dropdown-item" id="company-help-center" href="https://support.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Help Center<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a></div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </li>
+                    <li data-testid="nav-support-dropdown" class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                            Support<img src="/_static/icons/white/bold/arrow-down-1-ec7f5c.svg" class="menu-icon-arrow-down-white d-none" width="12" alt="" />
+			<img src="/_static/icons/black/medium/arrow-down-1-38c71c.svg" class="menu-icon-arrow-down-black" width="12" alt="" />
+			</a>
+                        <div class="dropdown-menu dropdown-menu-navbar3">
+                            <div class="d-lg-flex justify-content-center">
+                                <div class="float-md-left">
+                                    <p class="dropdown-category">
+                                        Support</p>
+                                    <a class="dropdown-item" href="https://my.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Customer Portal<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="dropdown-item" href="https://support.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Help Center<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="dropdown-item" href="/en/contact-anydesk">
+	Contact Us</a></div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link nav-link-arrow-right cta-pricing-header" href="/en/pricing">Buy Now</a>
+                    </li>
+                </ul>
+                <div class="float-right mt-3 mt-lg-0">
+                    <a class="btn btn-sm btn-primary mr-1 d-lg-none d-xl-inline-block" href="/en/contact-anydesk/sales">
+	<p class="mb-0 d-inline-block">Contact Us</p>
+    </a><a class="btn btn btn-small btn-primary mr-1 d-none d-lg-inline-block d-xl-none" href="/en/contact-anydesk/sales">
+	<span><img src="/_static/icons/white/bold/envelope-07d233.svg" width="30" alt="" />
+			</span>
+    </a><a class="btn btn-sm btn-primary-outline d-lg-none d-xl-inline-block" href="/en/downloads">
+	<p class="mb-0 d-inline-block">Download Now</p>
+    </a><a class="btn btn btn-small btn-primary d-none d-lg-inline-block d-xl-none" href="/en/downloads">
+	<span><img src="/_static/icons/white/bold/download-bottom-5c14ad.svg" width="30" alt="" />
+			</span>
+    </a></div>
+            </div>
+        </nav>
+    </div>
+</div></header>
+			<div id="content">
+				<link rel="stylesheet" href="/_static/css/slick/slick.min-e6e4f1.css" type="text/css" />
+		<link rel="stylesheet" href="/_static/css/slick/slick-theme.min-7c2e6e.css" type="text/css" />
+
+		<a class="btn btn-primary d-none" id="download-button" download>
+	<p class="mb-0 d-inline-block">TRANSLATION_NOT_FOUND</p>
+    </a><style>.anydesk-arrow-v9-png-hero-img {
+        background-image: url(../../../_static/img/hero/anydesk-arrow-v9.png);
+    }
+
+    
+        .anydesk-arrow-v9-png-hero-img-darkmode {
+            background-image: url(../../../_static/img/hero/darkmode/anydesk-arrow-v9.png);
+        }
+    
+        .container-nav-bg {
+            background-color: transparent;
+        }
+        .container-white {
+            background-color: transparent;
+        }</style>
+
+<div class="container-header  darkmode&#32;font-color container-hero anydesk-arrow-v9-png-hero-img&#32;&#32;bg-pos-right" data-darkmode=anydesk-arrow-v9-png-hero-img-darkmode>
+    <div class="any-overlay any-overlay-white&#32;&#32;any-overlay-white-light&#32;&#32;"></div>
+    <div class="container">
+        <div class="row  text-center&#32;">
+        <div class="col-12 text-center">
+					<h1 class="h5 bold red">Remote Control Windows PC from Anywhere</h1>
+					<h2>Remote Desktop Software<br/>for Windows PC</h2>
+					<div class="height-73-sm">
+						<a class="btn btn-primary download-link" id="download-platform-button" href="/en/downloads/thank-you?dv=win_exe">
+	<p class="mb-0 d-inline-block">Download Now</p>
+    </a></div>
+
+					<div class="d-block">v9.6.2 (7.9 MB)</div>
+					<p class="mt-1">By downloading and using AnyDesk, you accept our <a href="/en/terms">Terms &amp; Conditions</a> and our <a href="/en/privacy">Privacy Policy</a>.</p>
+
+
+						</div></div>
+        </div>
+</div><div class="container">
+			<div class="row">
+				<div class="col-12">
+					<div class="divider-sm"></div>
+					<ul class="nav nav-tabs" id="iconNav" role="tablist">
+						<li class="nav-item" data-platform="windows" role="tab">
+								<a class="nav-link active" id="windows-nav-link" href="/en/downloads/windows" role="tab" data-platform="windows">
+									<img src="/_static/img/icons/new-design/windows-logo-red-orange-54ac2f.svg" id="windows-nav-icon" alt="" title="Windows" data-ot-ignore/>
+	<p>Windows</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="mac" role="tab">
+								<a class="nav-link" id="mac-nav-link" href="/en/downloads/mac-os" role="tab" data-platform="mac">
+									<img src="/_static/img/icons/new-design/mac-logo-208af3.svg" id="mac-nav-icon" alt="" title="macOS" data-ot-ignore/>
+	<p>macOS</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="android" role="tab">
+								<a class="nav-link" id="android-nav-link" href="/en/downloads/android" role="tab" data-platform="android">
+									<img src="/_static/img/icons/new-design/android-logo-5e3c95.svg" id="android-nav-icon" alt="" title="Android" data-ot-ignore/>
+	<p>Android</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="ios" role="tab">
+								<a class="nav-link" id="ios-nav-link" href="/en/downloads/ios" role="tab" data-platform="ios">
+									<img src="/_static/img/icons/new-design/ios-logo-cb4ee2.svg" id="ios-nav-icon" alt="" title="iOS" data-ot-ignore/>
+	<p>iOS</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="appletv" role="tab">
+								<a class="nav-link" id="appletv-nav-link" href="/en/downloads/apple-tv" role="tab" data-platform="appletv">
+									<img src="/_static/img/icons/new-design/appletv-logo-1415b6.svg" id="appletv-nav-icon" alt="" title="Apple TV" data-ot-ignore/>
+	<p>Apple TV</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="linux" role="tab">
+								<a class="nav-link" id="linux-nav-link" href="/en/downloads/linux" role="tab" data-platform="linux">
+									<img src="/_static/img/icons/new-design/linux-logo-39c4d2.svg" id="linux-nav-icon" alt="" title="Linux" data-ot-ignore/>
+	<p>Linux</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="freebsd" role="tab">
+								<a class="nav-link" id="freebsd-nav-link" href="/en/downloads/freebsd" role="tab" data-platform="freebsd">
+									<img src="/_static/img/icons/new-design/freebsd-logo-13e91e.svg" id="freebsd-nav-icon" alt="" title="FreeBSD" data-ot-ignore/>
+	<p>FreeBSD</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="raspberrypi" role="tab">
+								<a class="nav-link" id="raspberrypi-nav-link" href="/en/downloads/raspberry-pi" role="tab" data-platform="raspberrypi">
+									<img src="/_static/img/icons/new-design/raspberrypi-logo-5100f4.svg" id="raspberrypi-nav-icon" alt="" title="Raspberry Pi" data-ot-ignore/>
+	<p>Raspberry Pi</p>
+								</a>
+							</li>
+						<li class="nav-item" data-platform="chrome" role="tab">
+								<a class="nav-link" id="chrome-nav-link" href="/en/downloads/chrome-os" role="tab" data-platform="chrome">
+									<img src="/_static/img/icons/new-design/chrome-logo-d001ba.svg" id="chrome-nav-icon" alt="" title="Chrome OS" data-ot-ignore/>
+	<p>Chrome OS</p>
+								</a>
+							</li>
+						</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="divider"></div>
+
+		<div class="container any-module-textimg">
+    <div class="row  justify-content-center">
+        <div class="col-lg-6 text-lg-left mb-lg-0 p-2 text-center mb-3 ">
+            <div class="mr-lg-4 ml-lg-3">
+                        <p class="h5 bold red">Discover AnyDesk for Windows</p>
+                <h2 class="h3">Your Remote Desktop Software for Windows</h2>
+
+				<p><style>
+	.any-popover span{text-decoration: none !important;}
+</style><ul>
+        <li>New Session Request feature</li>
+        <li>Dedicated session queues</li>
+        <li>Session invitation links</li>
+        <li>Screen Recording</li>
+        <li>Updates free of charge</li>
+        <li>Compatible with earlier Windows versions</li>
+    </ul></p><a class="btn btn-primary download-link" id="download-platform-button" href="/en/downloads/thank-you?dv=win_exe">
+	<p class="mb-0 d-inline-block">Download Now</p>
+    </a><div class="mt-2">
+                    <a href="https://support.anydesk.com/knowledge/supported-operating-systems" target="_blank" rel="noopener noreferrer">
+	See all supported operating systems.<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a></div></div>
+                </div>
+        <div class="col-lg-6 text-center mb-0  pos-rel">
+            <img src="/_static/img/devices/anydesk-device-windows-dff587.jpg" class="img-fluid z-index-1 pos-rel  any-module-textimg-img opacity-10 max-height-450  darkmode" alt="Windows device with AnyDesk" title="Download AnyDesk for Windows" data-darkmode="/_static/img/devices/darkmode/anydesk-device-windows-e9ff8d.jpg" data-ot-ignore/>
+	</div>
+    </div>
+</div><div class="divider-sm"></div>
+
+		<div class="container-gray">
+			<div class="container">
+				<div class="divider-sm"></div>
+				<div class="row text-center">
+					<div class="col-md-12 mb-4">
+						<h2 class="h3">Highlights</h2>
+					</div>
+				</div>
+				<div class="row text-center justify-content-center">
+					<div class="col-sm-6 col-md-4 mb-4 mb-md-0">
+						<div class="px-2 px-xl-3">
+        <div class="sameHeight">
+        <img src="/_static/img/icons/new-design/space-rocket-flying-8948d0.svg" class="img-fluid mb-1 mx-auto h-50px w-auto darkmode" alt="" data-ot-ignore/>
+	<h3 class="h4 red">
+                Dynamic performance</h3>
+
+        <p class="mb-0">Establish seamless Remote Desktop  connections in Windows and offer excellent <a href='/en/solutions/remote-support'>Remote Support</a> to your customers with the help of thought-through features.</p>
+                </div>
+    <div class="mt-2 mt-md-3"></div>
+        <a href="/en/pricing">
+	Buy Now</a></div></div>
+					<div class="col-sm-6 col-md-4 mb-4 mb-md-0">
+						<div class="px-2 px-xl-3">
+        <div class="sameHeight">
+        <img src="/_static/img/icons/new-design/desktop-monitor-settings-5b07b6.svg" class="img-fluid mb-1 mx-auto h-50px w-auto darkmode" alt="" data-ot-ignore/>
+	<h3 class="h4 red">
+                Flexibility</h3>
+
+        <p class="mb-0">Customize AnyDesk with your own brand and logo to highlight your corporate identity. Easily <a href='/en/features'>administrate</a> all settings and configurations in Windows.</p>
+                </div>
+    <div class="mt-2 mt-md-3"></div>
+        <a href="/en/pricing">
+	Buy Now</a></div></div>
+					<div class="col-sm-6 col-md-4">
+						<div class="px-2 px-xl-3">
+        <div class="sameHeight">
+        <img src="/_static/img/icons/new-design/responsive-design-1-a75e0a.svg" class="img-fluid mb-1 mx-auto h-50px w-auto darkmode" alt="" data-ot-ignore/>
+	<h3 class="h4 red">
+                Compatibility</h3>
+
+        <p class="mb-0">AnyDesk is not only compatible with Windows 10 and older. You can also establish connections with many <a href='/en/all-platforms'>other operating systems</a> and their various versions, including iOS, macOS, Linux and Android.</p>
+                </div>
+    <div class="mt-2 mt-md-3"></div>
+        <a href="/en/pricing">
+	Buy Now</a></div></div>
+				</div>
+				<div class="divider-sm"></div>
+			</div>
+		</div>
+
+		<div class="divider"></div>
+
+		<div class="container">
+    <div class="row text-center align-items-center justify-content-center">
+        <div class="col-12">
+                    <h2 class="h3 mb-2 font-color">Using AnyDesk professionally?</h2>
+                    <a class="btn btn-primary pricing-button-3 cta-pricing" href="/en/pricing">
+	<p class="mb-0 d-inline-block">Buy Now</p>
+    </a></div>
+            </div>
+</div><div class="divider"></div>
+
+		<div class="container-gray">
+			<div class="divider-sm"></div>
+			<div class="container any-module-textimg">
+    <div class="row align-items-center justify-content-center">
+        <div class="col-lg-6&#32;order-lg-2 text-center text-lg-left mb-3 mb-lg-0">
+            <div class="mr-lg-4 ml-lg-3">
+                        <p class="h5 bold red">Tutorial: AnyDesk in a Nutshell</p>
+					<h2 class="h3">Discover all you need to know about AnyDesk</h2></div>
+                </div>
+        <div class="col-lg-6 text-center mb-0 order-lg-1 pos-rel z-index-1 ">
+            <div class="pos-rel embed-image downloads-windows-video-in_a_nutshell-embed-image" data-ref="downloads-windows-video-in_a_nutshell" >
+                <img src="/_static/img/videos/anydesk-employee-woman-sitting-office-red-65bcea.jpg" class="img-fluid any-module-textvideo-img mx-auto  darkmode" alt="Woman in front of a PC at the AnyDesk office" title="How to install AnyDesk" data-ot-ignore/>
+	<img src="/_static/icons/white/light/controls-play-558754.svg" class="any-module-textvideo-icon embed-icon-white downloads-windows-video-in_a_nutshell-embed-icon-white" width="120" alt="" />
+			<img src="/_static/icons/red/light/controls-play-c7b57a.svg" class="any-module-textvideo-icon embed-icon-red downloads-windows-video-in_a_nutshell-embed-icon-red" width="120" alt="" />
+			</div>
+            <div class="embed-responsive embed-responsive-textvideo embed-responsive-16by9 downloads-windows-video-in_a_nutshell-embed-video" data-ref="downloads-windows-video-in_a_nutshell">
+	<video
+		id="downloads-windows-video-in_a_nutshell"
+	    class="video-js vjs-fill vjs-big-play-centered embed-responsive-item"
+	    controls
+	    fluid
+	    preload="auto"
+	    data-setup="{}"
+		poster=""
+	  >
+	    <source src="https://www.anydesk.com/_videos/in_a_nutshell.mp4" type="video/mp4" />
+	    <source src="https://www.anydesk.com/_videos/in_a_nutshell.webm" type="video/webm" />
+	    <p class="vjs-no-js">
+	    	To view this video please enable JavaScript, and consider upgrading to a web browser that
+	        <a href="https://videojs.com/html5-video-support/" target="_blank" rel="noopener noreferrer">supports HTML5 video</a>
+	    </p>
+	</video>
+	</div>
+</div>
+    </div>
+</div><div class="divider-sm"></div>
+		</div>
+
+		<div class="divider"></div>
+
+		<div class="container">
+			<div class="row text-center">
+				<div class="col-md-6 col-lg-4 offset-lg-2 mb-4 mb-md-0 px-lg-3">
+					<h4>Do you need more information? Our online Help Center provides all the answers.</h4>
+					<a class="btn btn-primary-outline" href="https://support.anydesk.com" target="_blank" rel="noopener noreferrer">
+	<p class="mb-0 d-inline-block">Help Center</p>
+    <img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a></div>
+				<div class="col-md-6 col-lg-4 px-lg-3">
+					<h4>Interested in the most relevant changes in our latest AnyDesk version?</h4>
+					<a class="btn btn-primary-outline" href="/en/latest-version">
+	<p class="mb-0 d-inline-block">Learn More</p>
+    </a></div>
+			</div>
+		</div>
+
+		<div class="divider"></div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12 text-center">
+        <h2 class="h3 mb-2">Trusted by over <span class="primary-orange-gradient bold">200,000</span> customers</h2>
+    </div>
+<div class="col-md-12 any-slider-slick-col">
+    <div class="any-slider-slick-reference-logos">
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/1-f75772.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/1-e83481.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/2-933d52.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/2-e0f2ed.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/3-7dfd4f.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/3-f24e75.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/4-dbb9df.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/4-ca3d55.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/5-3179d1.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/5-a7057d.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/6-1f1a16.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/6-fda374.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/7-a49a86.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/7-759164.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/8-724f09.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/8-700a41.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/9-c52bb8.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/9-dd049f.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/10-d87a03.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/10-ad357f.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/11-229c76.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/11-b9d5f6.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/12-3e4333.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/12-69bf78.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/13-01dce7.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/13-ac8141.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/14-ea62c5.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/14-7da8ed.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/15-e9a4dc.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/15-707a1e.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/16-cf5c4d.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/16-793ff6.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/17-1b774b.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/17-3e5659.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/18-a5a96d.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/18-acbcdf.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/19-8fd721.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/19-20f581.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/20-3799e1.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/20-1118a9.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/21-b2d550.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/21-63e4ef.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/22-7d554a.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/22-c24671.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/23-eb4707.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/23-72c4ce.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/24-4c645a.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/24-c2b201.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/25-93b8a4.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/25-52cc81.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/26-da5cfc.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/26-c8cfcb.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        <div>
+                <div class="any-slider">
+                    <img src="/_static/img/sliders/reference-logos/customers/27-f9c6dc.jpg" class="img-fluid  darkmode" alt="" data-darkmode="/_static/img/sliders/reference-logos/customers/darkmode/27-4d62aa.jpg" data-ot-ignore/>
+	</div>
+            </div>
+        </div>
+</div></div>
+		</div>
+
+		<div class="container-gray">
+			<div class="container">
+				<div class="divider-sm"></div>
+				<div class="row text-center">
+					<div class="col-12 mb-4">
+						<h2 class="h3">More features</h2>
+					</div>
+				</div>
+				<div class="row text-center justify-content-center">
+					<div class="col-sm-6 col-md-4 mb-4 mb-md-5">
+						<div class="px-lg-2 px-xl-3 z-index-1">
+    <div class="sameHeight">
+        <h3 class="h4 red">Administration</h3>
+        <p class="mb-0">AnyDesk facilitates managing your Remote Desktop contacts and connections. You can administrate all settings and configurations in Windows with <a href='/en/features/group-policies'>Group Policies</a>. Focus on your projects rather than their administration.</p>
+        </div>
+    <span class="d-block mt-3"></span>
+        <a class="any-link" href="/en/features/group-policies">
+	Learn More</a></div></div>
+					<div class="col-sm-6 col-md-4 mb-4 mb-md-5">
+						<div class="px-lg-2 px-xl-3 z-index-1">
+    <div class="sameHeight">
+        <h3 class="h4 red">Security</h3>
+        <p class="mb-0">Thanks to TLS 1.2 encryption technology and incessant verification of connections, AnyDesk ensures end-to-end privacy and protects your data. Only authorized desks can demand <a href='/en/solutions/remote-access'>Remote Access</a> to your device via AnyDesk.</p>
+        </div>
+    <span class="d-block mt-3"></span>
+        <a class="any-link" href="/en/security">
+	Learn More</a></div></div>
+					<div class="col-sm-6 col-md-4 mb-4 mb-md-5">
+						<div class="px-lg-2 px-xl-3 z-index-1">
+    <div class="sameHeight">
+        <h3 class="h4 red">On-Premises</h3>
+        <p class="mb-0">You can establish an autonomous, private network that fully shields your data while operating Windows Remote Desktops with AnyDesk <a href='/en/solutions/on-premises'>On-Premises</a>. All information remains within your own network.</p>
+        </div>
+    <span class="d-block mt-3"></span>
+        <a class="any-link" href="/en/solutions/on-premises">
+	Learn More</a></div></div>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row text-center">
+					<div class="col-md-12 mb-3">
+							<a class="btn btn-primary download-link" id="download-platform-button" href="/en/downloads/thank-you?dv=win_exe">
+	<p class="mb-0 d-inline-block">Download Now</p>
+    </a></div>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row text-center">
+					<div class="col-12">
+						<a class="btn btn-primary-outline" href="/en/changelog/windows">
+	<p class="mb-0 d-inline-block">Changelog</p>
+    </a></div>
+				</div>
+			</div>
+
+			<div class="divider-sm"></div>
+		</div>
+
+	<div class="modal  fade modal-contact" id="contactUsModal" tabindex="-1" role="dialog" aria-labelledby="contactUsModalLabel" aria-hidden="true" data-ref="">
+	    <div class="modal-dialog-centered  modal-dialog modal-sm" role="document">
+			<div class="modal-content " >
+				<div class="modal-header text-center">
+							<h5 class="modal-title" id="contactUsModalLabel">Contact sales</h5>
+							<button type="button" class="close " data-dismiss="modal" aria-label="Close" data-ref="">
+								<span aria-hidden="true"></span>
+							</button>
+						</div>
+						<div class="modal-body text-center">
+								<p class="mb-0 contact-hover-number">
+			<a class="text-deco-none d-block btn-fix-border font-size-mdsm p-1 no-trans" href="tel:+919361926329">
+				<img src="/_static/icons/white/bold/phone-9be7e0.svg" class="phone-icon-white mb-0-1" width="20" alt="" />
+			+91 93619 26329<img src="/_static/icons/red/bold/arrow-button-right-1-acd1f2.svg" class="arrow-icon-red ml-7px mb-0-1" width="20" alt="" />
+			<img src="/_static/icons/white/bold/arrow-button-right-1-d8f1ad.svg" class="arrow-icon-white ml-3px d-none-normal mb-0-1" width="20" alt="" />
+			</a>
+			</p>
+		</div>
+					</div>
+	    </div>
+	</div>
+<div class="modal  fade modal-contact" id="contactUsModalAmericas" tabindex="-1" role="dialog" aria-labelledby="contactUsModalAmericasLabel" aria-hidden="true" data-ref="">
+	    <div class="modal-dialog-centered  modal-dialog modal-md" role="document">
+			<div class="modal-content modal-custom" >
+				<div class="modal-header text-center">
+							<button type="button" class="close " data-dismiss="modal" aria-label="Close" data-ref="">
+								<span aria-hidden="true"></span>
+							</button>
+						</div>
+						<div class="modal-body text-center">
+								<p>At AnyDesk, we want to provide the best experience and most innovative technology to all our users and customers. Our team will be operating on reduced holiday hours during this time.</p>
+		<h5 class="red text-center">Click below to create a ticket.</h5>
+		<div class="d-inline-block v-align-top mr-0 mr-md-2 mb-1">
+			<a class="btn btn-sm btn-primary" href="/en/contact/sales">
+	Sales</a></div>
+		<div class="d-inline-block v-align-top">
+			<a class="btn btn-sm btn-primary-outline" href="/en/contact/support">
+	Support</a></div></div>
+					</div>
+	    </div>
+	</div>
+<div class="modal  fade modal-contact" id="contactUsModalCta" tabindex="-1" role="dialog" aria-labelledby="contactUsModalCtaLabel" aria-hidden="true" data-ref="">
+	    <div class="modal-dialog-centered  modal-dialog modal-sm" role="document">
+			<div class="modal-content " >
+				<div class="modal-header text-center">
+							<h5 class="modal-title" id="contactUsModalCtaLabel">Contact sales</h5>
+							<button type="button" class="close " data-dismiss="modal" aria-label="Close" data-ref="">
+								<span aria-hidden="true"></span>
+							</button>
+						</div>
+						<div class="modal-body text-center">
+								<p class="mb-0 contact-hover-number">
+			<a class="text-deco-none d-block btn-fix-border font-size-mdsm p-1 no-trans" href="tel:+919361926329">
+				<img src="/_static/icons/white/bold/phone-9be7e0.svg" class="phone-icon-white mb-0-1" width="20" alt="" />
+			+91 93619 26329<img src="/_static/icons/red/bold/arrow-button-right-1-acd1f2.svg" class="arrow-icon-red ml-7px mb-0-1" width="20" alt="" />
+			<img src="/_static/icons/white/bold/arrow-button-right-1-d8f1ad.svg" class="arrow-icon-white d-none-normal mb-0-1" width="20" alt="" />
+			</a>
+			</p>
+		</div>
+					</div>
+	    </div>
+	</div>
+</div>
+			<div class="container-dark-gray">
+	<style>.newsletter-bg-img-png-hero-img {
+        background-image: url(../../../_static/img/hero/newsletter-bg-img.png);
+    }</style>
+
+<div class="bg-pos-right&#32; container-hero newsletter-bg-img-png-hero-img&#32;&#32;" >
+    <div class="container">
+        <div class="d-flex d-lg-block flex-column pos-rel any-module-newsletter p-2 p-md-4">
+				<h3 class="text-lg-left text-center mt-2 mt-md-0 font-size-lgxl bg-color-gray-dark-transparent pl-2 pr-2 pl-md-0 py-1 mb-0 d-inline-block border-radius-6px">Sign up for news, tips and more</h3>
+				<form id="newsletter-form" class="form-inline mt-2 mb-1" accept-charset="utf-8" action="/en/newsletter" method="post">
+					<div class="w-100 text-center text-md-left mb-2">
+						<div class="input-group mb-2 mb-md-0 d-inline-block">
+							<input type="hidden" name="newsletterSourceUrl" value="https://anydesk.com/en/downloads/windows">
+							<input type="hidden" data-cookie-value="hubspotutk" name="newsletterToken" value="">
+							<label for="email" class="sr-only">Enter your email address</label>
+							<input name="newsletterEmail" class="form-control border-none" pattern="[A-Za-z0-9._%+\-]+(?<!\.)@[A-Za-z0-9.\-]+\.[A-Za-z]{2,63}" title="Please enter a valid email address." required placeholder="Enter your email address*" type="email" value="" />
+	</div>
+						<button type="submit" class="btn btn-sm btn-primary d-inline-block ml-md-1" aria-label="Newsletter"><span>Subscribe Now</span></button>
+					</div>
+					<div class="m-auto m-md-0">
+								<span id="captcha-loading-newsletter">Loading captcha...</span>
+								<div data-callback="enableBtn" class="g-recaptcha" data-sitekey="6LcHubcUAAAAAHu47kB18HgzxqvE3j-fyMIs8Jv0"></div>
+							</div>
+						</form>
+				<!--<div class="custom-control custom-checkbox p-0">
+					<input type="hidden" name="__checkbox_confirmTermsNewsletter" value=""/>
+<input type="checkbox" value="true" class="pb-1" id="confirmTermsNewsletter" name="confirmTermsNewsletter" required/>
+
+<label for="confirmTermsNewsletter"class="font-size-sm required-checkbox">
+		I authorize AnyDesk Software GmbH to store and process my personal data.**</label>
+
+	</div> -->
+			</div></div>
+</div></div>
+
+
+<footer>
+	<div class="container container-footer d-block d-md-none">
+		<div class="divider"></div>
+		<div class="row">
+			<div class="col-12 mb-3">
+				<img src="/_static/img/logos/anydesk-logo-white-red-ec4e3a.png" class="footer-logo" alt="" title="AnyDesk logo" data-ot-ignore/>
+	<div class="mt-1">
+					<img src="/_static/img/logos/made-in-europe-white-69e1fc.svg" class="any-logo-made" alt="" title="AnyDesk logo" data-ot-ignore/>
+	</div>
+				<div class="d-flex align-items-center">
+						<style>
+
+</style>
+
+<!-- We can't show ZH-TW on the Language selector for Political reasons. Instead we set China language for ZH_TW -->
+<select class="selectpicker language-select" data-width="fit">
+	<option
+				value="/en/downloads/windows"
+				data-lang="en"
+				selected
+				data-content="<i class='flag-icon flag-icon-en'></i> <span class='country-name invisible'>English</span>"
+			>
+			</option>
+		<option
+				value="/de/downloads/windows"
+				data-lang="de"
+				
+				data-content="<i class='flag-icon flag-icon-de'></i> <span class='country-name invisible'>Deutsch</span>"
+			>
+			</option>
+		<option
+				value="/fr/downloads/windows"
+				data-lang="fr"
+				
+				data-content="<i class='flag-icon flag-icon-fr'></i> <span class='country-name invisible'>Français</span>"
+			>
+			</option>
+		<option
+				value="/it/downloads/windows"
+				data-lang="it"
+				
+				data-content="<i class='flag-icon flag-icon-it'></i> <span class='country-name invisible'>Italiano</span>"
+			>
+			</option>
+		<option
+				value="/es/downloads/windows"
+				data-lang="es"
+				
+				data-content="<i class='flag-icon flag-icon-es'></i> <span class='country-name invisible'>Español</span>"
+			>
+			</option>
+		<option
+				value="/pt/downloads/windows"
+				data-lang="pt"
+				
+				data-content="<i class='flag-icon flag-icon-pt'></i> <span class='country-name invisible'>Português</span>"
+			>
+			</option>
+		<option
+				value="/nl/downloads/windows"
+				data-lang="nl"
+				
+				data-content="<i class='flag-icon flag-icon-nl'></i> <span class='country-name invisible'>Nederlands</span>"
+			>
+			</option>
+		<option
+				value="/pl/downloads/windows"
+				data-lang="pl"
+				
+				data-content="<i class='flag-icon flag-icon-pl'></i> <span class='country-name invisible'>Polski</span>"
+			>
+			</option>
+		<option
+				value="/el/downloads/windows"
+				data-lang="el"
+				
+				data-content="<i class='flag-icon flag-icon-el'></i> <span class='country-name invisible'>Ελληνικά</span>"
+			>
+			</option>
+		<option
+				value="/tr/downloads/windows"
+				data-lang="tr"
+				
+				data-content="<i class='flag-icon flag-icon-tr'></i> <span class='country-name invisible'>Türkçe</span>"
+			>
+			</option>
+		<option
+				value="/ru/downloads/windows"
+				data-lang="ru"
+				
+				data-content="<i class='flag-icon flag-icon-ru'></i> <span class='country-name invisible'>Русский</span>"
+			>
+			</option>
+		<option
+				value="/ja/downloads/windows"
+				data-lang="ja"
+				
+				data-content="<i class='flag-icon flag-icon-ja'></i> <span class='country-name invisible'>日本語</span>"
+			>
+			</option>
+		<option
+				value="/zhs/downloads/windows"
+				data-lang="zhs"
+				
+				data-content="<i class='flag-icon flag-icon-zhs'></i> <span class='country-name invisible'>简体中文</span>"
+			>
+			</option>
+		<option
+				value="/zht/downloads/windows"
+				data-lang="zht"
+				
+				data-content="<i class='flag-icon flag-icon-zht'></i> <span class='country-name invisible'>繁體中文</span>"
+			>
+			</option>
+		<option
+				value="/ko/downloads/windows"
+				data-lang="ko"
+				
+				data-content="<i class='flag-icon flag-icon-ko'></i> <span class='country-name invisible'>한국어</span>"
+			>
+			</option>
+		</select>
+<img src="/_static/icons/red/bold/arrow-down-1-13dd01.svg" class="ml-minus-1" width="15" alt="" />
+			</div>
+				<div class="mt-3">
+					<a class="d-block mb-2" href="https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid" target="_blank" rel="noopener noreferrer" download aria-label="Google Play">
+	<img src="/_static/img/badges/google-play-badge-1338ed.svg" class="w-180px" alt="" data-ot-ignore/>
+	</a><a class="d-block" href="https://itunes.apple.com/us/app/anydesk/id1176131273" target="_blank" rel="noopener noreferrer" download aria-label="iTunes">
+	<img src="/_static/img/badges/app-store-badge-2f2fe1.svg" class="w-180px" alt="" data-ot-ignore/>
+	</a></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<div class="card-accordion card-accordion-dark">
+					<div class="card">
+						<div class="card-header card-header-accordion" data-toggle="collapse" href="#card-accordion-footer-menu1" aria-expanded="true" aria-controls="card-accordion-footer-menu1">
+							<a class="card-link" data-toggle="collapse" href="#card-accordion-footer-menu1" aria-expanded="true" aria-controls="card-accordion-footer-menu1">Why AnyDesk<span class="collapsed"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+								<span class="expanded"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+							</a>
+						</div>
+						<div id="card-accordion-footer-menu1" class="collapse show">
+							<div class="card-body">
+								<a class="nav-link p-0 pb-1" href="/en/performance">
+	Time-saving</a><a class="nav-link p-0 pb-1" href="/en/security">
+	Secure</a><a class="nav-link p-0 pb-1" href="/en/downloads">
+	All Platforms</a><a class="nav-link p-0 pb-1" href="/en/customization">
+	Customizable</a><a class="nav-link p-0 pb-1" href="/en/case-studies">
+	Case Studies</a><a class="nav-link p-0 pb-1" href="/en/features">
+	Features</a></div>
+						</div>
+					</div>
+					<div class="card">
+						<div class="card-header card-header-accordion" data-toggle="collapse" href="#card-accordion-footer-menu2" aria-expanded="true" aria-controls="card-accordion-footer-menu2">
+							<a class="card-link" data-toggle="collapse" href="#card-accordion-footer-menu2" aria-expanded="true" aria-controls="card-accordion-footer-menu2">Solutions<span class="collapsed"><span class="accordion-icon font-size-lg red"></span></span>
+								<span class="expanded"><span class="accordion-icon font-size-lg red"></span></span>
+							</a>
+						</div>
+						<div id="card-accordion-footer-menu2" class="collapse show">
+							<div class="card-body">
+								<a class="nav-link p-0 pb-1" href="/en/solutions/remote-desktop">
+	Remote Desktop</a><a class="nav-link p-0 pb-1" href="/en/solutions/remote-support">
+	Remote Support</a><a class="nav-link p-0 pb-1" href="/en/solutions/remote-work">
+	Remote Work</a><a class="nav-link p-0 pb-1" href="/en/solutions/remote-access">
+	Remote Access</a><a class="nav-link p-0 pb-1" href="/en/solutions/mobile-device-support">
+	Mobile Device Support</a><a class="nav-link p-0 pb-1" href="/en/solutions/on-premises">
+	Cloud vs On-Premises</a><a class="nav-link p-0 pb-1" href="/en/solutions/enterprise-solution">
+	Ultimate Solution</a><a class="nav-link p-0 pb-1 cta-pricing-footer" href="/en/pricing">
+	Buy Now</a><a class="nav-link p-0 pb-1" href="/en/downloads">
+	Downloads</a></div>
+						</div>
+					</div>
+					<div class="card">
+						<div class="card-header card-header-accordion" data-toggle="collapse" href="#card-accordion-footer-menu3" aria-expanded="true" aria-controls="card-accordion-footer-menu3">
+							<a class="card-link" data-toggle="collapse" href="#card-accordion-footer-menu3" aria-expanded="true" aria-controls="card-accordion-footer-menu3">Support<span class="collapsed"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+								<span class="expanded"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+							</a>
+						</div>
+						<div id="card-accordion-footer-menu3" class="collapse show">
+							<div class="card-body">
+								<a class="nav-link p-0 pb-1" href="/en/services">
+	AnyDesk Services</a><a class="nav-link p-0 pb-1" href="/en/services/customer-success">
+	Customer Success</a><a class="nav-link p-0 pb-1" href="https://support.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Help Center<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="nav-link p-0 pb-1" href="https://my.anydesk.com" target="_blank" rel="noopener noreferrer">
+	my.anydesk.com<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="nav-link p-0 pb-1" href="/en/abuse-prevention">
+	Abuse Prevention</a><a class="nav-link p-0 pb-1" href="/en/abuse-prevention">
+	Abuse Prevention</a><a class="nav-link p-0 pb-1" href="https://status.anydesk.com/" target="_blank" rel="noopener noreferrer">
+	System Status<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="nav-link p-0 pb-1" href="https://trust.anydesk.com/" target="_blank" rel="noopener noreferrer">
+	Trust Center<img src="/_static/icons/red/bold/keyboard-arrow-top-right-634d12.svg" class="ml-0-1" width="10" alt="" />
+			</a><a class="nav-link p-0 pb-1" href="/en/changelog">
+	Changelog</a></div>
+						</div>
+					</div>
+					<div class="card">
+						<div class="card-header card-header-accordion" data-toggle="collapse"  href="#card-accordion-footer-menu4" aria-expanded="true" aria-controls="card-accordion-footer-menu4">
+							<a class="card-link" data-toggle="collapse"  href="#card-accordion-footer-menu4" aria-expanded="true" aria-controls="card-accordion-footer-menu4">Company<span class="collapsed"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+								<span class="expanded"><span class="accordion-icon"><span class="font-size-lg red"></span></span></span>
+							</a>
+						</div>
+						<div id="card-accordion-footer-menu4" class="collapse show">
+							<div class="card-body">
+								<a class="nav-link p-0 pb-1" href="/en/leadership-team">
+	AnyDesk Team</a><a class="nav-link p-0 pb-1" href="/en/contact-anydesk">
+	Contact Us</a><a class="nav-link p-0 pb-1" href="/en/career">
+	Open Positions</a><a class="nav-link p-0 pb-1" href="/en/partners">
+	Partners</a><a class="nav-link p-0 pb-1" href="https://anydesk.com/fanshop" target="_blank" rel="noopener noreferrer">
+	Fanshop<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="divider"></div>
+	</div>
+
+	<div class="container container-footer d-none d-md-block">
+		<div class="divider d-none d-xl-block"></div>
+		<div class="divider-sm d-xl-none"></div>
+		<div class="row">
+			<div class="col-md-6 col-lg-12  col-xl-4 mb-3 mb-md-2 d-flex justify-content-center align-items-center">
+				<div class="d-flex flex-column align-items-start align-items-lg-center align-items-xl-end">
+					<img src="/_static/img/logos/anydesk-logo-white-red-ec4e3a.png" class="footer-logo" alt="" title="AnyDesk logo" data-ot-ignore/>
+	<div class="mt-1">
+						<img src="/_static/img/logos/made-in-europe-white-69e1fc.svg" class="any-logo-made" alt="" title="AnyDesk logo" data-ot-ignore/>
+	</div>
+
+					<div class="d-flex align-items-center footer-select mt-1">
+							<style>
+
+</style>
+
+<!-- We can't show ZH-TW on the Language selector for Political reasons. Instead we set China language for ZH_TW -->
+<select class="selectpicker language-select" data-width="fit">
+	<option
+				value="/en/downloads/windows"
+				data-lang="en"
+				selected
+				data-content="<i class='flag-icon flag-icon-en'></i> <span class='country-name invisible'>English</span>"
+			>
+			</option>
+		<option
+				value="/de/downloads/windows"
+				data-lang="de"
+				
+				data-content="<i class='flag-icon flag-icon-de'></i> <span class='country-name invisible'>Deutsch</span>"
+			>
+			</option>
+		<option
+				value="/fr/downloads/windows"
+				data-lang="fr"
+				
+				data-content="<i class='flag-icon flag-icon-fr'></i> <span class='country-name invisible'>Français</span>"
+			>
+			</option>
+		<option
+				value="/it/downloads/windows"
+				data-lang="it"
+				
+				data-content="<i class='flag-icon flag-icon-it'></i> <span class='country-name invisible'>Italiano</span>"
+			>
+			</option>
+		<option
+				value="/es/downloads/windows"
+				data-lang="es"
+				
+				data-content="<i class='flag-icon flag-icon-es'></i> <span class='country-name invisible'>Español</span>"
+			>
+			</option>
+		<option
+				value="/pt/downloads/windows"
+				data-lang="pt"
+				
+				data-content="<i class='flag-icon flag-icon-pt'></i> <span class='country-name invisible'>Português</span>"
+			>
+			</option>
+		<option
+				value="/nl/downloads/windows"
+				data-lang="nl"
+				
+				data-content="<i class='flag-icon flag-icon-nl'></i> <span class='country-name invisible'>Nederlands</span>"
+			>
+			</option>
+		<option
+				value="/pl/downloads/windows"
+				data-lang="pl"
+				
+				data-content="<i class='flag-icon flag-icon-pl'></i> <span class='country-name invisible'>Polski</span>"
+			>
+			</option>
+		<option
+				value="/el/downloads/windows"
+				data-lang="el"
+				
+				data-content="<i class='flag-icon flag-icon-el'></i> <span class='country-name invisible'>Ελληνικά</span>"
+			>
+			</option>
+		<option
+				value="/tr/downloads/windows"
+				data-lang="tr"
+				
+				data-content="<i class='flag-icon flag-icon-tr'></i> <span class='country-name invisible'>Türkçe</span>"
+			>
+			</option>
+		<option
+				value="/ru/downloads/windows"
+				data-lang="ru"
+				
+				data-content="<i class='flag-icon flag-icon-ru'></i> <span class='country-name invisible'>Русский</span>"
+			>
+			</option>
+		<option
+				value="/ja/downloads/windows"
+				data-lang="ja"
+				
+				data-content="<i class='flag-icon flag-icon-ja'></i> <span class='country-name invisible'>日本語</span>"
+			>
+			</option>
+		<option
+				value="/zhs/downloads/windows"
+				data-lang="zhs"
+				
+				data-content="<i class='flag-icon flag-icon-zhs'></i> <span class='country-name invisible'>简体中文</span>"
+			>
+			</option>
+		<option
+				value="/zht/downloads/windows"
+				data-lang="zht"
+				
+				data-content="<i class='flag-icon flag-icon-zht'></i> <span class='country-name invisible'>繁體中文</span>"
+			>
+			</option>
+		<option
+				value="/ko/downloads/windows"
+				data-lang="ko"
+				
+				data-content="<i class='flag-icon flag-icon-ko'></i> <span class='country-name invisible'>한국어</span>"
+			>
+			</option>
+		</select>
+<img src="/_static/icons/red/bold/arrow-down-1-13dd01.svg" class="ml-minus-1" width="15" alt="" />
+			</div>
+					</div>
+			</div>
+			<div class="col-md-6 mb-0 mb-md-3 d-md-block d-lg-none">
+				<a href="https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid" target="_blank" rel="noopener noreferrer" download aria-label="Google Play">
+	<img src="/_static/img/badges/google-play-badge-1338ed.svg" class="w-180px mr-1 mb-1" alt="" data-ot-ignore/>
+	</a><a href="https://itunes.apple.com/us/app/anydesk/id1176131273" target="_blank" rel="noopener noreferrer" download aria-label="iTunes">
+	<img src="/_static/img/badges/app-store-badge-2f2fe1.svg" class="w-180px" alt="" data-ot-ignore/>
+	</a></div>
+			<div class="col-xl-2 col-md-3">
+				<p class="red mb-3 pb-2 font-size-md border-bottom-solid-gradient">Why AnyDesk</p>
+				<p><a class="any-link-textblock-white" href="/en/performance">
+	Time-saving</a></p>
+				<p><a class="any-link-textblock-white" href="/en/security">
+	Secure</a></p>
+				<p><a class="any-link-textblock-white" href="/en/downloads">
+	All Platforms</a></p>
+				<p><a class="any-link-textblock-white" href="/en/customization">
+	Customizable</a></p>
+				<p><a class="any-link-textblock-white" href="/en/case-studies">
+	Case Studies</a></p>
+				<p class="mb-0"><a class="any-link-textblock-white" href="/en/features">
+	Features</a></p>
+			</div>
+			<div class="col-xl-2 col-md-3">
+				<p class="red mb-3 pb-2 font-size-md border-bottom-solid-gradient">Solutions</p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/remote-desktop">
+	Remote Desktop</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/remote-support">
+	Remote Support</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/remote-work">
+	Remote Work</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/remote-access">
+	Remote Access</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/mobile-device-support">
+	Mobile Device Support</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/on-premises">
+	Cloud vs On-Premises</a></p>
+				<p><a class="any-link-textblock-white" href="/en/solutions/enterprise-solution">
+	Ultimate Solution</a></p>
+				<p><a class="any-link-textblock-white cta-pricing-footer" href="/en/pricing">
+	Buy Now</a></p>
+				<p class="mb-0"><a class="any-link-textblock-white" href="/en/downloads">
+	Downloads</a></p>
+			</div>
+			<div class="col-xl-2 col-md-3">
+				<p class="red mb-3 pb-2 font-size-md border-bottom-solid-gradient">Support</p>
+				<p><a class="any-link-textblock-white" href="/en/services">
+	AnyDesk Services</a></p>
+				<p><a class="any-link-textblock-white" href="/en/services/customer-success">
+	Customer Success</a></p>
+				<p><a class="any-link-textblock-white" href="https://support.anydesk.com" target="_blank" rel="noopener noreferrer">
+	Help Center<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></p>
+				<p><a class="any-link-textblock-white" href="https://my.anydesk.com" target="_blank" rel="noopener noreferrer">
+	my.anydesk.com<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></p>
+				<p><a class="any-link-textblock-white" href="/en/abuse-prevention">
+	Abuse Prevention</a></p>
+				<p><a class="any-link-textblock-white" href="https://status.anydesk.com/" target="_blank" rel="noopener noreferrer">
+	System Status<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></p>
+				<p><a class="any-link-textblock-white" href="https://trust.anydesk.com/" target="_blank" rel="noopener noreferrer">
+	Trust Center<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></p>
+				<p><a class="any-link-textblock-white" href="/en/changelog">
+	Changelog</a></p>
+			</div>
+			<div class="col-xl-2 col-md-3">
+				<p class="red mb-3 pb-2 font-size-md border-bottom-solid-gradient">Company</p>
+				<p><a class="any-link-textblock-white" href="/en/leadership-team">
+	AnyDesk Team</a></p>
+				<p><a class="any-link-textblock-white" href="/en/contact-anydesk">
+	Contact Us</a></p>
+				<p><a class="any-link-textblock-white" href="/en/career">
+	Open Positions</a></p>
+				<p><a class="any-link-textblock-white" href="/en/partners">
+	Partners</a></p>
+				<p class="mb-0"><a class="any-link-textblock-white" href="https://anydesk.com/fanshop" target="_blank" rel="noopener noreferrer">
+	Fanshop<img src="/_static/icons/white/bold/keyboard-arrow-top-right-5f4184.svg" class="ml-0-1" width="10" alt="" />
+			</a></p>
+					</div>
+		</div>
+		<div class="divider"></div>
+	</div>
+		
+	<div class="container-footer-bottom">
+		<div class="container">
+			<div class="row justify-content-center align-items-center">
+				<div class="col-lg-7 col-md-6 align-items-center">
+					<p class="mb-0 font-size-xs">
+						© 2025 AnyDesk Software GmbH
+						 &bull;
+						<a class="any-link-textblock-red" href="/en/terms">
+	Terms &amp; Conditions</a> &bull;
+						<a class="any-link-textblock-red" href="/en/privacy">
+	Privacy Policy</a> &bull;
+						<a class="any-link-textblock-red" href="/en/imprint">
+	Legal Notice</a></p>
+				</div>
+				<div class="col-lg-5 col-md-6 mt-2 mt-md-0">
+					<a class="footer-social-icon-tt ml-2" href="https://www.tiktok.com/@anydesksoftware" title="TikTok" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-tw ml-2" href="https://twitter.com/anydesk" title="Twitter" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-rd ml-2" href="https://www.reddit.com/r/AnyDesk/" title="reddit" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-yt ml-2" href="https://www.youtube.com/channel/UCFkLwT67lnyruZWVw78-NjA" title="YouTube" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-li ml-2" href="https://de.linkedin.com/company/anydesk-software-gmbh" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-fb ml-2" href="https://www.facebook.com/AnyDesk/" title="Facebook" target="_blank" rel="noopener noreferrer">
+	</a><a class="footer-social-icon-ig ml-2" href="https://www.instagram.com/anydesksoftware/" title="Instagram" target="_blank" rel="noopener noreferrer">
+	</a></div>	
+			</div>
+		</div>
+	</div>
+
+	</footer>
+</div>
+		<script src="/_static/js/jquery-3.5.1.min-d2cc8d.js"></script>
+		<script src="/_static/js/popper.min-60cc59.js"></script>
+		<script src="/_static/js/bootstrap.min-0cc93b.js"></script>
+		<script src="/_static/js/bootstrap-select/bootstrap-select.min-44f87f.js"></script>
+		<script src="/_static/js/anydesk.min-24cfa8.js"></script>
+		<!-- Matomo Global Tracker -->
+
+
+
+<script>
+	$(document).ready(function(){$('[class*="cta-pricing"]').on('click',function(e){e.preventDefault();let link=$(this).attr("href");let classNames=$(this).attr('class').split(' ');let ctaPosition='';$.each(classNames,function(i,className){if(className.startsWith('cta-pricing-')){ctaPosition='-'+className.split('-').pop();return false;}});_paq.push(['trackEvent','CTA','BuyNow','downloads/windows'+ctaPosition]);setTimeout(function(){window.location.href=link;},500);});$('[class*="cta-contactsales"]').on('click',function(e){e.preventDefault();let link=$(this).attr("href");let classNames=$(this).attr('class').split(' ');let ctaPosition='';$.each(classNames,function(i,className){if(className.startsWith('cta-contactsales-')){ctaPosition='-'+className.split('-').pop();return false;}});_paq.push(['trackEvent','CTA','GetNow','downloads/windows'+ctaPosition]);setTimeout(function(){window.location.href=link;},500);});});
+</script>
+<!-- End Matomo Global Tracker --><script src="https://www.recaptcha.net/recaptcha/api.js?onload=recaptchaLoadedNewsletter" async defer></script><script>
+			
+				function recaptchaLoadedNewsletter() {
+					$("#captcha-loading-newsletter").hide();
+				}
+			</script>
+		<script src="/_static/video-js/video.min-1869f1.js"></script>
+		<script src="/_static/js/slick.min-3b41b3.js"></script>
+		<script src="/_static/js/dataTables-29e0ec.js"></script>
+		<script src="/_static/js/dataTables.bootstrap4-4df14e.js"></script>
+		<script>
+			let searchText = "Search";
+			let allText = "All";
+			let noResultsText = "No results found";
+		</script>
+
+<script>
+	$(document).ready(function(){function iOS(){return['iPad Simulator','iPhone Simulator','iPod Simulator','iPad','iPhone','iPod'].includes(navigator.platform)||(navigator.userAgent.includes("Mac")&&"ontouchend"in document)}
+var agent=window.navigator.userAgent;var platform=window.navigator.platform;var iosPlatforms=['iPhone','iPad','iPod'];var os,url,appstore;os=url='windows';appstore=''
+if(/Mac/.test(platform)){os='mac';url='mac-os';}else if(iOS()){os=url=appstore='ios';}else if(/huawei/gi.test(agent)){os='android';url='huawei';appstore='huawei'}else if(/Android/.test(agent)){os=url=appstore='android';}else if(/CrOS/.test(agent)){os='chrome';url='chrome-os';appstore='chrome-os';}else if(/Linux/.test(platform)){os=url='linux';}
+var downloads={"appletv":{"platformName":"Apple TV","sizeString":"21.1 MB","packages":[{"size":21100000,"name":"iOS","id":"","version":"7.1.0","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"}],"version":"7.1.0","platform":"appletv","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"},"chrome":{"platformName":"Chrome OS","sizeString":"48.1 MB","packages":[{"size":48066324,"name":"Chrome OS","id":"","version":"8.0.4","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"}],"version":"8.0.4","platform":"chrome","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"},"freebsd":{"platformName":"FreeBSD","sizeString":"4.9 MB","packages":[{"size":4870859,"old":"https://download.anydesk.com/freebsd","name":"FreeBSD (64 Bit)","id":"freebsd_64","version":"6.1.1","url":"https://download.anydesk.com/freebsd/anydesk-freebsd-6.1.1-x86_64.tar.gz"}],"version":"6.1.1","platform":"freebsd","url":"https://download.anydesk.com/freebsd/anydesk-freebsd-6.1.1-x86_64.tar.gz"},"raspberrypi":{"platformName":"Raspberry Pi","sizeString":"14.7 MB","packages":[{"size":14689304,"old":"https://download.anydesk.com/rpi","name":"Raspberry Pi","id":"raspberrypi","version":"7.1.0","url":"https://download.anydesk.com/rpi/anydesk_7.1.0-1_arm64.deb"}],"version":"7.1.0","platform":"raspberrypi","url":"https://download.anydesk.com/rpi/anydesk_7.1.0-1_arm64.deb"},"android":{"platformName":"Android","sizeString":"48.1 MB","packages":[{"size":48066324,"name":"Android","id":"","version":"8.0.4","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"}],"version":"8.0.4","platform":"android","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"},"linux":{"platformName":"Linux","sizeString":"14.6 MB","packages":[{"size":14698084,"old":"https://download.anydesk.com/linux","name":"Debian / Ubuntu / Mint (64 Bit)","id":"deb_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_amd64.deb"},{"size":14644673,"name":"openSUSE 15/42 (64 Bit)","id":"suse_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"CentOS 7 (64 Bit)","id":"centos7_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"CentOS 8 (64 Bit)","id":"centos8_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"RedHat Enterprise Linux 7 (64 Bit)","id":"redhat7_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"RedHat Enterprise Linux 8 (64 Bit)","id":"redhat8_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14720287,"name":"Generic Linux (64 Bit)","id":"linux_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk-7.1.0-amd64.tar.gz"}],"version":"7.1.0","platform":"linux","url":"/en/downloads/linux"},"windows":{"platformName":"Windows","sizeString":"7.9 MB","packages":[{"size":7945144,"name":"Windows","id":"win_exe","version":"9.6.2","url":"https://download.anydesk.com/AnyDesk.exe"}],"version":"9.6.2","platform":"windows","url":"https://download.anydesk.com/AnyDesk.exe"},"ios":{"platformName":"iOS","sizeString":"43.7 MB","packages":[{"size":43700000,"name":"iOS","id":"","version":"7.1.2","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"}],"version":"7.1.2","platform":"ios","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"},"mac":{"platformName":"macOS","sizeString":"26 MB","packages":[{"size":26020146,"old":"https://download.anydesk.com/macos","name":"macOS","id":"mac_dmg","version":"9.5.0","url":"https://download.anydesk.com/anydesk.dmg"}],"version":"9.5.0","platform":"mac","url":"https://download.anydesk.com/anydesk.dmg"}};var download=downloads[os];let mtmPushed=false;function startDownload(e){if(!mtmPushed){e.preventDefault();_paq.push(['trackEvent','CTA','Download','downloads/windows']);setTimeout(function(){$('.download-button').trigger('click');},500);mtmPushed=true;}else{setTimeout(function(){window.location=$('.download-button').attr('href');},500);}}
+$('.download-button').click(startDownload);switch(os){case"windows":case"mac":case"raspberrypi":case"freebsd":$('.download-button').attr('href',"/en/downloads/thank-you"+"?dv="+download.packages[0].id);break;default:$('.download-button').attr('href',"/en/downloads/"+download.platform);break;}
+switch(appstore){case"huawei":$('.download-button').attr('href',"https://appgallery.huawei.com/#/app/C100140863");break;case"android":case"ios":case"chrome-os":$('.download-button').attr('href',download.url);break;}});var selectedDownload;$(document).ready(function(){var downloads={"appletv":{"platformName":"Apple TV","sizeString":"21.1 MB","packages":[{"size":21100000,"name":"iOS","id":"","version":"7.1.0","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"}],"version":"7.1.0","platform":"appletv","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"},"chrome":{"platformName":"Chrome OS","sizeString":"48.1 MB","packages":[{"size":48066324,"name":"Chrome OS","id":"","version":"8.0.4","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"}],"version":"8.0.4","platform":"chrome","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"},"freebsd":{"platformName":"FreeBSD","sizeString":"4.9 MB","packages":[{"size":4870859,"old":"https://download.anydesk.com/freebsd","name":"FreeBSD (64 Bit)","id":"freebsd_64","version":"6.1.1","url":"https://download.anydesk.com/freebsd/anydesk-freebsd-6.1.1-x86_64.tar.gz"}],"version":"6.1.1","platform":"freebsd","url":"https://download.anydesk.com/freebsd/anydesk-freebsd-6.1.1-x86_64.tar.gz"},"raspberrypi":{"platformName":"Raspberry Pi","sizeString":"14.7 MB","packages":[{"size":14689304,"old":"https://download.anydesk.com/rpi","name":"Raspberry Pi","id":"raspberrypi","version":"7.1.0","url":"https://download.anydesk.com/rpi/anydesk_7.1.0-1_arm64.deb"}],"version":"7.1.0","platform":"raspberrypi","url":"https://download.anydesk.com/rpi/anydesk_7.1.0-1_arm64.deb"},"android":{"platformName":"Android","sizeString":"48.1 MB","packages":[{"size":48066324,"name":"Android","id":"","version":"8.0.4","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"}],"version":"8.0.4","platform":"android","url":"https://play.google.com/store/apps/details?id=com.anydesk.anydeskandroid"},"linux":{"platformName":"Linux","sizeString":"14.6 MB","packages":[{"size":14698084,"old":"https://download.anydesk.com/linux","name":"Debian / Ubuntu / Mint (64 Bit)","id":"deb_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_amd64.deb"},{"size":14644673,"name":"openSUSE 15/42 (64 Bit)","id":"suse_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"CentOS 7 (64 Bit)","id":"centos7_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"CentOS 8 (64 Bit)","id":"centos8_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"RedHat Enterprise Linux 7 (64 Bit)","id":"redhat7_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14644673,"name":"RedHat Enterprise Linux 8 (64 Bit)","id":"redhat8_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk_7.1.0-1_x86_64.rpm"},{"size":14720287,"name":"Generic Linux (64 Bit)","id":"linux_64","version":"7.1.0","url":"https://download.anydesk.com/linux/anydesk-7.1.0-amd64.tar.gz"}],"version":"7.1.0","platform":"linux","url":"/en/downloads/linux"},"windows":{"platformName":"Windows","sizeString":"7.9 MB","packages":[{"size":7945144,"name":"Windows","id":"win_exe","version":"9.6.2","url":"https://download.anydesk.com/AnyDesk.exe"}],"version":"9.6.2","platform":"windows","url":"https://download.anydesk.com/AnyDesk.exe"},"ios":{"platformName":"iOS","sizeString":"43.7 MB","packages":[{"size":43700000,"name":"iOS","id":"","version":"7.1.2","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"}],"version":"7.1.2","platform":"ios","url":"https://itunes.apple.com/us/app/anydesk/id1176131273"},"mac":{"platformName":"macOS","sizeString":"26 MB","packages":[{"size":26020146,"old":"https://download.anydesk.com/macos","name":"macOS","id":"mac_dmg","version":"9.5.0","url":"https://download.anydesk.com/anydesk.dmg"}],"version":"9.5.0","platform":"mac","url":"https://download.anydesk.com/anydesk.dmg"}};var platformName="";var version="";function isFirefoxOniOS(){const ua=navigator.userAgent||navigator.vendor||window.opera;return/FxiOS/i.test(ua);}
+if(!isFirefoxOniOS()){if(document.getElementById('download-button')){setTimeout(function(){_paq.push(['trackEvent','Downloads','Download - '+platformName,version]);document.getElementById('download-button').click();},500);}}
+if(window.location.hash==='#changelog')
+{$('#changelog').addClass('show');$('#btn-changelog').addClass('collapsed');$('html, body').animate({scrollTop:$("#btn-changelog").offset().top},300);}});$('.any-slider-slick-reference-logos').slick({infinite:true,slidesToShow:5,slidesToScroll:1,swipeToSlide:true,autoplay:true,autoplaySpeed:5000,arrows:false,responsive:[{breakpoint:768,settings:{slidesToShow:3,}},]});$('.any-slider-slick-images-text').slick({infinite:true,slidesToShow:3,slidesToScroll:1,autoplay:true,autoplaySpeed:5000,responsive:[{breakpoint:1600,settings:{slidesToShow:3,dots:false,arrows:true,}},{breakpoint:1400,settings:{slidesToShow:3,dots:false,arrows:false,}},{breakpoint:1200,settings:{slidesToShow:2,dots:false,arrows:false,}},{breakpoint:992,settings:{slidesToShow:2,dots:false,arrows:false,}},{breakpoint:768,settings:{slidesToShow:1,dots:false,arrows:false,}},{breakpoint:480,settings:{slidesToShow:1,dots:false,arrows:false,}}]});$('.any-slider-slick-articles, .any-slider-slick-onboarding, .any-slider-slick-premium-onboarding, .any-slider-slick-essentials-onboarding').slick({infinite:true,slidesToShow:3,slidesToScroll:1,autoplay:true,autoplaySpeed:5000,dots:true,arrows:false,responsive:[{breakpoint:1600,settings:{slidesToShow:3,dots:true}},{breakpoint:1200,settings:{slidesToShow:3,dots:true}},{breakpoint:992,settings:{slidesToShow:2,dots:true}},{breakpoint:768,settings:{slidesToShow:1,dots:true}},{breakpoint:480,settings:{slidesToShow:1,dots:true}}]});$('.any-slider-slick-images').slick({infinite:true,slidesToShow:3,slidesToScroll:1,autoplay:true,autoplaySpeed:5000,responsive:[{breakpoint:1600,settings:{slidesToShow:3,arrows:true}},{breakpoint:1200,settings:{slidesToShow:3,arrows:true}},{breakpoint:992,settings:{slidesToShow:3,arrows:false}},{breakpoint:768,settings:{slidesToShow:3,arrows:false}},{breakpoint:480,settings:{slidesToShow:1,arrows:false}}]});$('.any-slider-slick-images-myad').slick({infinite:false,slidesToShow:2,slidesToScroll:2,arrows:true});$('.any-slider-slick-testimonials').slick({infinite:true,slidesToShow:1,slidesToScroll:1,autoplay:true,autoplaySpeed:5000,arrows:false,dots:true});$('.any-slider-slick-features').slick({infinite:true,slidesToShow:3,slidesToScroll:1,autoplay:true,dots:true,autoplaySpeed:5000,arrows:false,responsive:[{breakpoint:1600,settings:{slidesToShow:3,dots:true}},{breakpoint:1200,settings:{slidesToShow:3,dots:true}},{breakpoint:992,settings:{slidesToShow:3,dots:true}},{breakpoint:768,settings:{slidesToShow:1,dots:true}},{breakpoint:480,settings:{slidesToShow:1,dots:true}}]});$('.any-slider-slick-namespace').slick({slidesToShow:1,dots:true,arrows:true,autoplay:false,infinite:true,responsive:[{breakpoint:992,settings:{slidesToShow:1,slidesToScroll:1,autoplay:true,infinite:true,arrows:false,autoplaySpeed:7000,}},{breakpoint:1200,settings:{slidesToShow:1,slidesToScroll:1,autoplay:true,infinite:true,arrows:false,autoplaySpeed:7000,}}]});$('.any-slider-slick-namespace').on('beforeChange',function(event,slick,currentSlide,nextSlide){for(var i=0;i<4;i++){console.log(i,nextSlide)
+if(nextSlide===i){$(".img-slider-"+i).removeClass("d-none");}else{$(".img-slider-"+i).addClass("d-none");}}});$('.any-slider-slick-collaboration').slick({infinite:true,slidesToShow:3,dots:false,responsive:[{breakpoint:1600,settings:{slidesToShow:3,dots:false}},{breakpoint:1200,settings:{slidesToShow:3,dots:false}},{breakpoint:992,settings:{slidesToShow:3,dots:false}},{breakpoint:768,settings:{slidesToShow:1,dots:true}},{breakpoint:480,settings:{slidesToShow:1,dots:true}}]});$('.any-slider-slick-stories').slick({infinite:false,centerMode:true,slidesToShow:1,slidesToScroll:1,autoplay:false,arrows:true,initialSlide:1,dots:true,variableWidth:true,autoplaySpeed:5000,speed:1500,adaptiveHeight:true,responsive:[{breakpoint:1500,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:1200,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:992,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:768,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:480,settings:{centerMode:false,variableWidth:false,dots:true}}]});$('.any-slider-slick-stories').on('beforeChange',function(event,slick,currentSlide,nextSlide){var overlay=$("#slick-slide"+pad(currentSlide,2)+" > .any-slider > .any-overlay");var overlayContent=$("#slick-slide"+pad(currentSlide,2)+" > .any-slider > .any-slider-content");overlayContent.animate({opacity:0},1000);overlay.animate({marginLeft:"100%",width:"0"},1000);var nextSlideOverlay=$("#slick-slide"+pad(nextSlide,2)+" > .any-slider > .any-overlay");var nextSlideOverlayContent=$("#slick-slide"+pad(nextSlide,2)+" > .any-slider > .any-slider-content");nextSlideOverlayContent.animate({opacity:1},1000);if($(this).width()<768){nextSlideOverlay.animate({marginLeft:"0",width:"100%"},1000);}else if($(this).width()<992){nextSlideOverlay.animate({marginLeft:"30%",width:"70%"},1000);}else{nextSlideOverlay.animate({marginLeft:"50%",width:"50%"},1000);}});$('.any-slider-slick-stories-testimonials').slick({centerMode:true,centerPadding:'0',slidesToShow:3,arrows:false,dots:true,infinite:false,responsive:[{breakpoint:992,settings:{arrows:false,centerMode:true,centerPadding:'0',slidesToShow:1}},{breakpoint:480,settings:{arrows:false,centerMode:true,centerPadding:'0',slidesToShow:1}}]});$('.any-slider-slick-stories-testimonials').on('beforeChange',function(event,slick,currentSlide,nextSlide){var nextCurrentId;$('.any-slider-slick-stories-testimonials .any-slider').each(function(){var slide=$(this);if(slide.attr('data-slick-index')==nextSlide){slide.children('.any-slider-slick-center').removeClass("any-slider-stay-big");nextCurrentId=nextSlide+1;slide.css("visibility","visible");slide.css("opacity",1);return;}
+if(nextCurrentId&&slide.attr('data-slick-index')==nextCurrentId){slide.children('.any-slider-slick-center').removeClass("any-slider-stay-big");slide.css("visibility","visible");slide.css("opacity",1);return;}
+if(currentSlide<nextSlide)
+slide.children('.any-slider-slick-center').addClass("any-slider-stay-big");slide.animate({opacity:0},100);});});$('.any-slider-slick-creative-use').slick({swipe:true,autoplaySpeed:5000,speed:1500,swipeToSlide:true,centerMode:true,centerPadding:'0',slidesToShow:3,arrows:true,focusOnSelect:true,responsive:[{breakpoint:992,settings:{centerMode:true,centerPadding:'0',slidesToShow:1,infinite:true,}},{breakpoint:480,settings:{centerMode:true,centerPadding:'0',slidesToShow:1,infinite:true,}}]});$('.any-slider-slick-creative-use').on("afterChange",function(slick,currentSlide){$('.any-slider-slick-creative-use .slick-slide').each(function(){var slide=$(this);var video=slide.find("video");if(slide.hasClass("slick-current"))return;if(video.length>0){var videoId=video[0].id;var player=videojs.getPlayer(videoId);if(player){player.pause();player.currentTime(0);player.hasStarted(false);}}});});$('.any-slider-slick-client-testimonials').slick({infinite:true,autoplay:false,dots:false,arrows:true,slidesToShow:4,slidesToScroll:1,responsive:[{breakpoint:1600,settings:{slidesToShow:4,arrows:false,dots:true}},{breakpoint:1500,settings:{slidesToShow:4,arrows:false,dots:true}},{breakpoint:1200,settings:{slidesToShow:3,arrows:false,dots:true}},{breakpoint:992,settings:{slidesToShow:3,arrows:false,dots:true}},{breakpoint:768,settings:{slidesToShow:2,arrows:false,dots:true}},{breakpoint:576,settings:{slidesToShow:2,arrows:false,dots:true}},{breakpoint:480,settings:{slidesToShow:1}}]});$('.any-slider-slick-integrations').slick({infinite:false,centerMode:true,slidesToShow:1,slidesToScroll:1,autoplay:false,arrows:true,initialSlide:1,dots:true,variableWidth:true,autoplaySpeed:5000,speed:1500,adaptiveHeight:true,responsive:[{breakpoint:1500,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:1200,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:992,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:768,settings:{centerMode:false,variableWidth:false,dots:true}},{breakpoint:480,settings:{centerMode:false,variableWidth:false,dots:true}}]});$('.any-slider-slick-integrations').on('beforeChange',function(event,slick,currentSlide,nextSlide){var overlay=$("#slick-slide"+pad(currentSlide,2)+" > .any-slider > .any-overlay");var overlayContent=$("#slick-slide"+pad(currentSlide,2)+" > .any-slider > .any-slider-content");overlayContent.animate({opacity:0},1000);overlay.animate({marginLeft:"100%",width:"0"},1000);var nextSlideOverlay=$("#slick-slide"+pad(nextSlide,2)+" > .any-slider > .any-overlay");var nextSlideOverlayContent=$("#slick-slide"+pad(nextSlide,2)+" > .any-slider > .any-slider-content");nextSlideOverlayContent.animate({opacity:1},1000);if($(this).width()<768){nextSlideOverlay.animate({marginLeft:"0",width:"100%"},1000);}else if($(this).width()<992){nextSlideOverlay.animate({marginLeft:"30%",width:"70%"},1000);}else{nextSlideOverlay.animate({marginLeft:"50%",width:"50%"},1000);}});$('.any-slider-slick-images-freshworks-integration').slick({infinite:true,slidesToShow:3,slidesToScroll:1,autoplay:true,autoplaySpeed:5000,dots:true,responsive:[{breakpoint:1600,settings:{slidesToShow:3,arrows:true}},{breakpoint:1200,settings:{slidesToShow:3,arrows:true}},{breakpoint:992,settings:{slidesToShow:3,arrows:false}},{breakpoint:768,settings:{slidesToShow:3,arrows:false}},{breakpoint:480,settings:{slidesToShow:1,arrows:false}}]});$(document).ready(function(){$('#downloadVersionTable thead').clone(true).addClass('downloadVersionTableFilters').insertBefore('#downloadVersionTable');var table=$('#downloadVersionTable').DataTable({aaSorting:[[4,'desc']],lengthChange:false,language:{search:"",searchPlaceholder:searchText+'...',searchPanes:{i18n:{emptyMessage:noResultsText}},infoEmpty:noResultsText,zeroRecords:noResultsText,emptyTable:noResultsText,},initComplete:function(){this.api().columns().every(function(ind){var column=this;var colTitle=this.header().innerHTML;var select=$('<select class="form-control form-control-lg cursor-pointer custom-cls"><option value="">'+allText+'&nbsp;'+colTitle+'</option></select>').appendTo($(".downloadVersionTableFilters th").eq(column.index()).empty()).on('click',function(evt){evt.stopPropagation();}).on('change',function(){var val=$.fn.dataTable.util.escapeRegex($(this).val());column.search(val?'^'+val+'$':'',true,false).draw();});column.data().unique().sort().each(function(d,j){select.append('<option value="'+d+'">'+d+'</option>');});});},});$('.btn-reset').on('click',function(){$('thead select').each(function(index){$(this).val('')})
+table.columns().search('').draw();$('input[type=search]').val('');table.search('').draw();})});$(document).ready(function(){$("select.language-select").change(function(){gae('Interactions','Change Language','en to '+$('option:selected',this).attr('data-lang'));var url=$(this).val();var params=window.location.href.indexOf("?")>0?window.location.href.slice(window.location.href.indexOf('?')+1):"";if(params)url=url+"?"+params;setTimeout(function(){window.location=url;},250);});});
+</script>
+<!-- Start of Salesforce -->
+
+
+<script>
+	function initEmbeddedMessaging(){try{embeddedservice_bootstrap.settings.language='en';window.addEventListener("onEmbeddedMessagingReady",()=>{embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({"Country_Based":"IN","Conversation_Language":"en"});});embeddedservice_bootstrap.init('00D680000026b4z','Live_Chat_Deployment','https://anydesk.my.site.com/ESWLiveChatDeployment1746023403312',{scrt2URL:'https://anydesk.my.salesforce-scrt.com'});}catch(err){console.error('Error loading Embedded Messaging: ',err);}};
+</script>
+<script type='text/javascript' src='https://anydesk.my.site.com/ESWLiveChatDeployment1746023403312/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
+<!-- End of Salesforce --></body>
+</html>

@@ -1,5 +1,7 @@
-require('dotenv').config();
+﻿require('dotenv').config();
+const { debugLog, isDevelopment } = require('./utils/debugLogger');
 const express = require('express');
+
 const mongoose = require('mongoose');
 
 const passport = require('passport');
@@ -21,27 +23,22 @@ const { helmetConfig, apiRateLimit } = require('./middleware/security');
 
 const app = express();
 
+console.log('[STARTUP] Starting LoopJS Backend Server...');
+console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
+console.log('[STARTUP] Debug Mode:', isDevelopment ? 'ENABLED' : 'DISABLED');
+
 // CORS CONFIGURATION
 const corsOptions = {
     origin: function (origin, callback) {
         const allowedOrigins = [
             'http://localhost:5173',
-            'http://192.168.0.127:5173',
-            'http://172.19.64.1:5173',
-            'http://172.19.64.1',
+            'http://localhost:5174',
+            'http://localhost:5175',
             'http://localhost:4173',
             'http://localhost:4174',
             'http://localhost',
-            'https://www.sendparcel.art',
-            'https://loopjs.sendparcel.art',
-            'https://loopjs.vidai.sbs',
             'https://loopjs-frontend-361659024403.us-central1.run.app',
-            'https://loopjs-frontend-kn2yg4ji5a-uc.a.run.app',
-            'https://loopjs-backend-kn2yg4ji5a-uc.a.run.app',
-            'https://loopjs-by-loopcreations-6p0gj7w5b-chrisdemonxxxs-projects.vercel.app',
-            'https://frontend-i5o13j8jz-chrisdemonxxxs-projects.vercel.app',
-            'https://frontend-b65tmnfvy-chrisdemonxxxs-projects.vercel.app',
-            'https://storage.googleapis.com'
+            'https://loopjs.vidai.sbs'
         ];
         
         // Allow requests with no origin (like mobile apps, curl requests)
@@ -50,14 +47,6 @@ const corsOptions = {
             callback(null, true);
         } else if (allowedOrigins.indexOf(origin) !== -1) {
             console.log(`CORS: Allowing request from origin: ${origin}`);
-            callback(null, true);
-        } else if (origin.match(/^http:\/\/172\.\d+\.\d+\.\d+:5173$/)) {
-            // Allow Docker/VM network IPs for development
-            console.log(`CORS: Allowing Docker/VM origin: ${origin}`);
-            callback(null, true);
-        } else if (origin.match(/^http:\/\/192\.168\.\d+\.\d+:5173$/)) {
-            // Allow local network IPs for development
-            console.log(`CORS: Allowing local network origin: ${origin}`);
             callback(null, true);
         } else {
             console.log(`CORS: Blocking request from origin: ${origin}`);
@@ -113,6 +102,7 @@ passport.deserializeUser((id, done) => User.findById(id, done));
 
 // Routes
 app.use('/api', apiRoutes);
+app.use('/api/ai', require('./routes/ai'));  // AI API routes
 app.use('/admin', require('./middleware/security').protect, require('./routes/admin'));  // Protect admin routes
 app.use('/debug', require('./routes/debug'));
 app.use('/', healthRoutes);
@@ -137,7 +127,7 @@ app.use((err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
-    console.error("🔥 UNHANDLED ERROR:", err.stack || err);
+    console.error("ðŸ”¥ UNHANDLED ERROR:", err.stack || err);
 
     res.status(err.statusCode).json({
         status: err.status,

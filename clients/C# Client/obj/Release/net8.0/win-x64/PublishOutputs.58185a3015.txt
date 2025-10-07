@@ -1,0 +1,2 @@
+D:\My Projects\loopjs\clients\C# Client\bin\Release\net8.0\win-x64\publish\loopjs-client.pdb
+D:\My Projects\loopjs\clients\C# Client\bin\Release\net8.0\win-x64\publish\loopjs-client.exe

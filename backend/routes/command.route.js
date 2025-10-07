@@ -19,6 +19,22 @@ router.get('/tasks/:uuid',
   commandController.getTasksForClientAction
 );
 
+router.get('/available/:uuid', 
+  authorize(['admin', 'user']), 
+  audit('COMMANDS_LIST', (req) => ({ uuid: req.params.uuid })),
+  commandController.getAvailableCommandsAction
+);
+
+router.post('/validate', 
+  authorize(['admin', 'user']), 
+  audit('COMMAND_VALIDATE', (req) => ({ command: req.body.command, target: req.body.uuid })),
+  commandController.validateCommandAction
+);
+
+router.post('/result', 
+  commandController.handleCommandResultAction
+);
+
 router.get('/', (req, res) => {
     res.status(200).json({
         status: "success",

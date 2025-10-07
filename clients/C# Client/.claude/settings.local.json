@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where dotnet)",
+      "Bash(dotnet --version)",
+      "Bash(dir:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet publish:*)",
+      "Bash(where:*)",
+      "Bash(dotnet build:*)",
+      "Read(//c/Users/cabor/OneDrive/Desktop/loopjs-client/**)",
+      "Bash(echo $C2_SERVER)",
+      "Read(//c/Users/cabor/OneDrive/Desktop/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

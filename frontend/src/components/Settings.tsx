@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { FiUser, FiUsers, FiShield, FiDatabase, FiTrash2, FiSave, FiEye, FiEyeOff, FiPlus, FiEdit, FiX, FiSettings, FiKey, FiMail, FiPhone } from 'react-icons/fi';
 
-type ThemeMode = 'light' | 'dark' | 'hacker' | 'matrix' | 'cyberpunk' | 'redteam' | 'neon-city' | 'ghost-protocol' | 'quantum' | 'neural-net' | 'dark-web' | 'glass' | 'hologram' | 'terminal' | 'blood' | 'synthwave' | 'void' | 'neon-punk' | 'digital-rain' | 'ai-core';
+type ThemeMode = 'light' | 'dark' | 'hacker-elite' | 'premium-cyber';
 
 interface User {
   id: string;
@@ -97,18 +97,10 @@ const Settings: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const themes = [
-    { value: 'light' as ThemeMode, label: '☀️ Light Mode', desc: 'Clean & minimal', category: 'Professional' },
-    { value: 'dark' as ThemeMode, label: '🌙 Dark Mode', desc: 'Easy on eyes', category: 'Professional' },
-    { value: 'hacker' as ThemeMode, label: '💚 Hacker Terminal', desc: 'Classic green terminal', category: 'Hacker' },
-    { value: 'matrix' as ThemeMode, label: '🔋 Matrix Rain', desc: 'Digital rain effect', category: 'Hacker' },
-    { value: 'cyberpunk' as ThemeMode, label: '🌆 Cyberpunk', desc: 'Neon future vibes', category: 'Futuristic' },
-    { value: 'synthwave' as ThemeMode, label: '🌅 Synthwave', desc: '80s retro future', category: 'Retro' },
-    { value: 'void' as ThemeMode, label: '🌌 The Void', desc: 'Infinite darkness', category: 'Mysterious' },
-    { value: 'neon-punk' as ThemeMode, label: '⚡ Neon Punk', desc: 'Electric rebellion', category: 'Rebellion' },
-    { value: 'ai-core' as ThemeMode, label: '🤖 AI Core', desc: 'Machine consciousness', category: 'AI' },
-    { value: 'blood' as ThemeMode, label: '🩸 Blood Red', desc: 'Intense red theme', category: 'Intense' },
-    { value: 'glass' as ThemeMode, label: '🔮 Glass Morphism', desc: 'Transparent design', category: 'Modern' },
-    { value: 'hologram' as ThemeMode, label: '🌈 Holographic', desc: 'Futuristic display', category: 'Futuristic' }
+    { value: 'light' as ThemeMode, label: '☀️ Light Premium', desc: 'Clean & minimal design', category: 'Professional' },
+    { value: 'dark' as ThemeMode, label: '🌙 Dark Premium', desc: 'Easy on the eyes', category: 'Professional' },
+    { value: 'hacker-elite' as ThemeMode, label: '💚 Hacker Elite', desc: 'Matrix rain effects', category: 'Hacker' },
+    { value: 'premium-cyber' as ThemeMode, label: '🚀 Premium Cyber', desc: 'Futuristic cyberpunk', category: 'Cyberpunk' }
   ];
 
   const categories = [...new Set(themes.map(theme => theme.category))];

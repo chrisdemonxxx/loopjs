@@ -39,47 +39,41 @@ LoopJS is a comprehensive Command & Control (C2) panel system designed for syste
 
 ### Development Setup
 
-#### Backend
+#### Backend Development
 ```bash
 cd backend
 npm install
-npm run dev  # Runs on http://localhost:8080
+npm run dev  # Port 8080
 ```
 
-#### Frontend
+#### Frontend Development
 ```bash
 cd frontend
 npm install
-npm run dev  # Runs on http://localhost:5173
+npm run dev  # Port 5173
 ```
 
-#### Client
+#### Client Development
 ```bash
+# Qt Client
 cd clients/qt-client
-.\build-standalone.bat  # Creates standalone executable
+./build-standalone.bat
+
+# C# Client
+cd clients/C# Client
+dotnet build
 ```
 
-## 📦 Components
+## 📁 Project Structure
 
-### 🔧 Backend (`backend/`)
-- **Framework**: Node.js + Express
-- **Database**: MongoDB with Mongoose
-- **WebSocket**: Real-time client communication
-- **Authentication**: JWT-based security
-- **Deployment**: Google Cloud Run
+The project is organized into three main sections:
 
-**Key Features**:
-- RESTful API endpoints
-- WebSocket server for real-time updates
-- Client registration and management
-- Task execution and monitoring
-- Audit logging and security
-
-### 🎨 Frontend (`frontend/`)
-- **Framework**: React + TypeScript + Vite
-- **UI**: Tailwind CSS with custom hacker theme
-- **State**: React Context + Hooks
-- **Deployment**: Google Cloud Run with Nginx
+### 🎨 Frontend (`/frontend`)
+React/TypeScript C2 Panel - Web-based control interface
+- **Source Code**: `/src` - React components, pages, services
+- **Configuration**: Build configs, TypeScript configs
+- **Deployment**: Dockerfile, nginx config
+- **Build Output**: `/dist` - Compiled frontend assets
 
 **Key Features**:
 - Modern C2 panel interface
@@ -88,11 +82,30 @@ cd clients/qt-client
 - System information display
 - User management and authentication
 
-### 💻 Client (`clients/qt-client/`)
-- **Framework**: Qt 6.9.3 C++
-- **Compiler**: MinGW 64-bit
-- **Build**: CMake with static linking
-- **Deployment**: Standalone executable
+### ⚙️ Backend (`/backend`)
+Node.js/Express API Server with WebSocket support
+- **Core**: `index.js`, `package.json` - Main server entry point
+- **API**: `/controllers`, `/routes` - REST API endpoints
+- **Models**: `/models` - Database schemas (MongoDB)
+- **Middleware**: `/middleware` - Authentication, security, validation
+- **Services**: `/services` - Business logic services
+- **Configuration**: `/configs` - Server configuration files
+- **Deployment**: Dockerfile, cloudbuild.yaml, app.yaml
+
+**Key Features**:
+- RESTful API endpoints
+- WebSocket server for real-time updates
+- Client registration and management
+- Task execution and monitoring
+- Audit logging and security
+
+### 💻 Clients (`/clients`)
+Multiple client implementations for different platforms
+
+#### Qt C++ Client (`/clients/qt-client`)
+- **Source**: `.cpp`, `.h` files - Core client implementation
+- **Build**: `.bat` scripts, CMakeLists.txt, .pro files
+- **Config**: `config.json` - Client configuration
 
 **Key Features**:
 - System information gathering
@@ -100,6 +113,21 @@ cd clients/qt-client
 - Command execution
 - Self-updating capabilities
 - Stealth operation mode
+
+#### C# Client (`/clients/C# Client`)
+- **Source**: `Program.cs` - Main client implementation
+- **Project**: `.csproj`, `.sln` - Visual Studio project files
+- **Config**: `Properties/launchSettings.json`
+
+#### Stealth Client (`/clients/stealth-client`)
+- **Headers**: Core injection and evasion headers
+- **Minimal**: Lightweight implementation
+
+### 🔧 Shared Resources (`/scripts`)
+Deployment and utility scripts
+- **Deployment**: `deploy-all.ps1`, `setup-*.ps1`
+- **Configuration**: `update-client-config.ps1`
+- **Verification**: `verify-deployment.ps1`
 
 ## 🔧 Configuration
 
@@ -282,9 +310,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: See `PROJECT_MEMORY.md` for detailed information
-- **Deployment Guide**: See `DEPLOYMENT_GUIDE.md` for deployment instructions
-- **Client Build Guide**: See `CLIENT_BUILD_GUIDE.md` for client build instructions
+- **Documentation**: See `PROJECT_STRUCTURE.md` for detailed project organization
 - **Issues**: Report issues on GitHub
 - **Discussions**: Use GitHub Discussions for questions
 

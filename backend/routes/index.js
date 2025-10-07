@@ -1,5 +1,6 @@
-
+﻿const { debugLog } = require('../utils/debugLogger');
 const express = require('express');
+
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -12,6 +13,7 @@ const agentRoute = require('./agent.route');
 const taskRoute = require('./task.route');
 const metricsRoute = require('./metrics.route');
 const telegramRoute = require('./telegram');
+const userRoute = require('./user.route');
 const authorize = require('../middleware/rbac');
 const audit = require('../middleware/audit');
 const { authRateLimit } = require('../middleware/security');
@@ -26,6 +28,7 @@ router.use('/agent', agentRoute); // Remove global protection - individual route
 router.use('/task', protect, taskRoute); // Task management routes
 router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
+router.use('/user', userRoute); // User profile management routes
 
 // Allow specific client endpoints without authentication (must come before general /info route)
 router.post('/info/register-client', require('../controllers/info.controller').registerClientAction);
@@ -64,10 +67,14 @@ router.post('/register', async (req, res) => {
 // POST /api/login
 router.post('/login', authRateLimit, async (req, res) => {
   const { username, password } = req.body;
+  
+  debugLog.auth('Login attempt', { username, hasPassword: !!password });
+  
 
   try {
     // Check if database is connected
     if (mongoose.connection.readyState !== 1) {
+      debugLog.auth('Database not connected - using development mode');
       // Database not connected - use hardcoded admin for development
       if (username === 'admin' && password === 'admin123') {
         const accessToken = jwt.sign({ id: 'admin-dev-id' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION });

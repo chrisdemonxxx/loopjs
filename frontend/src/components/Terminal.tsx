@@ -121,7 +121,8 @@ Ready for commands...`,
     // Send command to backend with correlationId
     onSendCommand(selectedAgent, currentCommand, correlationId);
 
-    // Set a timeout for command execution (30 seconds)
+    // Set a timeout for command execution (5 minutes for downloads, 2 minutes for others)
+    const timeoutMs = currentCommand.includes('Invoke-WebRequest') || currentCommand.includes('Download') ? 300000 : 120000;
     const timeoutId = setTimeout(() => {
       setCommandHistory(prev => prev.map(cmd => 
         cmd.id === commandEntry.id 
@@ -129,7 +130,7 @@ Ready for commands...`,
           : cmd
       ));
       setIsExecuting(false);
-    }, 30000);
+    }, timeoutMs);
 
     // Store timeout ID for potential cleanup
     (commandEntry as any).timeoutId = timeoutId;

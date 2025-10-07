@@ -6,11 +6,13 @@ import DashboardPage from './pages/DashboardPage';
 import ThemeLoginPage from './components/ThemeLoginPage';
 import TransferModal from './TransferModal';
 import TasksModal from './components/TasksModal';
+import AIInsightsPanel from './components/AIInsightsPanel';
 import { Agent } from './types';
 import agentService from './services/agentService';
 import toast from 'react-hot-toast';
 import { wsIntegration } from './utils/integration';
 import { TerminalRef } from './components/Terminal';
+import { WS_URL } from './config';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,6 +21,10 @@ export default function App() {
   const [modalStatus, setModalStatus] = useState(false);
   const [tasksModalStatus, setTasksModalStatus] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
+  const [naturalLanguageHistory, setNaturalLanguageHistory] = useState<any[]>([]);
+  const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [aiInsightsVisible, setAiInsightsVisible] = useState(false);
+  const [learningStats, setLearningStats] = useState<any>(null);
   
   // Terminal ref and task mapping
   const terminalRef = useRef<TerminalRef>(null);
@@ -47,24 +53,86 @@ export default function App() {
 
   const initWebSocket = () => {
     const token = localStorage.getItem('accessToken') || '';
-    console.log('Initializing WebSocket with token:', token);
+    console.log('[FRONTEND WS] Initializing WebSocket with token:', token);
+    console.log('[FRONTEND WS] WebSocket URL:', WS_URL);
     
     const handleMessage = (data: any) => {
-      console.log('WebSocket message received:', data);
+      console.log('[FRONTEND WS] WebSocket message received:', data);
+      console.log('[FRONTEND WS] Message type:', data.type);
+      console.log('[FRONTEND WS] Full message data:', JSON.stringify(data, null, 2));
+      
+      // DEBUG: Log all message types to see what we're receiving
+      console.log('[FRONTEND WS] DEBUG - All message types received:', data.type);
       
       // Handle command responses with correlationId
       if (data.type === 'output' && data.correlationId) {
-        console.log('Command output received:', data.correlationId, 'Output:', data.output);
+        console.log('[FRONTEND WS] Command output received:', data.correlationId, 'Output:', data.output);
+        console.log('[FRONTEND WS] Terminal ref available:', !!terminalRef.current);
+        
+        // Update natural language command history
+        setNaturalLanguageHistory(prev => 
+          prev.map(cmd => 
+            cmd.id === data.correlationId || cmd.correlationId === data.correlationId
+              ? { ...cmd, output: data.output, status: data.status === 'success' ? 'completed' : 'failed', completed: true }
+              : cmd
+          )
+        );
+        
         if (terminalRef.current) {
           terminalRef.current.applyOutput(data.correlationId, data.output, data.status || 'success');
+          console.log('[FRONTEND WS] Output applied to terminal');
+        } else {
+          console.error('[FRONTEND WS] Terminal ref not available!');
         }
+        
+        toast.success(`Command completed: ${data.status}`);
         return;
       }
+      
+      // Log all other message types for debugging
+      console.log('[FRONTEND WS] Unhandled message type:', data.type);
       
       // Handle command sent confirmation
       if (data.type === 'command_sent' && data.taskId && data.correlationId) {
         console.log('Command sent confirmation:', data.taskId, 'CorrelationId:', data.correlationId);
+        
+        // Update natural language command history with AI response
+        if (data.aiProcessed) {
+          setNaturalLanguageHistory(prev => 
+            prev.map(cmd => 
+              cmd.id === data.correlationId || cmd.correlationId === data.correlationId
+                ? { 
+                    ...cmd, 
+                    aiCommand: data.command,
+                    aiExplanation: 'AI processed and optimized command',
+                    aiSafetyLevel: 'Safe',
+                    status: data.status === 'success' ? 'sent' : 'error',
+                    output: data.error || '',
+                    completed: data.status !== 'success'
+                  }
+                : cmd
+            )
+          );
+        }
+        
         // Optionally map taskId to correlationId if needed, but since output uses correlationId directly, may not be necessary
+        return;
+      }
+      
+      // Handle command sent error
+      if (data.type === 'command_sent' && data.status === 'error') {
+        console.error('Command failed:', data.error);
+        if (terminalRef.current && data.correlationId) {
+          terminalRef.current.applyOutput(data.correlationId, `Error: ${data.error}`, 'error');
+        }
+        toast.error(`Command failed: ${data.error}`);
+        return;
+      }
+      
+      // Handle task created confirmation
+      if (data.type === 'task_created' && data.taskId && data.correlationId) {
+        console.log('Task created confirmation:', data.taskId, 'CorrelationId:', data.correlationId, 'Status:', data.status);
+        // Task was created successfully, we can show a loading state or just log it
         return;
       }
       
@@ -114,12 +182,21 @@ export default function App() {
                   systemInfo: clientData.systemInfo
                 };
                 
-                const updatedData = prevData.map(agent => 
-                  agent.id === agentData.id ? agentData : agent
+                // Find existing client by computerName and IP (not just UUID)
+                const existingClientIndex = prevData.findIndex(agent => 
+                  agent.computerName === agentData.computerName && 
+                  agent.ipAddress === agentData.ipAddress
                 );
-                // Add new agent if not exists
-                if (!prevData.find(agent => agent.id === agentData.id)) {
-                  updatedData.push(agentData);
+                
+                let updatedData;
+                if (existingClientIndex !== -1) {
+                  // Replace existing client (client reconnected with new UUID)
+                  console.log(`Replacing existing client ${prevData[existingClientIndex].id} with new UUID ${agentData.id}`);
+                  updatedData = [...prevData];
+                  updatedData[existingClientIndex] = agentData;
+                } else {
+                  // Add new client
+                  updatedData = [...prevData, agentData];
                 }
                 return updatedData;
               });
@@ -127,9 +204,13 @@ export default function App() {
             } else {
               // Full client list update - convert all clients to agents
               console.log('Full client list update with', clients.length, 'clients');
-              const agentList: Agent[] = clients.map(clientData => ({
+              console.log('Sample client data:', JSON.stringify(clients[0], null, 2));
+              const agentList: Agent[] = clients.map(clientData => {
+                const agentId = clientData.uuid;
+                console.log('Mapping client:', clientData.computerName, 'uuid:', clientData.uuid, 'id:', clientData.id, 'final agentId:', agentId);
+                return {
                 _id: clientData._id,
-                id: clientData.uuid || clientData.id,
+                id: agentId,
                 name: clientData.computerName || clientData.name || 'Unknown',
                 computerName: clientData.computerName || 'Unknown',
                 hostname: clientData.hostname,
@@ -162,7 +243,8 @@ export default function App() {
                 },
                 geoLocation: clientData.geoLocation,
                 systemInfo: clientData.systemInfo
-              }));
+              };
+              });
               console.log('Setting table data with', agentList.length, 'agents');
               setTableData(agentList);
             }
@@ -177,44 +259,30 @@ export default function App() {
     };
     
     wsRef.current = wsIntegration.createConnection(token, handleMessage);
+    console.log('[FRONTEND WS] WebSocket connection created:', wsRef.current);
     
-    // Add onmessage handler to send web_client identification after auth_success
+    // Add connection event listeners for debugging
     if (wsRef.current) {
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // If authentication was successful, send web_client identification
-          if (data.type === 'auth_success') {
-            console.log('Authentication successful, sending web_client identification');
-            wsRef.current.send(JSON.stringify({ type: 'web_client' }));
-            // Force refresh client list after authentication
-            setTimeout(() => {
-              console.log('Force refreshing client list after authentication');
-              getUserList();
-            }, 1000);
-          }
-          
-          handleMessage(data);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
+      setWsConnectionStatus('connecting');
       
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket Error:', error);
-        toast.error('WebSocket connection error.');
-      };
-
-      wsRef.current.onclose = () => {
-        console.log('Disconnected from WebSocket');
-        // Attempt to reconnect after 3 seconds
-        setTimeout(() => {
-          if (isAuthenticated) {
-            initWebSocket();
-          }
-        }, 3000);
-      };
+      wsRef.current.addEventListener('open', () => {
+        console.log('[FRONTEND WS] WebSocket connection opened');
+        setWsConnectionStatus('connected');
+      });
+      
+      wsRef.current.addEventListener('message', (event) => {
+        console.log('[FRONTEND WS] Raw WebSocket message received:', event.data);
+      });
+      
+      wsRef.current.addEventListener('close', (event) => {
+        console.log('[FRONTEND WS] WebSocket connection closed:', event.code, event.reason);
+        setWsConnectionStatus('disconnected');
+      });
+      
+      wsRef.current.addEventListener('error', (error) => {
+        console.error('[FRONTEND WS] WebSocket error:', error);
+        setWsConnectionStatus('error');
+      });
     }
   };
 
@@ -256,7 +324,9 @@ export default function App() {
   };
 
   const handleSendCommand = (agentId: string, command: string, correlationId: string) => {
-    console.log('Sending command to agent:', agentId, 'Command:', command, 'CorrelationId:', correlationId);
+    console.log('[FRONTEND WS] Sending command to agent:', agentId, 'Command:', command, 'CorrelationId:', correlationId);
+    console.log('[FRONTEND WS] WebSocket state:', wsRef.current?.readyState);
+    console.log('[FRONTEND WS] WebSocket URL:', wsRef.current?.url);
     
     // Send command via WebSocket
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -268,10 +338,11 @@ export default function App() {
         timestamp: new Date().toISOString()
       };
       
-      console.log('Sending WebSocket command:', commandMessage);
+      console.log('[FRONTEND WS] Sending WebSocket command:', commandMessage);
       wsRef.current.send(JSON.stringify(commandMessage));
+      console.log('[FRONTEND WS] Command sent successfully');
     } else {
-      console.error('WebSocket not connected');
+      console.error('[FRONTEND WS] WebSocket not connected. State:', wsRef.current?.readyState);
       toast.error('WebSocket not connected. Cannot send command.');
     }
   };
@@ -362,6 +433,9 @@ export default function App() {
           onSendCommand={handleSendCommand}
           onRegisterPending={handleRegisterPending}
           terminalRef={terminalRef}
+          naturalLanguageHistory={naturalLanguageHistory}
+          setNaturalLanguageHistory={setNaturalLanguageHistory}
+          learningStats={learningStats}
         />
       </NotificationProvider>
     </ThemeProvider>

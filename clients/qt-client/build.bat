@@ -5,7 +5,9 @@ echo ========================================
 
 REM Set Qt environment
 set QT_DIR=C:\Qt\6.9.3\mingw_64
-set PATH=%QT_DIR%\bin;%PATH%
+set MINGW_DIR=C:\Qt\Tools\mingw1310_64
+set CMAKE_DIR=C:\Qt\Tools\CMake_64
+set PATH=%QT_DIR%\bin;%MINGW_DIR%\bin;%CMAKE_DIR%\bin;%PATH%
 set CMAKE_PREFIX_PATH=%QT_DIR%
 
 REM Clean previous builds
@@ -28,8 +30,8 @@ cmake .. ^
     -DCMAKE_PREFIX_PATH="%QT_DIR%" ^
     -DCMAKE_CXX_FLAGS="-static -static-libgcc -static-libstdc++ -O3 -DNDEBUG -s" ^
     -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,--subsystem,windows" ^
-    -DCMAKE_CXX_COMPILER="%QT_DIR%\bin\g++.exe" ^
-    -DCMAKE_C_COMPILER="%QT_DIR%\bin\gcc.exe"
+    -DCMAKE_CXX_COMPILER="%MINGW_DIR%\bin\g++.exe" ^
+    -DCMAKE_C_COMPILER="%MINGW_DIR%\bin\gcc.exe"
 
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!

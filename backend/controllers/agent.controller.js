@@ -152,6 +152,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
     try {
       // Prepare command payload
       let commandPayload = {
+        type: 'command',              // ADD THIS - critical for routing
         cmd: 'execute',
         taskId: taskId,
         command: command,

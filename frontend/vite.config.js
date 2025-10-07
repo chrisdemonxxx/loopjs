@@ -20,13 +20,8 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Allow access from any IP address
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    host: '0.0.0.0',
+    port: 5173,
+    // Proxy removed for local development - frontend will connect directly to localhost:8080
   },
 })
