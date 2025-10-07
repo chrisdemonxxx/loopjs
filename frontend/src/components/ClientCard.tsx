@@ -74,7 +74,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
           <div className="premium-client-status"></div>
           <div>
             <h3 className="premium-client-name">{client.computerName}</h3>
-            <p className="text-sm text-gray-500 font-mono">{client.uuid}</p>
+            <p className="text-sm font-mono" style={{color: 'var(--text-tertiary)'}}>{client.uuid}</p>
           </div>
         </div>
         

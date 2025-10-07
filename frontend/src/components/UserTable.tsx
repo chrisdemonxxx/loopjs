@@ -172,7 +172,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
       {/* Online Clients - Top Priority */}
       <div className="premium-card">
         <div className="premium-card-header">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold" style={{color: 'var(--text-primary)'}}>
             🟢 Online Clients ({onlineUsers.length})
           </h2>
         </div>
@@ -245,7 +245,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
           <details className="group">
             <summary className="premium-card-header cursor-pointer list-none">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-semibold" style={{color: 'var(--text-primary)'}}>
                   🔴 Offline Clients ({offlineUsers.length})
                 </h2>
                 <div className="transform group-open:rotate-180 transition-transform">
