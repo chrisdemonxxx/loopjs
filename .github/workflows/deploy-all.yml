@@ -125,7 +125,7 @@ jobs:
           
           cd frontend
           # Submit build with no-cache
-          gcloud builds submit --config cloudbuild.yaml --substitutions=_COMMIT_SHA=${{ github.sha }},_BUILD_ID=$(date +%s)
+          gcloud builds submit --config cloudbuild.yaml
           
           echo "Waiting for build to complete..."
           sleep 30
