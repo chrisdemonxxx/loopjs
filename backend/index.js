@@ -18,16 +18,23 @@ console.log('[STARTUP] Deployment pipeline test - backend is ready');
 const connectDB = async () => {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000, // 5 second timeout
+            connectTimeoutMS: 5000,
+            socketTimeoutMS: 5000,
+        });
         console.log('[STARTUP] MongoDB connected successfully');
     } catch (error) {
         console.error('[STARTUP] MongoDB connection failed:', error.message);
         console.log('[STARTUP] Continuing without database connection...');
+        // Don't throw error - let the app start without database
     }
 };
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (non-blocking)
+connectDB().catch(err => {
+    console.error('[STARTUP] MongoDB connection error (non-blocking):', err.message);
+});
 
 // CORS CONFIGURATION
 const corsOptions = {
@@ -87,13 +94,23 @@ if (!process.env.SESSION_SECRET) {
 const wsHandler = require('./configs/ws.handler');
 wss.on('connection', wsHandler);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
 // API Routes
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working', timestamp: new Date().toISOString() });
 });
 
 // User profile endpoint
-app.get('/api/api/user/profile', (req, res) => {
+app.get('/api/user/profile', (req, res) => {
     res.json({ 
         id: 'demo-user',
         username: 'demo',
@@ -142,8 +159,11 @@ app.use((err, req, res, next) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on port ${PORT} on all network interfaces`);
-    console.log(`Local access: http://localhost:${PORT}`);
-    console.log(`Network access: http://192.168.0.127:${PORT}`);
-    console.log(`WebSocket endpoint: ws://192.168.0.127:${PORT}/ws`);
+    console.log(`[STARTUP] ✅ Server listening on port ${PORT} on all network interfaces`);
+    console.log(`[STARTUP] ✅ Local access: http://localhost:${PORT}`);
+    console.log(`[STARTUP] ✅ Health check: http://localhost:${PORT}/health`);
+    console.log(`[STARTUP] ✅ API endpoint: http://localhost:${PORT}/api/test`);
+    console.log(`[STARTUP] ✅ WebSocket endpoint: ws://localhost:${PORT}/ws`);
+    console.log(`[STARTUP] ✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`[STARTUP] ✅ MongoDB status: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
 });
