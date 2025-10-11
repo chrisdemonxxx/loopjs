@@ -30,7 +30,7 @@ router.use('/task', protect, taskRoute); // Task management routes
 router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
 router.use('/user', userRoute); // User profile management routes
-router.use('/ai', aiRoute); // AI processing routes
+router.use('/ai', aiRoute); // AI processing routes (no global auth - individual routes handle auth)
 
 // Allow specific client endpoints without authentication (must come before general /info route)
 router.post('/info/register-client', require('../controllers/info.controller').registerClientAction);

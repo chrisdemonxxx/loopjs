@@ -57,7 +57,7 @@ router.post('/process-command', async (req, res) => {
 
 /**
  * GET /api/ai/status
- * Get AI service status
+ * Get AI service status (public endpoint)
  */
 router.get('/status', (req, res) => {
         res.json({
