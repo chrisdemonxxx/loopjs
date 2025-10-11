@@ -8,18 +8,42 @@ build/
 */dist/
 */build/
 
-# Client build artifacts
+# Client build artifacts - COMPREHENSIVE
 clients/*/bin/
 clients/*/obj/
-clients/*/build-standalone/
 clients/*/build/
+clients/*/build-standalone/
 clients/*/debug/
 clients/*/release/
 clients/*/publish/
-clients/*/dist/
+clients/*/*.exe
+clients/*/*.dll
+clients/*/*.pdb
+clients/*/*.obj
+clients/*/*.o
+clients/*/*.a
+clients/*/*.cache
+clients/*/CMakeFiles/
 
-# Test clients
+# Test clients - exclude entirely
 test-clients/
+
+# Qt specific
+*.pro.user
+*.autosave
+Makefile
+Makefile.*
+*.qmake.stash
+
+# C# specific
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
 
 # Environment files
 .env
@@ -41,80 +65,72 @@ pids
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage
 coverage
 *.lcov
-
-# nyc test coverage
 .nyc_output
 
-# Dependency directories
+# Dependencies
 jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
 
-# Optional npm cache directory
+# Optional npm cache
 .npm
-
-# Optional eslint cache
 .eslintcache
 
-# Microbundle cache
+# Cache
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
-# Next.js build output
-.next
-out
+# REPL history
+.node_repl_history
 
-# Nuxt.js build / generate output
-.nuxt
+# Output of npm pack
+*.tgz
 
-# Gatsby files
-.cache/
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
+# Yarn
+.yarn-integrity
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
 
-# OS generated files
+# Next.js
+.next
+out
+
+# Nuxt.js
+.nuxt
+
+# Gatsby
+.cache/
+
+# vuepress
+.vuepress/dist
+
+# Serverless
+.serverless/
+
+# FuseBox
+.fusebox/
+
+# DynamoDB Local
+.dynamodb/
+
+# TernJS
+.tern-port
+
+# VSCode
+.vscode-test
+
+# OS generated
 .DS_Store
 .DS_Store?
 ._*
@@ -123,13 +139,13 @@ out
 ehthumbs.db
 Thumbs.db
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Temporary files
+# Temporary
 *.tmp
 *.temp

@@ -15,3 +15,16 @@
 
 # Node.js dependencies:
 node_modules/
+
+# Environment files
+.env
+.env.*
+*.log
+.DS_Store
+build/
+.vscode/
+.idea/
+*.swp
+*.swo
+scripts/
+public/test-websocket.html
