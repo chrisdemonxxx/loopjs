@@ -49,6 +49,10 @@ jobs:
           echo "Commit SHA: ${{ github.sha }}"
           echo "Build timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
+          # Extract short SHA (first 7 characters)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "Short SHA for tagging: $SHORT_SHA"
+          
           cd backend
           # Submit build using cloudbuild.yaml configuration
           gcloud builds submit --config cloudbuild.yaml
@@ -57,7 +61,7 @@ jobs:
           echo "Waiting for build to complete..."
           sleep 30
           
-          # Deploy to Cloud Run
+          # Deploy to Cloud Run with shortened tag
           gcloud run deploy loopjs-backend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend \
             --region ${{ env.REGION }} \
@@ -67,7 +71,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --tag commit-${{ github.sha }} \
+            --tag commit-$SHORT_SHA \
             --set-env-vars="NODE_ENV=production,JWT_ACCESS_TOKEN_EXPIRATION=1h,JWT_REFRESH_TOKEN_EXPIRATION=7d"
 
       - name: Get Backend URL
@@ -115,6 +119,10 @@ jobs:
           echo "Commit SHA: ${{ github.sha }}"
           echo "Build timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
+          # Extract short SHA (first 7 characters)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "Short SHA for tagging: $SHORT_SHA"
+          
           cd frontend
           # Submit build with no-cache
           gcloud builds submit --config cloudbuild.yaml --substitutions=COMMIT_SHA=${{ github.sha }},BUILD_ID=$(date +%s)
@@ -122,7 +130,7 @@ jobs:
           echo "Waiting for build to complete..."
           sleep 30
           
-          # Deploy with tag to force new revision
+          # Deploy with shortened tag to force new revision
           gcloud run deploy loopjs-frontend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest \
             --region ${{ env.REGION }} \
@@ -133,7 +141,7 @@ jobs:
             --max-instances 10 \
             --timeout 300 \
             --port 8080 \
-            --tag commit-${{ github.sha }} \
+            --tag commit-$SHORT_SHA \
             --no-traffic  # Deploy without traffic first
           
           # Route all traffic to new revision
