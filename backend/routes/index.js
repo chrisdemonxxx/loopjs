@@ -14,6 +14,7 @@ const taskRoute = require('./task.route');
 const metricsRoute = require('./metrics.route');
 const telegramRoute = require('./telegram');
 const userRoute = require('./user.route');
+const aiRoute = require('./ai');
 const authorize = require('../middleware/rbac');
 const audit = require('../middleware/audit');
 const { authRateLimit } = require('../middleware/security');
@@ -29,6 +30,7 @@ router.use('/task', protect, taskRoute); // Task management routes
 router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
 router.use('/user', userRoute); // User profile management routes
+router.use('/ai', aiRoute); // AI processing routes
 
 // Allow specific client endpoints without authentication (must come before general /info route)
 router.post('/info/register-client', require('../controllers/info.controller').registerClientAction);
