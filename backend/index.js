@@ -12,6 +12,7 @@ const wss = new WebSocket.Server({ server, path: "/ws" });
 
 console.log('[STARTUP] Starting LoopJS Backend Server...');
 console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
+console.log('[STARTUP] Deployment pipeline test - backend is ready');
 
 // MongoDB Connection
 const connectDB = async () => {
