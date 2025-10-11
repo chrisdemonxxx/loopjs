@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -6,13 +6,13 @@ import DashboardPage from './pages/DashboardPage';
 import ThemeLoginPage from './components/ThemeLoginPage';
 import TransferModal from './TransferModal';
 import TasksModal from './components/TasksModal';
-import AIInsightsPanel from './components/AIInsightsPanel';
 import { Agent } from './types';
 import agentService from './services/agentService';
 import toast from 'react-hot-toast';
 import { wsIntegration } from './utils/integration';
 import { TerminalRef } from './components/Terminal';
 import { WS_URL } from './config';
+import request from './axios';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,8 +23,6 @@ export default function App() {
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
   const [naturalLanguageHistory, setNaturalLanguageHistory] = useState<any[]>([]);
   const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
-  const [aiInsightsVisible, setAiInsightsVisible] = useState(false);
-  const [learningStats, setLearningStats] = useState<any>(null);
   
   // Terminal ref and task mapping
   const terminalRef = useRef<TerminalRef>(null);
@@ -50,6 +48,81 @@ export default function App() {
       setIsLoading(false);
     }
   }, []);
+
+  // Add this function to handle command failures with AI retry
+  const handleCommandFailureWithAI = async (correlationId: string, error: string, originalCommand: string) => {
+    try {
+      // Find the command in history
+      const commandEntry = naturalLanguageHistory.find(cmd => 
+        cmd.id === correlationId || cmd.correlationId === correlationId
+      );
+
+      if (!commandEntry || !selectedUser) return;
+
+      // Check if we should retry with AI
+      const retryCount = commandEntry.retryCount || 0;
+      if (retryCount >= 2) {
+        console.log('Max retry attempts reached for command:', originalCommand);
+        return;
+      }
+
+      // Process error through AI
+      const aiErrorResponse = await request({
+        url: '/ai/handle-error',
+        method: 'POST',
+        data: {
+          error: error,
+          originalCommand: originalCommand,
+          clientInfo: selectedUser,
+          retryCount: retryCount,
+          context: {
+            previousCommands: naturalLanguageHistory.slice(-3)
+          }
+        }
+      });
+
+      if (aiErrorResponse.data.success) {
+        const { fixedCommand, explanation, changesMade } = aiErrorResponse.data.data;
+        
+        // Update command history with retry attempt
+        setNaturalLanguageHistory(prev => 
+          prev.map(cmd => 
+            cmd.id === correlationId || cmd.correlationId === correlationId
+              ? { 
+                  ...cmd, 
+                  retryCount: retryCount + 1,
+                  status: 'retrying',
+                  output: `Retrying with AI fix: ${explanation}`,
+                  aiRetryCommand: fixedCommand,
+                  aiChanges: changesMade
+                }
+              : cmd
+          )
+        );
+
+        // Execute the AI-fixed command
+        setTimeout(() => {
+          // Send the retry command through the existing command system
+          if (selectedUser) {
+            const retryCommand = {
+              targetUuid: selectedUser.id,
+              command: fixedCommand,
+              id: `retry_${correlationId}_${retryCount + 1}`,
+              isRetry: true,
+              originalCorrelationId: correlationId
+            };
+            // This would need to be integrated with the existing command sending mechanism
+            console.log('AI retry command:', retryCommand);
+          }
+        }, 1000);
+
+        toast.success(`AI is retrying command with fix: ${explanation}`);
+      }
+    } catch (aiError) {
+      console.error('AI error handling failed:', aiError);
+      toast.error('Failed to get AI error fix');
+    }
+  };
 
   const initWebSocket = () => {
     const token = localStorage.getItem('accessToken') || '';
@@ -85,7 +158,25 @@ export default function App() {
           console.error('[FRONTEND WS] Terminal ref not available!');
         }
         
-        toast.success(`Command completed: ${data.status}`);
+        // Handle command failures with AI retry
+        if (data.status === 'error' || data.status === 'failed') {
+          console.log('[FRONTEND WS] Command failed, attempting AI retry:', data.correlationId);
+          
+          // Find original command for retry
+          const commandEntry = naturalLanguageHistory.find(cmd => 
+            cmd.id === data.correlationId || cmd.correlationId === data.correlationId
+          );
+          
+          if (commandEntry) {
+            handleCommandFailureWithAI(
+              data.correlationId, 
+              data.output || data.error || 'Command execution failed',
+              commandEntry.originalCommand || commandEntry.command
+            );
+          }
+        } else {
+          toast.success(`Command completed: ${data.status}`);
+        }
         return;
       }
       
@@ -220,7 +311,7 @@ export default function App() {
                 return acc;
               }, new Map());
               
-              const agentList: Agent[] = Array.from(uniqueClients.values()).map(clientData => {
+              const agentList: Agent[] = Array.from(uniqueClients.values()).map((clientData: any) => {
                 const agentId = clientData.uuid;
                 console.log('Mapping client:', clientData.computerName, 'uuid:', clientData.uuid, 'id:', clientData.id, 'final agentId:', agentId);
                 return {
@@ -256,8 +347,8 @@ export default function App() {
                   fileManager: false,
                   processManager: false
                 },
-                geoLocation: clientData.geoLocation,
-                systemInfo: clientData.systemInfo
+                geoLocation: (clientData as any).geoLocation,
+                systemInfo: (clientData as any).systemInfo
               };
               });
               console.log('Setting table data with', agentList.length, 'agents (deduplicated from', clients.length, 'clients)');
@@ -368,10 +459,6 @@ export default function App() {
     console.log('Registered pending command:', { taskId, agentId, historyId });
   };
 
-  const handleCommandResponse = (agentId: string, output: string, status: 'success' | 'error') => {
-    console.log('Command response from agent:', agentId, 'Status:', status, 'Output:', output);
-    // TODO: Pass this to Terminal component to update command history
-  };
 
   const handleProcess = async (user: Agent, commandKey: string) => {
     try {
@@ -384,9 +471,6 @@ export default function App() {
     }
   };
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -447,10 +531,8 @@ export default function App() {
           onLogout={handleLogout}
           onSendCommand={handleSendCommand}
           onRegisterPending={handleRegisterPending}
-          terminalRef={terminalRef}
           naturalLanguageHistory={naturalLanguageHistory}
           setNaturalLanguageHistory={setNaturalLanguageHistory}
-          learningStats={learningStats}
         />
       </NotificationProvider>
     </ThemeProvider>

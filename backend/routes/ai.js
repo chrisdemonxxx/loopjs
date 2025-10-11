@@ -201,4 +201,55 @@ router.get('/config', protect, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/ai/handle-error
+ * Handle command execution errors with AI-powered solutions
+ */
+router.post('/handle-error', protect, async (req, res) => {
+  try {
+    const { error, originalCommand, clientInfo, retryCount, context } = req.body;
+    
+    console.log('[AI API] Handling command error:', error);
+    
+    if (!isGeminiAvailable) {
+      return res.status(400).json({
+        success: false,
+        error: 'Gemini AI is not configured for error handling'
+      });
+    }
+    
+    // Use the existing error handling from GeminiAICommandProcessor
+    const errorResult = await geminiAIProcessor.handleErrorWithAI(
+      { message: error },
+      { command: originalCommand },
+      clientInfo,
+      retryCount
+    );
+    
+    if (errorResult.success) {
+      res.json({
+        success: true,
+        data: {
+          fixedCommand: errorResult.fixedCommand,
+          explanation: errorResult.explanation,
+          changesMade: errorResult.changesMade,
+          retryCount: retryCount + 1
+        }
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to generate AI fix for command error'
+      });
+    }
+    
+  } catch (error) {
+    console.error('[AI API] Error handling failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

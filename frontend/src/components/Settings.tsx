@@ -111,6 +111,7 @@ const Settings: React.FC = () => {
   });
   const [telegramLoading, setTelegramLoading] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const themes = [
     { value: 'light' as ThemeMode, label: '☀️ Light Premium', desc: 'Clean & minimal design', category: 'Professional' },
@@ -122,11 +123,31 @@ const Settings: React.FC = () => {
   const categories = [...new Set(themes.map(theme => theme.category))];
 
   useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem('c2-settings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
+    const loadSettings = async () => {
+      try {
+        // Load settings from database first
+        const response = await request({
+          url: '/settings',
+          method: 'GET'
+        });
+
+        if (response.data.status === 'success' && response.data.settings) {
+          setSettings(prev => ({
+            ...prev,
+            ...response.data.settings
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load settings from database:', error);
+        // Fallback to localStorage
+        const savedSettings = localStorage.getItem('c2-settings');
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
+      }
+    };
+
+    loadSettings();
     
     // Load Telegram configuration from backend
     loadTelegramConfig();
@@ -273,19 +294,35 @@ const Settings: React.FC = () => {
 
   const handleSaveSettings = async () => {
     try {
-      // Save general settings to localStorage
-      localStorage.setItem('c2-settings', JSON.stringify(settings));
+      setLoading(true);
       
-      // Save Telegram configuration to backend
-      if (telegramConfig.enabled) {
-        await saveTelegramConfig();
+      // Save to backend database
+      const response = await request({
+        url: '/settings',
+        method: 'POST',
+        data: { settings }
+      });
+
+      if (response.data.status === 'success') {
+        // Also save to localStorage as backup
+        localStorage.setItem('c2-settings', JSON.stringify(settings));
+        
+        // Save Telegram configuration to backend
+        if (telegramConfig.enabled) {
+          await saveTelegramConfig();
+        }
+        
+        setSaved(true);
+        toast.success('Settings saved successfully to database');
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        throw new Error('Failed to save settings');
       }
-      
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      toast.error('Failed to save settings');
+      toast.error('Failed to save settings to database');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1098,10 +1135,20 @@ const Settings: React.FC = () => {
       <div className="flex justify-end">
         <button 
           onClick={handleSaveSettings}
-          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center"
+          disabled={loading}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center disabled:opacity-50"
         >
-          <FiSave className="w-4 h-4 mr-2" />
-          Save All Settings
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              <FiSave className="w-4 h-4 mr-2" />
+              Save All Settings
+            </>
+          )}
         </button>
       </div>
     </div>

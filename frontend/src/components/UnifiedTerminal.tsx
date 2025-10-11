@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Agent } from '../types';
 import { FiSend, FiTrash2, FiTerminal, FiPaperclip, FiMessageSquare, FiCommand, FiDownload, FiCamera, FiMonitor, FiList, FiGlobe, FiUser, FiWifi, FiFolder, FiPower, FiRefreshCw, FiX, FiZap } from 'react-icons/fi';
-import axios from 'axios';
 import request from '../axios';
 import toast from 'react-hot-toast';
 
@@ -68,13 +67,21 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   // Check AI connection status
   useEffect(() => {
     checkAIStatus();
+    const interval = setInterval(checkAIStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const checkAIStatus = async () => {
     try {
-      const response = await axios.get('/api/ai/status');
+      const response = await request({
+        url: '/ai/status',
+        method: 'GET'
+      });
+      
       if (response.data.success) {
         setAiConnected(response.data.available);
+      } else {
+        setAiConnected(false);
       }
     } catch (error) {
       console.error('Failed to check AI status:', error);
@@ -142,30 +149,66 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
         command: cmdToExecute,
         client: selectedClient.computerName,
         status: 'executing',
-        output: 'Executing command...',
-        telegramSent: telegramEnabled
+        output: 'Processing command with AI...',
+        telegramSent: telegramEnabled,
+        aiProcessed: false
       };
 
       setCommandHistory(prev => [...prev, newEntry]);
       setUserInput('');
 
-      // Send command
+      let finalCommand = cmdToExecute;
+      let aiExplanation = '';
+
+      // Process through AI if available and in commands mode
+      if (aiConnected && mode === 'commands') {
+        try {
+          const aiResponse = await request({
+            url: '/ai/process-command',
+            method: 'POST',
+            data: {
+              userInput: cmdToExecute,
+              clientInfo: selectedClient,
+              context: { 
+                previousCommands: commandHistory.slice(-5),
+                mode: 'commands'
+              }
+            }
+          });
+
+          if (aiResponse.data.success) {
+            finalCommand = aiResponse.data.data.command;
+            aiExplanation = aiResponse.data.data.explanation;
+            
+            // Update command history with AI processing info
+            setCommandHistory(prev => 
+              prev.map(entry => 
+                entry.id === taskId 
+                  ? { 
+                      ...entry, 
+                      command: finalCommand,
+                      output: `AI Processed: ${aiExplanation}`,
+                      aiProcessed: true,
+                      originalCommand: cmdToExecute
+                    }
+                  : entry
+              )
+            );
+          }
+        } catch (aiError) {
+          console.warn('AI processing failed, using original command:', aiError);
+          // Continue with original command if AI fails
+        }
+      }
+
+      // Send the final command (AI-processed or original)
       await onCommandSent({
         targetUuid: selectedClient.id,
-        command: cmdToExecute,
-        id: taskId
+        command: finalCommand,
+        id: taskId,
+        aiProcessed: aiConnected && mode === 'commands',
+        originalCommand: cmdToExecute !== finalCommand ? cmdToExecute : undefined
       });
-
-      // Update status after a delay
-      setTimeout(() => {
-        setCommandHistory(prev => 
-          prev.map(entry => 
-            entry.id === taskId 
-              ? { ...entry, status: 'completed', output: 'Command executed successfully' }
-              : entry
-          )
-        );
-      }, 2000);
 
     } catch (error) {
       console.error('Error sending command:', error);
@@ -341,22 +384,54 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
               </div>
             ) : (
               commandHistory.map((entry) => (
-                <div key={entry.id} className="mb-4 border-l-2 border-green-500 pl-3">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-green-400 font-bold">$</span>
-                    <span className="text-white">{entry.command}</span>
+                <div key={entry.id} className={`mb-4 border-l-2 pl-3 ${
+                  entry.status === 'completed' ? 'border-green-500' :
+                  entry.status === 'error' ? 'border-red-500' :
+                  entry.status === 'executing' ? 'border-blue-500' :
+                  entry.status === 'retrying' ? 'border-yellow-500' :
+                  'border-gray-500'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-green-400 font-bold">$</span>
+                      <span className="text-white">{entry.command}</span>
+                      {entry.aiProcessed && (
+                        <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                          AI Processed
+                        </span>
+                      )}
+                      {entry.retryCount > 0 && (
+                        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                          Retry {entry.retryCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-gray-500 text-xs">
                       [{new Date(entry.timestamp).toLocaleTimeString()}]
                     </span>
-                    {entry.telegramSent && (
-                      <span className="text-blue-400 text-xs">📤 Telegram</span>
-                    )}
                   </div>
-                  <div className="text-gray-300 whitespace-pre-wrap">
+                  
+                  {entry.originalCommand && entry.originalCommand !== entry.command && (
+                    <div className="text-sm text-gray-400 mb-2">
+                      <span className="font-medium">Original:</span> {entry.originalCommand}
+                    </div>
+                  )}
+                  
+                  <div className="text-gray-300 whitespace-pre-wrap command-history-entry">
                     {entry.output}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Client: {entry.client} | Status: {entry.status}
+                  
+                  {entry.aiChanges && entry.aiChanges.length > 0 && (
+                    <div className="text-xs text-blue-400 mt-2">
+                      <span className="font-medium">AI Changes:</span> {entry.aiChanges.join(', ')}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500 mt-2 flex items-center justify-between">
+                    <span>Client: {entry.client} | Status: {entry.status}</span>
+                    {entry.telegramSent && (
+                      <span className="text-blue-400">📤 Telegram</span>
+                    )}
                   </div>
                 </div>
               ))

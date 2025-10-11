@@ -75,7 +75,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onLogout }) => {
   const fetchUserProfile = async () => {
     try {
       const response = await request({
-        url: '/api/user/profile',
+        url: '/user/profile',  // Remove /api prefix since axios.ts already adds it
         method: 'GET'
       });
 
@@ -90,24 +90,27 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onLogout }) => {
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
+      toast.error('Failed to load user profile');
     }
   };
 
   const handleProfileUpdate = async () => {
     try {
       setLoading(true);
-      await request({
-        url: '/api/user/profile',
+      const response = await request({
+        url: '/user/profile',  // Remove /api prefix
         method: 'PUT',
         data: profileForm
       });
 
-      toast.success('Profile updated successfully');
-      setShowProfileModal(false);
-      fetchUserProfile();
-    } catch (error) {
+      if (response.data && response.data.success) {
+        toast.success('Profile updated successfully');
+        setShowProfileModal(false);
+        fetchUserProfile();
+      }
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }

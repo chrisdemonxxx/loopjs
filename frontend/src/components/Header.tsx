@@ -150,18 +150,20 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar, isSidebarOpe
   const handleProfileUpdate = async () => {
     try {
       setLoading(true);
-      await request({
-        url: '/api/user/profile',
+      const response = await request({
+        url: '/user/profile',  // Remove /api prefix
         method: 'PUT',
         data: profileForm
       });
 
-      toast.success('Profile updated successfully');
-      setShowProfileModal(false);
-      fetchUserProfile();
-    } catch (error) {
+      if (response.data && response.data.success) {
+        toast.success('Profile updated successfully');
+        setShowProfileModal(false);
+        fetchUserProfile();
+      }
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }

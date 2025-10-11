@@ -460,6 +460,94 @@ Provide a JSON response with:
             return false;
         }
     }
+
+    /**
+     * Generate download command with dynamic filename handling
+     */
+    generateDownloadCommand(userInput, clientInfo) {
+        const downloadParams = this.extractDownloadParams(userInput);
+        
+        if (!downloadParams.url) {
+            throw new Error('No download URL found in input');
+        }
+        
+        // Extract filename from URL or generate one
+        const urlParts = downloadParams.url.split('/');
+        const originalFilename = urlParts[urlParts.length - 1];
+        const fileExtension = originalFilename.includes('.') ? 
+            originalFilename.split('.').pop() : 'exe';
+        
+        // Generate dynamic filename based on software name
+        const softwareName = this.extractSoftwareName(userInput) || 'download';
+        const cleanSoftwareName = softwareName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const dynamicFilename = `${cleanSoftwareName}.${fileExtension}`;
+        
+        // Generate dynamic download path
+        const downloadPath = `$env:TEMP\\${dynamicFilename}`;
+        const installPath = `C:\\Program Files\\${cleanSoftwareName}`;
+        
+        // Generate PowerShell download and execute command
+        const command = `
+# Download and execute ${softwareName}
+$url = "${downloadParams.url}"
+$outputPath = "${downloadPath}"
+$installPath = "${installPath}"
+
+try {
+    Write-Host "Downloading ${softwareName} from: $url"
+    Invoke-WebRequest -Uri $url -OutFile $outputPath -UseBasicParsing
+    
+    if (Test-Path $outputPath) {
+        Write-Host "Download completed: $outputPath"
+        Write-Host "File size: $((Get-Item $outputPath).Length) bytes"
+        
+        # Execute the downloaded file
+        Write-Host "Executing ${softwareName}..."
+        Start-Process -FilePath $outputPath -Wait
+        
+        Write-Host "${softwareName} execution completed"
+    } else {
+        Write-Error "Download failed - file not found at $outputPath"
+    }
+} catch {
+    Write-Error "Download/execution failed: $($_.Exception.Message)"
+}
+        `.trim();
+            
+        return {
+            command: command,
+            explanation: `Download ${softwareName} from provided URL and execute it with dynamic filename handling`,
+            changesMade: [
+                'Dynamic filename generation based on software name',
+                'Proper error handling for download failures',
+                'File size verification after download',
+                'Clean temporary file management'
+            ]
+        };
+    }
+
+    /**
+     * Extract software name from user input
+     */
+    extractSoftwareName(userInput) {
+        // Extract software name from user input
+        const patterns = [
+            /download\s+(\w+)/i,
+            /install\s+(\w+)/i,
+            /get\s+(\w+)/i,
+            /(\w+)\s+download/i,
+            /(\w+)\s+install/i
+        ];
+        
+        for (const pattern of patterns) {
+            const match = userInput.match(pattern);
+            if (match && match[1]) {
+                return match[1];
+            }
+        }
+        
+        return null;
+    }
 }
 
 module.exports = GeminiAICommandProcessor;

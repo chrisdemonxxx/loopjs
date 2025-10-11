@@ -5,6 +5,7 @@ import App from './App';
 import './css/style.css';
 import './css/satoshi.css';
 import './styles/premium-themes.css';
+import './styles/style.css';
 import 'jsvectormap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
 
