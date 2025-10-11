@@ -116,4 +116,72 @@ router.post('/test', async (req, res) => {
     }
 });
 
+const fs = require('fs').promises;
+const path = require('path');
+const { protect } = require('../middleware/security');
+const authorize = require('../middleware/rbac');
+
+// POST /api/ai/config - Save/Update Gemini API Key
+router.post('/config', protect, authorize(['admin']), async (req, res) => {
+    try {
+        const { apiKey } = req.body;
+        
+        if (!apiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'API key is required'
+            });
+        }
+
+        // Save to environment file or database
+        process.env.GEMINI_API_KEY = apiKey;
+        
+        // Optionally persist to .env file
+        const envPath = path.join(__dirname, '..', '.env');
+        let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
+        
+        if (envContent.includes('GEMINI_API_KEY=')) {
+            envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey}`);
+        } else {
+            envContent += `\nGEMINI_API_KEY=${apiKey}\n`;
+        }
+        
+        await fs.writeFile(envPath, envContent);
+        
+        // Reinitialize Gemini AI processor
+        const geminiAIProcessor = new GeminiAICommandProcessor();
+        
+        res.json({
+            success: true,
+            message: 'API key configured successfully',
+            available: true
+        });
+    } catch (error) {
+        console.error('Error saving API key:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save API key'
+        });
+    }
+});
+
+// GET /api/ai/config - Get current configuration status
+router.get('/config', protect, async (req, res) => {
+    try {
+        const hasApiKey = !!(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here');
+        
+        res.json({
+            success: true,
+            configured: hasApiKey,
+            available: isGeminiAvailable
+        });
+    } catch (error) {
+        console.error('Error getting AI config:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get AI configuration'
+        });
+    }
+});
+
 module.exports = router;

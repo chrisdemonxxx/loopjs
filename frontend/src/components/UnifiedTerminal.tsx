@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Agent } from '../types';
-import { FiSend, FiTrash2, FiTerminal, FiPaperclip, FiMessageSquare, FiCommand, FiDownload, FiCamera, FiMonitor, FiList, FiGlobe, FiUser, FiWifi, FiFolder, FiPower, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiSend, FiTrash2, FiTerminal, FiPaperclip, FiMessageSquare, FiCommand, FiDownload, FiCamera, FiMonitor, FiList, FiGlobe, FiUser, FiWifi, FiFolder, FiPower, FiRefreshCw, FiX, FiZap } from 'react-icons/fi';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 interface UnifiedTerminalProps {
   selectedAgent: Agent | null;
@@ -28,6 +30,11 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   const [mode, setMode] = useState<TerminalMode>('commands');
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState('');
+  
+  // AI connection status
+  const [aiConnected, setAiConnected] = useState(false);
+  const [showAIConfigModal, setShowAIConfigModal] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   const terminalRef = useRef<HTMLDivElement>(null);
 
   // Update when parent changes
@@ -56,6 +63,42 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [commandHistory]);
+
+  // Check AI connection status
+  useEffect(() => {
+    checkAIStatus();
+  }, []);
+
+  const checkAIStatus = async () => {
+    try {
+      const response = await axios.get('/api/ai/status');
+      if (response.data.success) {
+        setAiConnected(response.data.available);
+      }
+    } catch (error) {
+      console.error('Failed to check AI status:', error);
+      setAiConnected(false);
+    }
+  };
+
+  const handleSaveAPIKey = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.post('/api/ai/config', 
+        { apiKey },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success('API key saved successfully');
+        setShowAIConfigModal(false);
+        checkAIStatus(); // Recheck status
+      }
+    } catch (error) {
+      console.error('Failed to save API key:', error);
+      toast.error('Failed to save API key');
+    }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -180,6 +223,19 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
         <div className="flex items-center space-x-3">
           <FiTerminal className="w-5 h-5 text-indigo-600" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Terminal</h2>
+          
+          {/* AI Connection Status */}
+          <div 
+            className={`flex items-center space-x-1 ${aiConnected ? 'text-green-600' : 'text-red-600 cursor-pointer hover:text-red-700'}`}
+            onClick={() => !aiConnected && setShowAIConfigModal(true)}
+          >
+            <FiZap className="w-4 h-4" />
+            <span className="text-xs font-medium">
+              {aiConnected ? 'AI Connected' : 'AI Disconnected'}
+            </span>
+          </div>
+          
+          {/* Telegram Status */}
           {telegramEnabled && (
             <div className="flex items-center space-x-1 text-green-600">
               <FiPaperclip className="w-4 h-4" />
@@ -450,6 +506,70 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
               >
                 <FiDownload className="w-4 h-4 mr-1 inline" />
                 Download & Execute
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Configuration Modal */}
+      {showAIConfigModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Configure Google Gemini AI
+              </h3>
+              <button
+                onClick={() => setShowAIConfigModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Gemini API Key
+                </label>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Enter your Google Gemini API key"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Get your free API key from Google AI Studio:
+                  <a 
+                    href="https://makersuite.google.com/app/apikey" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline ml-1"
+                  >
+                    https://makersuite.google.com/app/apikey
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAIConfigModal(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAPIKey}
+                disabled={!apiKey.trim()}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+              >
+                Save & Connect
               </button>
             </div>
           </div>

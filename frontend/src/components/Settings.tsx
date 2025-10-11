@@ -330,16 +330,40 @@ const Settings: React.FC = () => {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      if (type === 'all') {
-        setUsers([users[0]]); // Keep admin user
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
       }
-      
-      alert(`Successfully cleared ${type}`);
-    } catch (error) {
-      alert(`Failed to clear ${type}`);
+
+      let endpoint = '';
+      switch (type) {
+        case 'logs':
+          endpoint = '/api/task'; // Clear all tasks/logs
+          break;
+        case 'users':
+          endpoint = '/api/info/clients'; // Clear all clients except admin
+          break;
+        case 'all':
+          endpoint = '/api/info/clients/all'; // Clear everything
+          break;
+      }
+
+      const response = await axios.delete(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.status === 200) {
+        toast.success(`Successfully cleared ${type}`);
+        
+        // Reload the page to reflect changes
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    } catch (error: any) {
+      console.error(`Failed to clear ${type}:`, error);
+      toast.error(`Failed to clear ${type}: ${error.response?.data?.message || error.message}`);
     }
   };
 
