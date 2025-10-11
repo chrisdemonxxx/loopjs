@@ -4,14 +4,16 @@ import { FiSend, FiTrash2, FiTerminal, FiSettings, FiPaperclip } from 'react-ico
 
 interface UnifiedTerminalProps {
   selectedAgent: Agent | null;
+  onSelectAgent?: (agent: Agent | null) => void;
   agents: Agent[];
-  onCommandSent: (uuid: string, command: string, taskId: string) => void;
+  onCommandSent: (command: any) => void;
   commandHistory: any[];
   setCommandHistory: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   selectedAgent,
+  onSelectAgent,
   agents,
   onCommandSent,
   commandHistory,
@@ -22,6 +24,11 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   const [selectedClient, setSelectedClient] = useState<Agent | null>(selectedAgent);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
+
+  // Update when parent changes
+  useEffect(() => {
+    setSelectedClient(selectedAgent);
+  }, [selectedAgent]);
 
   // Check if Telegram is enabled
   useEffect(() => {
@@ -75,7 +82,11 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
       setUserInput('');
 
       // Send command
-      await onCommandSent(selectedClient.uuid, command, taskId);
+      await onCommandSent({
+        targetUuid: selectedClient.uuid,
+        command: command,
+        id: taskId
+      });
 
       // Update status after a delay
       setTimeout(() => {
@@ -149,6 +160,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 onChange={(e) => {
                   const client = onlineClients.find(c => c.uuid === e.target.value);
                   setSelectedClient(client || null);
+                  onSelectAgent?.(client || null);
                 }}
                 className="premium-input max-w-xs"
                 disabled={onlineClients.length === 0}

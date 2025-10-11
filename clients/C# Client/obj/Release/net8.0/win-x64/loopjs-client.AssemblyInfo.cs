@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("loopjs-client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43f4d1b241928eb11471189b45391c31ae098c89")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2788d540ee39256313c0fe205ddcb1f9b608262d")]
 [assembly: System.Reflection.AssemblyProductAttribute("loopjs-client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("loopjs-client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

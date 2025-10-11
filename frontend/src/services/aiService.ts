@@ -18,22 +18,85 @@ class AIService {
     try {
       console.log('[AI SERVICE] Processing natural language:', userInput);
       
-      const response = await axios.post(`${API_BASE_URL}/api/ai/natural-language`, {
+      // Try the new AI endpoint first
+      const response = await axios.post(`${API_BASE_URL}/api/ai/process-command`, {
         userInput,
         clientInfo,
-        context,
-        useIntelligentAgent: true
+        context
       }, {
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        timeout: 30000 // 30 second timeout for AI processing
       });
 
-      console.log('[AI SERVICE] Natural language response:', response.data);
-      return response.data;
+      console.log('[AI SERVICE] AI response:', response.data);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.error || 'AI processing failed');
+      }
     } catch (error) {
       console.error('[AI SERVICE] Error processing natural language:', error);
-      console.error('[AI SERVICE] Error details:', error.response?.data);
-      throw error;
+      
+      // Fallback to simple command generation
+      console.log('[AI SERVICE] Falling back to simple command generation');
+      return this.generateFallbackCommand(userInput, clientInfo);
     }
+  }
+
+  /**
+   * Generate fallback command when AI is unavailable
+   */
+  private generateFallbackCommand(userInput: string, clientInfo: any) {
+    const input = userInput.toLowerCase();
+    
+    // Simple pattern matching for common requests
+    if (input.includes('download') && input.includes('putty')) {
+      return {
+        command: `$software='PuTTY'; $downloadPath='$env:TEMP\\putty.exe'; try { Write-Host 'Downloading PuTTY...'; Invoke-WebRequest -Uri 'https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe' -OutFile $downloadPath -UseBasicParsing; Write-Host 'Download complete, launching...'; Start-Process -FilePath $downloadPath; Write-Host 'PuTTY launched successfully!' } catch { Write-Host "Error: $_"; Write-Host 'Trying alternative method...'; winget install PuTTY.PuTTY }`,
+        type: 'powershell',
+        timeout: 300,
+        explanation: 'I\'ll download PuTTY from the official site and launch it. If that fails, I\'ll use Windows Package Manager.',
+        safety_level: 'safe',
+        alternatives: ['winget install PuTTY.PuTTY'],
+        steps: ['Download PuTTY installer', 'Launch PuTTY', 'Fallback to winget if needed']
+      };
+    }
+    
+    if (input.includes('system info') || input.includes('computer info')) {
+      return {
+        command: 'Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, TotalPhysicalMemory, CsProcessors, CsSystemType',
+        type: 'powershell',
+        timeout: 60,
+        explanation: 'I\'ll show you detailed system information including OS, memory, and processor details.',
+        safety_level: 'safe',
+        alternatives: ['systeminfo'],
+        steps: ['Query system information', 'Display formatted results']
+      };
+    }
+    
+    if (input.includes('list') && input.includes('process')) {
+      return {
+        command: 'Get-Process | Select-Object Name, Id, CPU, WorkingSet | Sort-Object CPU -Descending | Format-Table -AutoSize',
+        type: 'powershell',
+        timeout: 60,
+        explanation: 'I\'ll list all running processes sorted by CPU usage.',
+        safety_level: 'safe',
+        alternatives: ['tasklist'],
+        steps: ['Query running processes', 'Sort by CPU usage', 'Display results']
+      };
+    }
+    
+    // Generic fallback
+    return {
+      command: `Write-Host "I understand you want to: ${userInput}"; Write-Host "However, AI processing is currently unavailable. Please try a more specific command or contact support."`,
+      type: 'powershell',
+      timeout: 30,
+      explanation: 'AI processing is unavailable. Please try a more specific command.',
+      safety_level: 'safe',
+      alternatives: [],
+      steps: ['Display user request', 'Inform about AI unavailability']
+    };
   }
 
   /**

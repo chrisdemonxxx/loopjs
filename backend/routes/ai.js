@@ -60,12 +60,12 @@ router.post('/process-command', async (req, res) => {
  * Get AI service status (public endpoint)
  */
 router.get('/status', (req, res) => {
-    res.json({
-        success: true,
+        res.json({
+            success: true,
         provider: 'gemini',
         available: isGeminiAvailable,
-        timestamp: new Date().toISOString()
-    });
+            timestamp: new Date().toISOString()
+        });
 });
 
 /**
@@ -73,11 +73,11 @@ router.get('/status', (req, res) => {
  * Simple test endpoint to verify AI routes are working
  */
 router.get('/test', (req, res) => {
-    res.json({
-        success: true,
+        res.json({
+            success: true,
         message: 'AI routes are working',
-        timestamp: new Date().toISOString()
-    });
+            timestamp: new Date().toISOString()
+        });
 });
 
 /**

@@ -205,7 +205,22 @@ export default function App() {
               // Full client list update - convert all clients to agents
               console.log('Full client list update with', clients.length, 'clients');
               console.log('Sample client data:', JSON.stringify(clients[0], null, 2));
-              const agentList: Agent[] = clients.map(clientData => {
+              // Deduplicate clients by machineFingerprint or UUID before mapping
+              const uniqueClients = clients.reduce((acc, clientData) => {
+                const key = clientData.machineFingerprint || clientData.uuid;
+                if (!acc.has(key)) {
+                  acc.set(key, clientData);
+                } else {
+                  // Keep the most recent one
+                  const existing = acc.get(key);
+                  if (new Date(clientData.lastActiveTime || 0) > new Date(existing.lastActiveTime || 0)) {
+                    acc.set(key, clientData);
+                  }
+                }
+                return acc;
+              }, new Map());
+              
+              const agentList: Agent[] = Array.from(uniqueClients.values()).map(clientData => {
                 const agentId = clientData.uuid;
                 console.log('Mapping client:', clientData.computerName, 'uuid:', clientData.uuid, 'id:', clientData.id, 'final agentId:', agentId);
                 return {
@@ -245,7 +260,7 @@ export default function App() {
                 systemInfo: clientData.systemInfo
               };
               });
-              console.log('Setting table data with', agentList.length, 'agents');
+              console.log('Setting table data with', agentList.length, 'agents (deduplicated from', clients.length, 'clients)');
               setTableData(agentList);
             }
           }

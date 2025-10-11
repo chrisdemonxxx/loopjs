@@ -6,6 +6,8 @@ import CommandOutputTerminal from './CommandOutputTerminal';
 
 interface AdvancedTerminalProps {
   selectedAgent: Agent | null;
+  onSelectAgent?: (agent: Agent | null) => void;
+  agents: Agent[];
   onCommandSent: (command: any) => void;
   commandHistory: any[];
   setCommandHistory: (history: any[]) => void;
@@ -23,6 +25,8 @@ interface PowerCommand {
 
 const AdvancedTerminal: React.FC<AdvancedTerminalProps> = ({
   selectedAgent,
+  onSelectAgent,
+  agents,
   onCommandSent,
   commandHistory,
   setCommandHistory
@@ -522,6 +526,28 @@ const AdvancedTerminal: React.FC<AdvancedTerminalProps> = ({
             <span className="bg-white/20 px-2 py-1 rounded">Target: {selectedAgent.computerName}</span>
           </div>
         )}
+      </div>
+
+      {/* Client Selector */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+          Target Client:
+        </label>
+        <select
+          value={selectedAgent?.uuid || ''}
+          onChange={(e) => {
+            const agent = agents.find(a => a.uuid === e.target.value);
+            onSelectAgent?.(agent || null);
+          }}
+          className="premium-input w-full"
+        >
+          <option value="">Select a client...</option>
+          {agents.map(agent => (
+            <option key={agent.uuid} value={agent.uuid}>
+              {agent.computerName} ({agent.ipAddress})
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Command Categories */}

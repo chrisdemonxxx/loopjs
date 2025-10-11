@@ -53,10 +53,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     avgExecutionTimeMs: 0
   });
   const [showOfflineClients, setShowOfflineClients] = useState(false);
+  const [selectedTerminalAgent, setSelectedTerminalAgent] = useState<Agent | null>(null);
 
   // Calculate stats from real data
   const onlineAgents = tableData.filter(agent => agent.status === 'online');
   const offlineAgents = tableData.filter(agent => agent.status === 'offline');
+
+  // Update selectedTerminalAgent when onlineAgents changes
+  useEffect(() => {
+    if (onlineAgents.length > 0 && !selectedTerminalAgent) {
+      setSelectedTerminalAgent(onlineAgents[0]);
+    } else if (onlineAgents.length === 0) {
+      setSelectedTerminalAgent(null);
+    }
+  }, [onlineAgents, selectedTerminalAgent]);
 
   // Fetch task stats
   const fetchTaskStats = async () => {
@@ -255,17 +265,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="space-y-6">
             {/* Enhanced Terminal Component */}
             <EnhancedTerminal
-              selectedAgent={onlineAgents.length > 0 ? onlineAgents[0] : null}
+              selectedAgent={selectedTerminalAgent}
+              onSelectAgent={setSelectedTerminalAgent}
               onCommandSent={(command) => {
                 console.log('Enhanced terminal command sent:', command);
-                if (command && onlineAgents.length > 0) {
-                  // Handle the new command format
-                  if (command.command && command.id) {
-                    onSendCommand(onlineAgents[0].uuid, command.command, command.id);
-                  } else if (command.type === 'command' && command.correlationId) {
-                    // Handle old format for backward compatibility
-                    onSendCommand(onlineAgents[0].uuid, command.command, command.correlationId);
-                  }
+                const agent = command.targetUuid || selectedTerminalAgent?.uuid;
+                if (agent && command.command) {
+                  onSendCommand(agent, command.command, command.id || command.correlationId);
                 }
               }}
               terminalRef={terminalRef}

