@@ -48,7 +48,7 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd backend
-          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/loopjs-backend
+          gcloud builds submit --config cloudbuild.yaml --substitutions=_PROJECT_ID=${{ env.PROJECT_ID }}
           gcloud run deploy loopjs-backend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend \
             --region ${{ env.REGION }} \
@@ -104,7 +104,7 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd frontend
-          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend
+          gcloud builds submit --config cloudbuild.yaml --substitutions=_PROJECT_ID=${{ env.PROJECT_ID }}
           gcloud run deploy loopjs-frontend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend \
             --region ${{ env.REGION }} \
