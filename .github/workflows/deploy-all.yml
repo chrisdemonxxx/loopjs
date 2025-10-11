@@ -48,8 +48,8 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd backend
-          # Submit build without streaming logs to avoid permissions issues
-          gcloud builds submit --config cloudbuild.yaml --no-logs
+          # Submit build using cloudbuild.yaml configuration
+          gcloud builds submit --config cloudbuild.yaml
           
           # Wait for build to complete
           echo "Waiting for build to complete..."
@@ -111,8 +111,8 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd frontend
-          # Submit build without streaming logs to avoid permissions issues
-          gcloud builds submit --config cloudbuild.yaml --no-logs
+          # Submit build using cloudbuild.yaml configuration
+          gcloud builds submit --config cloudbuild.yaml
           
           # Wait for build to complete
           echo "Waiting for build to complete..."
