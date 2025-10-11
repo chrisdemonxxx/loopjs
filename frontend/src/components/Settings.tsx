@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { FiUser, FiUsers, FiShield, FiDatabase, FiTrash2, FiSave, FiEye, FiEyeOff, FiPlus, FiEdit, FiX, FiSettings, FiKey, FiMail, FiPhone } from 'react-icons/fi';
+import { FiUsers, FiDatabase, FiTrash2, FiSave, FiEye, FiEyeOff, FiPlus, FiEdit, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 type ThemeMode = 'light' | 'dark' | 'hacker-elite' | 'premium-cyber';
 
@@ -95,6 +97,19 @@ const Settings: React.FC = () => {
     role: 'user' as 'admin' | 'user' | 'viewer'
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [telegramConfig, setTelegramConfig] = useState({
+    enabled: false,
+    botToken: '',
+    chatId: '',
+    notifications: {
+      newConnection: true,
+      disconnection: true,
+      taskCompletion: false,
+      systemAlerts: true
+    }
+  });
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const themes = [
     { value: 'light' as ThemeMode, label: '☀️ Light Premium', desc: 'Clean & minimal design', category: 'Professional' },
@@ -111,7 +126,137 @@ const Settings: React.FC = () => {
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
     }
+    
+    // Load Telegram configuration from backend
+    loadTelegramConfig();
   }, []);
+
+  // Load Telegram configuration from backend
+  const loadTelegramConfig = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await axios.get('/api/telegram/config', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.status === 'success') {
+        const config = response.data.data;
+        setTelegramConfig({
+          enabled: config.enabled || false,
+          botToken: config.botToken || '',
+          chatId: config.chatId || '',
+          notifications: config.notifications || {
+            newConnection: true,
+            disconnection: true,
+            taskCompletion: false,
+            systemAlerts: true
+          }
+        });
+        
+        // Update local settings to match backend
+        setSettings(prev => ({
+          ...prev,
+          telegramEnabled: config.enabled || false,
+          telegramBotToken: config.botToken || '',
+          telegramChatId: config.chatId || ''
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load Telegram config:', error);
+      // Load from localStorage as fallback
+      const localTelegramConfig = localStorage.getItem('telegram-config');
+      if (localTelegramConfig) {
+        setTelegramConfig(JSON.parse(localTelegramConfig));
+      }
+    }
+  };
+
+  // Save Telegram configuration to backend
+  const saveTelegramConfig = async () => {
+    try {
+      setTelegramLoading(true);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const configData = {
+        enabled: telegramConfig.enabled,
+        botToken: telegramConfig.botToken,
+        chatId: telegramConfig.chatId,
+        notifications: telegramConfig.notifications
+      };
+
+      const response = await axios.post('/api/telegram/config', configData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.status === 'success') {
+        // Save to localStorage as backup
+        localStorage.setItem('telegram-config', JSON.stringify(telegramConfig));
+        
+        // Update local settings
+        setSettings(prev => ({
+          ...prev,
+          telegramEnabled: telegramConfig.enabled,
+          telegramBotToken: telegramConfig.botToken,
+          telegramChatId: telegramConfig.chatId
+        }));
+
+        toast.success('Telegram configuration saved successfully');
+      }
+    } catch (error) {
+      console.error('Failed to save Telegram config:', error);
+      toast.error('Failed to save Telegram configuration');
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
+
+  // Test Telegram bot connection
+  const testTelegramBot = async () => {
+    try {
+      setTelegramLoading(true);
+      setTelegramTestResult(null);
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const response = await axios.post('/api/telegram/test', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.status === 'success') {
+        setTelegramTestResult({
+          success: true,
+          message: 'Telegram bot connection successful!'
+        });
+        toast.success('Telegram bot test successful');
+      } else {
+        setTelegramTestResult({
+          success: false,
+          message: response.data.message || 'Test failed'
+        });
+        toast.error('Telegram bot test failed');
+      }
+    } catch (error: any) {
+      console.error('Telegram bot test failed:', error);
+      const message = error.response?.data?.message || 'Test failed';
+      setTelegramTestResult({
+        success: false,
+        message: message
+      });
+      toast.error(`Telegram bot test failed: ${message}`);
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
 
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -121,16 +266,28 @@ const Settings: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       [parentKey]: {
-        ...prev[parentKey as keyof Settings],
+        ...(prev[parentKey as keyof Settings] as any),
         [key]: value
       }
     }));
   };
 
-  const handleSaveSettings = () => {
-    localStorage.setItem('c2-settings', JSON.stringify(settings));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSaveSettings = async () => {
+    try {
+      // Save general settings to localStorage
+      localStorage.setItem('c2-settings', JSON.stringify(settings));
+      
+      // Save Telegram configuration to backend
+      if (telegramConfig.enabled) {
+        await saveTelegramConfig();
+      }
+      
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings');
+    }
   };
 
   const handleThemeChange = (themeValue: ThemeMode) => {
@@ -702,15 +859,15 @@ const Settings: React.FC = () => {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.telegramEnabled}
-                onChange={(e) => handleSettingChange('telegramEnabled', e.target.checked)}
+                checked={telegramConfig.enabled}
+                onChange={(e) => setTelegramConfig(prev => ({ ...prev, enabled: e.target.checked }))}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
             </label>
           </div>
 
-          {settings.telegramEnabled && (
+          {telegramConfig.enabled && (
             <>
               <div>
                 <label className="block text-sm font-medium text-black dark:text-white mb-2">
@@ -718,8 +875,8 @@ const Settings: React.FC = () => {
                 </label>
                 <input
                   type="password"
-                  value={settings.telegramBotToken}
-                  onChange={(e) => handleSettingChange('telegramBotToken', e.target.value)}
+                  value={telegramConfig.botToken}
+                  onChange={(e) => setTelegramConfig(prev => ({ ...prev, botToken: e.target.value }))}
                   placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                   className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
                 />
@@ -731,12 +888,122 @@ const Settings: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={settings.telegramChatId}
-                  onChange={(e) => handleSettingChange('telegramChatId', e.target.value)}
+                  value={telegramConfig.chatId}
+                  onChange={(e) => setTelegramConfig(prev => ({ ...prev, chatId: e.target.value }))}
                   placeholder="-1001234567890"
                   className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
                 />
               </div>
+
+              {/* Notification Settings */}
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h4 className="font-medium text-black dark:text-white mb-3">Notification Settings</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={telegramConfig.notifications.newConnection}
+                      onChange={(e) => setTelegramConfig(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, newConnection: e.target.checked }
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-black dark:text-white">New client connections</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={telegramConfig.notifications.disconnection}
+                      onChange={(e) => setTelegramConfig(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, disconnection: e.target.checked }
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-black dark:text-white">Client disconnections</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={telegramConfig.notifications.taskCompletion}
+                      onChange={(e) => setTelegramConfig(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, taskCompletion: e.target.checked }
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-black dark:text-white">Task completion</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={telegramConfig.notifications.systemAlerts}
+                      onChange={(e) => setTelegramConfig(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, systemAlerts: e.target.checked }
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-black dark:text-white">System alerts</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Test Connection */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={testTelegramBot}
+                  disabled={telegramLoading || !telegramConfig.botToken || !telegramConfig.chatId}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {telegramLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck className="w-4 h-4 mr-2" />
+                      Test Connection
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={saveTelegramConfig}
+                  disabled={telegramLoading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <FiSave className="w-4 h-4 mr-2" />
+                  Save Config
+                </button>
+              </div>
+
+              {/* Test Result */}
+              {telegramTestResult && (
+                <div className={`p-3 rounded-lg flex items-center ${
+                  telegramTestResult.success 
+                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                }`}>
+                  {telegramTestResult.success ? (
+                    <FiCheck className="w-5 h-5 text-green-600 mr-2" />
+                  ) : (
+                    <FiAlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                  )}
+                  <span className={`text-sm ${
+                    telegramTestResult.success 
+                      ? 'text-green-700 dark:text-green-300' 
+                      : 'text-red-700 dark:text-red-300'
+                  }`}>
+                    {telegramTestResult.message}
+                  </span>
+                </div>
+              )}
 
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <h4 className="font-medium text-blue-800 dark:text-blue-400 mb-2">Setup Instructions</h4>

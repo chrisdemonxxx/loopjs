@@ -13,6 +13,14 @@ router.post('/send-script-to-client',
   commandController.sendScriptToClientAction
 );
 
+// General command sending endpoint (alias for send-script-to-client)
+router.post('/send', 
+  commandRateLimit,
+  authorize(['admin', 'user']), 
+  audit('COMMAND_EXECUTE', (req) => ({ command: req.body.command, target: req.body.uuid })),
+  commandController.sendScriptToClientAction
+);
+
 router.get('/tasks/:uuid', 
   authorize(['admin', 'user', 'viewer']), 
   audit('TASKS_VIEW', (req) => ({ uuid: req.params.uuid })),

