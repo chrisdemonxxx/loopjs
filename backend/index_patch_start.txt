@@ -1,3 +1,0 @@
-﻿require('dotenv').config();
-const { debugLog, isDevelopment } = require('./utils/debugLogger');
-const express = require('express');

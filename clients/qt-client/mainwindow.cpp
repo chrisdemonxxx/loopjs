@@ -20,10 +20,10 @@
 #include <QStorageInfo>
 
 // PRODUCTION: Cloud backend WebSocket URL
-// #define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
+#define DEF_WS_URL QUrl("wss://loopjs-backend-361659024403.us-central1.run.app/ws")
 
 // LOCAL DEVELOPMENT: Local backend WebSocket URL
-#define DEF_WS_URL QUrl("ws://localhost:8080/ws")
+// #define DEF_WS_URL QUrl("ws://localhost:8080/ws")
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_isRegistered(false)
