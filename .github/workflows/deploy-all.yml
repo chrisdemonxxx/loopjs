@@ -48,7 +48,14 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd backend
-          gcloud builds submit --config cloudbuild.yaml --substitutions=_PROJECT_ID=${{ env.PROJECT_ID }}
+          # Submit build without streaming logs to avoid permissions issues
+          gcloud builds submit --config cloudbuild.yaml --no-logs
+          
+          # Wait for build to complete
+          echo "Waiting for build to complete..."
+          sleep 30
+          
+          # Deploy to Cloud Run
           gcloud run deploy loopjs-backend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend \
             --region ${{ env.REGION }} \
@@ -104,7 +111,14 @@ jobs:
           echo "Region: ${{ env.REGION }}"
           
           cd frontend
-          gcloud builds submit --config cloudbuild.yaml --substitutions=_PROJECT_ID=${{ env.PROJECT_ID }}
+          # Submit build without streaming logs to avoid permissions issues
+          gcloud builds submit --config cloudbuild.yaml --no-logs
+          
+          # Wait for build to complete
+          echo "Waiting for build to complete..."
+          sleep 30
+          
+          # Deploy to Cloud Run
           gcloud run deploy loopjs-frontend \
             --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend \
             --region ${{ env.REGION }} \
