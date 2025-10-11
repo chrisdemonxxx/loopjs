@@ -6,15 +6,7 @@ const { validateWebSocketMessage } = require('../middleware/validation');
 const jwt = require('jsonwebtoken');
 const telegramService = require('../services/telegramService');
 
-// Import AI Services
-const AICommandProcessor = require('../services/aiCommandProcessor');
-const SmartErrorHandler = require('../services/smartErrorHandler');
-const CommandOptimizer = require('../services/commandOptimizer');
-
-// Initialize AI Services
-const aiProcessor = new AICommandProcessor();
-const errorHandler = new SmartErrorHandler();
-const commandOptimizer = new CommandOptimizer();
+// AI Services removed - using only Gemini AI integration
 
 // Store all connected clients (unified approach)
 const connectedClients = new Map(); // Map of uuid -> websocket
@@ -488,13 +480,8 @@ const wsHandler = (ws, req) => {
                         // Create error object for AI processing
                         const error = new Error(output);
                         
-                        // Get AI retry command
-                        const retryCommand = await errorHandler.handleError(
-                            error,
-                            originalTask.params.aiProcessing.optimizedCommand,
-                            clientInfo,
-                            originalTask.params.aiProcessing.retryCount
-                        );
+                        // AI retry functionality removed - using simple fallback
+                        const retryCommand = null;
                         
                         if (retryCommand) {
                             console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
@@ -554,28 +541,12 @@ const wsHandler = (ws, req) => {
                     if (status === 'success') {
                         updateData['queue.state'] = 'completed';
                         
-                        // Learn from successful command if AI-processed
-                        if (isAIProcessed) {
-                            const clientInfo = {
-                                uuid: ws.uuid,
-                                platform: ws.platform || 'unknown',
-                                systemInfo: ws.systemInfo || {}
-                            };
-                            aiProcessor.learnFromResult(taskId, true, null, clientInfo);
-                        }
+                        // AI learning functionality removed
                     } else {
                         updateData['queue.state'] = 'failed';
                         updateData.errorMessage = output;
                         
-                        // Learn from failed command if AI-processed
-                        if (isAIProcessed) {
-                            const clientInfo = {
-                                uuid: ws.uuid,
-                                platform: ws.platform || 'unknown',
-                                systemInfo: ws.systemInfo || {}
-                            };
-                            aiProcessor.learnFromResult(taskId, false, output, clientInfo);
-                        }
+                        // AI learning functionality removed
                     }
                     
                     await Task.findOneAndUpdate(
@@ -815,19 +786,14 @@ const wsHandler = (ws, req) => {
                     
                     console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
                     
-                    // Generate optimized command using AI
-                    const aiResult = await aiProcessor.processCommand({
-                        category: category,
-                        action: action,
-                        ...params
-                    }, clientInfo);
+                    // AI command processing removed - using simple command generation
+                    const optimizedCommand = {
+                        command: `echo "AI command processing not available - ${category} ${action}"`,
+                        type: 'powershell',
+                        timeout: 300
+                    };
                     
-                    console.log(`[AI COMMAND] AI processing result:`, aiResult);
-                    
-                    // Optimize command further
-                    const optimizedCommand = await commandOptimizer.optimizeCommand(aiResult.optimizedCommand, clientInfo);
-                    
-                    console.log(`[AI COMMAND] Optimized command:`, optimizedCommand);
+                    console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
                     
                     // Generate task ID
                     const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -839,8 +805,7 @@ const wsHandler = (ws, req) => {
                         command: optimizedCommand.command,
                         params: {
                             originalParams: params,
-                            aiProcessing: aiResult,
-                            optimization: optimizedCommand
+                            fallback: true
                         },
                         createdBy: clientId || 'admin',
                         platform: targetClient.platform || 'unknown',
