@@ -100,6 +100,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     confirm: false
   });
 
+  // Panel settings state
+  const [panelSettings, setPanelSettings] = useState({
+    panelName: 'C2 Panel',
+    panelIcon: '💀'
+  });
+
   // Calculate stats from real data
   const onlineAgents = tableData.filter(agent => agent.status === 'online');
   const offlineAgents = tableData.filter(agent => agent.status === 'offline');
@@ -112,6 +118,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       setSelectedTerminalAgent(null);
     }
   }, [onlineAgents, selectedTerminalAgent]);
+
+  // Load panel settings from database
+  const loadPanelSettings = async () => {
+    try {
+      const response = await request({
+        url: '/settings',
+        method: 'GET'
+      });
+      if (response.data.status === 'success' && response.data.settings) {
+        setPanelSettings({
+          panelName: response.data.settings.panelName || 'C2 Panel',
+          panelIcon: response.data.settings.panelIcon || '💀'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load panel settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPanelSettings();
+  }, []);
 
   // Fetch task stats
   const fetchTaskStats = async () => {
@@ -482,7 +510,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         return <TaskScheduler agents={tableData} />;
       
       case 'settings':
-        return <Settings />;
+        return <Settings onSettingsSaved={loadPanelSettings} />;
       
       case 'agent':
         return <AgentSection />;
@@ -510,10 +538,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">💀</span>
+                <span className="text-white font-bold text-lg">{panelSettings.panelIcon}</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{color: 'var(--text-primary)'}}>C2 Panel</h1>
+                <h1 className="text-xl font-bold" style={{color: 'var(--text-primary)'}}>{panelSettings.panelName}</h1>
                 <p className="text-xs" style={{color: 'var(--text-secondary)'}}>Command & Control Panel</p>
               </div>
             </div>
@@ -525,7 +553,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               <span className="text-sm" style={{color: 'var(--text-secondary)'}}>OPERATIONAL</span>
             </div>
             {/* Profile Dropdown */}
-            <div className="relative" ref={profileDropdownRef}>
+            <div className="relative" ref={profileDropdownRef} style={{ zIndex: 9998 }}>
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -559,7 +587,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
               {isProfileOpen && (
                 <div 
                   className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700"
-                  style={{ zIndex: 1001 }}
+                  style={{ zIndex: 9999 }}
                 >
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-3">

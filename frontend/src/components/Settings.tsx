@@ -50,7 +50,11 @@ interface Settings {
   theme: ThemeMode;
 }
 
-const Settings: React.FC = () => {
+interface SettingsProps {
+  onSettingsSaved?: () => void;
+}
+
+const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
   const { mode, setMode } = useTheme();
   const [activeTab, setActiveTab] = useState<'appearance' | 'general' | 'security' | 'users' | 'database' | 'telegram'>('appearance');
   const [saved, setSaved] = useState(false);
@@ -315,6 +319,11 @@ const Settings: React.FC = () => {
         setSaved(true);
         toast.success('Settings saved successfully to database');
         setTimeout(() => setSaved(false), 2000);
+        
+        // Call the callback to notify parent component
+        if (onSettingsSaved) {
+          onSettingsSaved();
+        }
       } else {
         throw new Error('Failed to save settings');
       }
