@@ -192,16 +192,25 @@ Respond ONLY with valid JSON in the specified format.`;
      * Fallback to rule-based processing
      */
     async fallbackProcessing(userInput, clientInfo, context) {
-        console.log('[GEMINI AI] Falling back to rule-based processing');
+        console.log('[GEMINI AI] Falling back to simple rule-based processing');
         
-        // Import the original AI processor as fallback
-        const AICommandProcessor = require('./aiCommandProcessor');
-        const fallbackProcessor = new AICommandProcessor();
-        
-        // Try to extract category and action from user input
+        // Simple fallback without external dependencies
         const extracted = this.extractCommandInfo(userInput);
         
-        return await fallbackProcessor.processCommand(extracted, clientInfo);
+        return {
+            success: true,
+            data: {
+                command: extracted.command || 'echo "Command not recognized"',
+                type: 'powershell',
+                timeout: 300,
+                explanation: 'Fallback command - Gemini AI not available',
+                safety_level: 'safe',
+                alternatives: [],
+                aiProcessed: false,
+                model: 'fallback',
+                timestamp: new Date().toISOString()
+            }
+        };
     }
 
     /**
@@ -210,63 +219,52 @@ Respond ONLY with valid JSON in the specified format.`;
     extractCommandInfo(userInput) {
         const input = userInput.toLowerCase();
         
-        // Download and execute patterns
-        if (input.includes('download') || input.includes('get file') || input.includes('fetch')) {
-            return {
-                category: 'download_exec',
-                action: 'download_and_execute',
-                params: this.extractDownloadParams(userInput)
-            };
-        }
-        
         // System information patterns
         if (input.includes('system info') || input.includes('computer info') || input.includes('system information')) {
             return {
-                category: 'system_info',
-                action: 'computer',
-                params: {}
+                command: 'Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, TotalPhysicalMemory, CsProcessors'
             };
         }
         
         if (input.includes('memory') || input.includes('ram')) {
             return {
-                category: 'system_info',
-                action: 'memory',
-                params: {}
+                command: 'Get-WmiObject -Class Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum | Select-Object @{Name="TotalRAM(GB)";Expression={[math]::Round($_.Sum/1GB,2)}}'
             };
         }
         
         if (input.includes('cpu') || input.includes('processor')) {
             return {
-                category: 'system_info',
-                action: 'cpu',
-                params: {}
+                command: 'Get-WmiObject -Class Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed'
             };
         }
         
         // File operations patterns
         if (input.includes('list files') || input.includes('show files') || input.includes('dir')) {
             return {
-                category: 'file_ops',
-                action: 'list_files',
-                params: { sourcePath: 'C:\\' }
+                command: 'Get-ChildItem C:\\ | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize'
             };
         }
         
         // Network operations patterns
         if (input.includes('ping') || input.includes('test connection')) {
             return {
-                category: 'network',
-                action: 'ping',
-                params: { target: 'google.com', count: 4 }
+                command: 'Test-NetConnection -ComputerName google.com -Port 80'
             };
+        }
+        
+        // Download patterns
+        if (input.includes('download') || input.includes('get file') || input.includes('fetch')) {
+            const urlMatch = userInput.match(/https?:\/\/[^\s]+/);
+            if (urlMatch) {
+                return {
+                    command: `Invoke-WebRequest -Uri "${urlMatch[0]}" -OutFile "C:\\temp\\downloaded_file.exe"`
+                };
+            }
         }
         
         // Default to system info
         return {
-            category: 'system_info',
-            action: 'computer',
-            params: {}
+            command: 'Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, TotalPhysicalMemory'
         };
     }
 
@@ -356,10 +354,14 @@ Provide a JSON response with:
      * Fallback error handling
      */
     async fallbackErrorHandling(error, originalCommand, clientInfo, retryCount) {
-        const SmartErrorHandler = require('./smartErrorHandler');
-        const errorHandler = new SmartErrorHandler();
+        console.log('[GEMINI AI] Simple fallback error handling');
         
-        return await errorHandler.handleError(error, originalCommand, clientInfo, retryCount);
+        return {
+            success: false,
+            error: error.message,
+            retryCount: retryCount,
+            fallback: true
+        };
     }
 
     /**
