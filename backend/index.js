@@ -1,169 +1,131 @@
 ﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const http = require('http');
-const WebSocket = require('ws');
 const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: "/ws" });
-
-console.log('[STARTUP] Starting LoopJS Backend Server...');
-console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
-console.log('[STARTUP] Deployment pipeline test - backend is ready');
-
-// MongoDB Connection
-const connectDB = async () => {
-    try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
-        await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000, // 5 second timeout
-            connectTimeoutMS: 5000,
-            socketTimeoutMS: 5000,
-        });
-        console.log('[STARTUP] MongoDB connected successfully');
-    } catch (error) {
-        console.error('[STARTUP] MongoDB connection failed:', error.message);
-        console.log('[STARTUP] Continuing without database connection...');
-        // Don't throw error - let the app start without database
-    }
-};
-
-// Connect to MongoDB (non-blocking)
-connectDB().catch(err => {
-    console.error('[STARTUP] MongoDB connection error (non-blocking):', err.message);
-});
-
-// CORS CONFIGURATION
-const corsOptions = {
-    origin: function (origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:5174',
-            'http://localhost:5175',
-            'http://localhost:4173',
-            'http://localhost:4174',
-            'http://localhost',
-            'https://loopjs-frontend-361659024403.us-central1.run.app',
-            'https://loopjs.vidai.sbs'
-        ];
-        
-        // Allow requests with no origin (like mobile apps, curl requests)
-        if (!origin) {
-            console.log('CORS: Allowing request with no origin');
-            callback(null, true);
-        } else if (allowedOrigins.indexOf(origin) !== -1) {
-            console.log(`CORS: Allowing request from origin: ${origin}`);
-            callback(null, true);
-        } else {
-            console.log(`CORS: Blocking request from origin: ${origin}`);
-            console.log('CORS: Allowed origins:', allowedOrigins);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Mount API routes
-const apiRoutes = require('./routes/index');
-app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 8080;
 
-// Set fallback values for required environment variables
-if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
-  console.warn('JWT_SECRET not set, using development fallback');
-}
-if (!process.env.SESSION_SECRET) {
-  process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
-  console.warn('SESSION_SECRET not set, using development fallback');
-}
+console.log('[STARTUP] Starting LoopJS Backend Server...');
+console.log('[STARTUP] PORT:', PORT);
+console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
 
-// WebSocket connection handler - use proper handler with database integration
-const wsHandler = require('./configs/ws.handler');
-wss.on('connection', wsHandler);
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check endpoint - available immediately
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
+        port: PORT,
+        initialized: global.appInitialized || false
     });
 });
 
-// API Routes
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'API is working', timestamp: new Date().toISOString() });
+// START SERVER IMMEDIATELY - before loading heavy dependencies
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`[STARTUP] ✅ Server listening on port ${PORT}`);
+    console.log(`[STARTUP] ✅ Health check: http://localhost:${PORT}/health`);
+    
+    // NOW load heavy dependencies asynchronously
+    initializeApp();
 });
 
-// User profile endpoint
-app.get('/api/user/profile', (req, res) => {
-    res.json({ 
-        id: 'demo-user',
-        username: 'demo',
-        email: 'demo@loopjs.com',
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-        message: 'Demo user profile - MongoDB not connected'
-    });
-});
+// Async initialization of heavy components
+async function initializeApp() {
+    try {
+        console.log('[INIT] Loading application components...');
+        
+        // Set environment fallbacks
+        if (!process.env.JWT_SECRET) {
+            process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
+            console.warn('[INIT] JWT_SECRET not set, using fallback');
+        }
+        if (!process.env.SESSION_SECRET) {
+            process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
+            console.warn('[INIT] SESSION_SECRET not set, using fallback');
+        }
+        
+        // CORS setup
+        const corsOptions = {
+            origin: function (origin, callback) {
+                const allowedOrigins = [
+                    'http://localhost:5173',
+                    'http://localhost:5174',
+                    'http://localhost:5175',
+                    'http://localhost:4173',
+                    'http://localhost:4174',
+                    'http://localhost',
+                    'https://loopjs-frontend-361659024403.us-central1.run.app',
+                    'https://loopjs.vidai.sbs'
+                ];
+                
+                // Allow requests with no origin (like mobile apps, curl requests)
+                if (!origin) {
+                    console.log('CORS: Allowing request with no origin');
+                    callback(null, true);
+                } else if (allowedOrigins.indexOf(origin) !== -1) {
+                    console.log(`CORS: Allowing origin: ${origin}`);
+                    callback(null, true);
+                } else {
+                    console.log(`CORS: Blocking origin: ${origin}`);
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
+            credentials: true
+        };
+        app.use(cors(corsOptions));
+        
+        // Load routes
+        const apiRoutes = require('./routes/index');
+        app.use('/api', apiRoutes);
+        
+        // Connect MongoDB (non-blocking)
+        connectDB().catch(err => {
+            console.error('[INIT] MongoDB error:', err.message);
+        });
+        
+        // Initialize WebSocket
+        const WebSocket = require('ws');
+        const wss = new WebSocket.Server({ server, path: "/ws" });
+        const wsHandler = require('./configs/ws.handler');
+        wss.on('connection', wsHandler);
+        
+        // Mark as fully initialized
+        global.appInitialized = true;
+        console.log('[INIT] ✅ Application components loaded');
+        console.log('[INIT] ✅ Full application initialization complete');
+    } catch (error) {
+        console.error('[INIT] ❌ Error loading components:', error);
+        // Don't crash - server is already listening
+    }
+}
 
-// User list endpoint - handled by info.route.js controller
+async function connectDB() {
+    try {
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
+        await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
+            socketTimeoutMS: 5000,
+        });
+        console.log('[INIT] ✅ MongoDB connected');
+    } catch (error) {
+        console.error('[INIT] MongoDB connection failed:', error.message);
+    }
+}
 
-// Task stats endpoint - handled by task.route.js controller
-
-// Client list endpoint - handled by info.route.js controller
-
-// Health check endpoint for deployment monitoring
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'healthy', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development',
-        websocket: 'enabled'
-    });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-    res.json({ message: 'LoopJS Backend Server is running' });
-});
-
-// Global error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
-
-    console.error("🔥 UNHANDLED ERROR:", err.stack || err);
-
-    res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
-        // For development, include the stack trace
+    console.error('[ERROR]', err);
+    res.status(500).json({
+        error: 'Internal server error',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`[STARTUP] ✅ Server listening on port ${PORT} on all network interfaces`);
-    console.log(`[STARTUP] ✅ Local access: http://localhost:${PORT}`);
-    console.log(`[STARTUP] ✅ Health check: http://localhost:${PORT}/health`);
-    console.log(`[STARTUP] ✅ API endpoint: http://localhost:${PORT}/api/test`);
-    console.log(`[STARTUP] ✅ WebSocket endpoint: ws://localhost:${PORT}/ws`);
-    console.log(`[STARTUP] ✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`[STARTUP] ✅ MongoDB status: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
 });

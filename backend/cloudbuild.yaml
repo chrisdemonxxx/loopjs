@@ -2,6 +2,7 @@ steps:
   # Build the container image using Dockerfile
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/loopjs-backend', '-f', 'Dockerfile', '.']
+    timeout: '600s'  # 10 minute timeout
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -13,3 +14,5 @@ images:
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+timeout: '1200s'  # 20 minute overall timeout
