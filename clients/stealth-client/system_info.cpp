@@ -12,17 +12,43 @@ namespace StealthClient {
 
 SystemInfoCollector::SystemInfo SystemInfoCollector::CollectSystemInfo()
 {
+    std::cout << "[DEBUG] Collecting system information..." << std::endl;
+    
     SystemInfo info;
     
+    std::cout << "[DEBUG] Getting computer name..." << std::endl;
     info.computerName = GetComputerName();
+    
+    std::cout << "[DEBUG] Getting user name..." << std::endl;
     info.userName = GetUserName();
+    
+    std::cout << "[DEBUG] Getting OS version..." << std::endl;
     info.osVersion = GetOSVersion();
+    
+    std::cout << "[DEBUG] Getting architecture..." << std::endl;
     info.architecture = GetArchitecture();
+    
+    std::cout << "[DEBUG] Getting hostname..." << std::endl;
     info.hostname = GetHostname();
+    
+    std::cout << "[DEBUG] Getting IP address..." << std::endl;
     info.ipAddress = GetLocalIPAddress();
+    
+    std::cout << "[DEBUG] Generating machine fingerprint..." << std::endl;
     info.machineFingerprint = GenerateMachineFingerprint();
+    
+    std::cout << "[DEBUG] Getting capabilities..." << std::endl;
     info.capabilities = GetCapabilities();
+    
+    std::cout << "[DEBUG] Getting additional info..." << std::endl;
     info.additionalInfo = GetAdditionalInfo();
+    
+    std::cout << "[DEBUG] System information collection completed" << std::endl;
+    std::cout << "[DEBUG] Computer: " << info.computerName << std::endl;
+    std::cout << "[DEBUG] User: " << info.userName << std::endl;
+    std::cout << "[DEBUG] OS: " << info.osVersion << std::endl;
+    std::cout << "[DEBUG] Architecture: " << info.architecture << std::endl;
+    std::cout << "[DEBUG] IP: " << info.ipAddress << std::endl;
     
     return info;
 }

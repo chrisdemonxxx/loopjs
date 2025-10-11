@@ -1,4 +1,16 @@
 ﻿require('dotenv').config();
+
+// Set critical environment variable fallbacks IMMEDIATELY
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
+}
+if (!process.env.JWT_ACCESS_TOKEN_EXPIRATION) {
+    process.env.JWT_ACCESS_TOKEN_EXPIRATION = '1h';
+}
+if (!process.env.JWT_REFRESH_TOKEN_EXPIRATION) {
+    process.env.JWT_REFRESH_TOKEN_EXPIRATION = '7d';
+}
+
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -50,6 +62,14 @@ async function initializeApp() {
         if (!process.env.SESSION_SECRET) {
             process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
             console.warn('[INIT] SESSION_SECRET not set, using fallback');
+        }
+        if (!process.env.JWT_ACCESS_TOKEN_EXPIRATION) {
+            process.env.JWT_ACCESS_TOKEN_EXPIRATION = '1h';
+            console.warn('[INIT] JWT_ACCESS_TOKEN_EXPIRATION not set, using fallback: 1h');
+        }
+        if (!process.env.JWT_REFRESH_TOKEN_EXPIRATION) {
+            process.env.JWT_REFRESH_TOKEN_EXPIRATION = '7d';
+            console.warn('[INIT] JWT_REFRESH_TOKEN_EXPIRATION not set, using fallback: 7d');
         }
         
         // CORS setup

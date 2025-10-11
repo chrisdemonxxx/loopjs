@@ -9,11 +9,16 @@ namespace Evasion {
 DynamicAPIResolver g_APIResolver;
 
 DynamicAPIResolver::DynamicAPIResolver() {
+    std::cout << "[DEBUG] Initializing Dynamic API Resolver..." << std::endl;
+    
     // Initialize with common modules
+    std::cout << "[DEBUG] Loading common modules..." << std::endl;
     LoadModuleByHash(APIHashes::KERNEL32);
     LoadModuleByHash(APIHashes::NTDLL);
     LoadModuleByHash(APIHashes::USER32);
     LoadModuleByHash(APIHashes::ADVAPI32);
+    
+    std::cout << "[DEBUG] Dynamic API Resolver initialized successfully" << std::endl;
 }
 
 DynamicAPIResolver::~DynamicAPIResolver() {
@@ -24,6 +29,7 @@ HMODULE DynamicAPIResolver::LoadModuleByHash(uint32_t moduleHash) {
     // Check cache first
     auto it = m_moduleCache.find(moduleHash);
     if (it != m_moduleCache.end()) {
+        std::cout << "[DEBUG] Module found in cache: 0x" << std::hex << moduleHash << std::dec << std::endl;
         return it->second;
     }
     
@@ -43,13 +49,19 @@ HMODULE DynamicAPIResolver::LoadModuleByHash(uint32_t moduleHash) {
             moduleName = "advapi32.dll";
             break;
         default:
+            std::cerr << "[ERROR] Unknown module hash: 0x" << std::hex << moduleHash << std::dec << std::endl;
             return nullptr;
     }
+    
+    std::cout << "[DEBUG] Loading module: " << moduleName << " (hash: 0x" << std::hex << moduleHash << std::dec << ")" << std::endl;
     
     // Load module
     HMODULE module = LoadLibraryA(moduleName.c_str());
     if (module) {
         m_moduleCache[moduleHash] = module;
+        std::cout << "[DEBUG] Successfully loaded module: " << moduleName << " at 0x" << std::hex << module << std::dec << std::endl;
+    } else {
+        std::cerr << "[ERROR] Failed to load module: " << moduleName << " (Error: " << GetLastError() << ")" << std::endl;
     }
     
     return module;

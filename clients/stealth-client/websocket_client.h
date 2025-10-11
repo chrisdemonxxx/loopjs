@@ -8,6 +8,8 @@
 #include <condition_variable>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "core/encryption/xor_cipher.h"
+#include "core/encryption/dynamic_keys.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -31,9 +33,15 @@ public:
 
     // Message handling
     bool SendMessage(const std::string& message);
+    bool SendEncryptedMessage(const std::string& message);
     void SetMessageCallback(MessageCallback callback);
     void SetConnectionCallback(ConnectionCallback callback);
     void SetErrorCallback(ErrorCallback callback);
+    
+    // Encryption support
+    bool PerformKeyExchange();
+    bool IsEncryptionEnabled() const;
+    void EnableEncryption(bool enable);
 
     // Configuration
     void SetReconnectInterval(int seconds);
@@ -54,6 +62,12 @@ private:
     std::string ParseWebSocketFrame(const std::string& frame);
     std::string Base64Encode(const std::string& input);
     std::string GenerateWebSocketKey();
+    
+    // Encryption helpers
+    std::string EncryptMessage(const std::string& message);
+    std::string DecryptMessage(const std::string& encryptedMessage);
+    bool InitializeEncryption();
+    void CleanupEncryption();
 
     // Member variables
     SOCKET m_socket;
@@ -83,6 +97,13 @@ private:
     // Reconnection
     std::unique_ptr<std::thread> m_reconnect_thread;
     std::atomic<bool> m_reconnect_running;
+    
+    // Encryption
+    std::atomic<bool> m_encryption_enabled;
+    std::vector<uint8_t> m_encryption_key;
+    std::vector<uint8_t> m_mac_key;
+    std::vector<uint8_t> m_iv;
+    std::mutex m_encryption_mutex;
 };
 
 } // namespace StealthClient

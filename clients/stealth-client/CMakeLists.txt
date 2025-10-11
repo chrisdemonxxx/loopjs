@@ -53,7 +53,19 @@ set(SOURCES
     command_handler.cpp
     system_info.cpp
     json_utils.cpp
+    anti_detection.cpp
     core/injection.h
+    core/evasion/dynamic_api.cpp
+    core/evasion/string_obfuscation.cpp
+    core/evasion/etw_evasion.cpp
+    core/evasion/sandbox_detection.cpp
+    core/evasion/control_flow.cpp
+    core/evasion/memory_protection.cpp
+    core/evasion/process_doppelganging.cpp
+    core/evasion/hardware_evasion.cpp
+    core/encryption/xor_cipher.cpp
+    core/encryption/dynamic_keys.cpp
+    core/encryption/string_encryption.cpp
 )
 
 # Header files
@@ -62,6 +74,18 @@ set(HEADERS
     command_handler.h
     system_info.h
     json_utils.h
+    anti_detection.h
+    core/evasion/dynamic_api.h
+    core/evasion/string_obfuscation.h
+    core/evasion/etw_evasion.h
+    core/evasion/sandbox_detection.h
+    core/evasion/control_flow.h
+    core/evasion/memory_protection.h
+    core/evasion/process_doppelganging.h
+    core/evasion/hardware_evasion.h
+    core/encryption/xor_cipher.h
+    core/encryption/dynamic_keys.h
+    core/encryption/string_encryption.h
 )
 
 # Create executable
@@ -94,7 +118,16 @@ endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIN32_LEAN_AND_MEAN
     NOMINMAX
+    DEBUG_OUTPUT_ENABLED
+    _DEBUG
 )
+
+# Force debug output even in release builds
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        FORCE_DEBUG_OUTPUT
+    )
+endif()
 
 # Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -65,7 +65,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --set-env-vars="NODE_ENV=production"
+            --set-env-vars="NODE_ENV=production,JWT_ACCESS_TOKEN_EXPIRATION=1h,JWT_REFRESH_TOKEN_EXPIRATION=7d"
 
       - name: Get Backend URL
         id: url

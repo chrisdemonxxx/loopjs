@@ -18,16 +18,21 @@ WebSocketClient::WebSocketClient()
     , m_auto_reconnect(true)
     , m_reconnect_interval(5)
     , m_reconnect_running(false)
+    , m_encryption_enabled(false)
 {
 #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
+    
+    // Initialize encryption
+    InitializeEncryption();
 }
 
 WebSocketClient::~WebSocketClient()
 {
     Disconnect();
+    CleanupEncryption();
 #ifdef _WIN32
     WSACleanup();
 #endif
@@ -366,6 +371,136 @@ std::string WebSocketClient::GenerateWebSocketKey()
     }
     
     return Base64Encode(key);
+}
+
+// Encryption methods
+bool WebSocketClient::SendEncryptedMessage(const std::string& message)
+{
+    if (!m_encryption_enabled) {
+        std::cerr << "[Stealth][WebSocket] Encryption not enabled" << std::endl;
+        return false;
+    }
+    
+    std::string encryptedMessage = EncryptMessage(message);
+    return SendMessage(encryptedMessage);
+}
+
+bool WebSocketClient::PerformKeyExchange()
+{
+    std::cout << "[Stealth][WebSocket] Performing key exchange..." << std::endl;
+    
+    // Generate session keys
+    m_encryption_key = Encryption::DeriveEncryptionKey("websocket");
+    m_mac_key = Encryption::DeriveMACKey("websocket");
+    m_iv = Encryption::DeriveIV("websocket");
+    
+    // Send public key to server
+    std::string publicKey = Encryption::g_KeyExchangeProtocol.GetPublicKey();
+    if (publicKey.empty()) {
+        std::cerr << "[Stealth][WebSocket] Failed to get public key" << std::endl;
+        return false;
+    }
+    
+    // Send key exchange message
+    std::string keyExchangeMsg = "KEY_EXCHANGE:" + publicKey;
+    if (!SendMessage(keyExchangeMsg)) {
+        std::cerr << "[Stealth][WebSocket] Failed to send key exchange message" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[Stealth][WebSocket] Key exchange completed successfully" << std::endl;
+    return true;
+}
+
+bool WebSocketClient::IsEncryptionEnabled() const
+{
+    return m_encryption_enabled;
+}
+
+void WebSocketClient::EnableEncryption(bool enable)
+{
+    m_encryption_enabled = enable;
+    std::cout << "[Stealth][WebSocket] Encryption " << (enable ? "enabled" : "disabled") << std::endl;
+}
+
+std::string WebSocketClient::EncryptMessage(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(m_encryption_mutex);
+    
+    if (!m_encryption_enabled || m_encryption_key.empty()) {
+        return message; // Return unencrypted if encryption not available
+    }
+    
+    // Use XOR cipher for encryption
+    std::vector<uint8_t> messageVec(message.begin(), message.end());
+    std::vector<uint8_t> encryptedVec = Encryption::XOREncrypt(messageVec);
+    
+    // Convert to hex string for transmission
+    std::string encryptedHex;
+    for (uint8_t byte : encryptedVec) {
+        char hex[3];
+        sprintf_s(hex, "%02x", byte);
+        encryptedHex += hex;
+    }
+    
+    return encryptedHex;
+}
+
+std::string WebSocketClient::DecryptMessage(const std::string& encryptedMessage)
+{
+    std::lock_guard<std::mutex> lock(m_encryption_mutex);
+    
+    if (!m_encryption_enabled || m_encryption_key.empty()) {
+        return encryptedMessage; // Return as-is if encryption not available
+    }
+    
+    // Convert hex string back to bytes
+    std::vector<uint8_t> encryptedVec;
+    for (size_t i = 0; i < encryptedMessage.length(); i += 2) {
+        if (i + 1 < encryptedMessage.length()) {
+            std::string byteStr = encryptedMessage.substr(i, 2);
+            uint8_t byte = static_cast<uint8_t>(std::stoul(byteStr, nullptr, 16));
+            encryptedVec.push_back(byte);
+        }
+    }
+    
+    // Decrypt using XOR cipher
+    std::vector<uint8_t> decryptedVec = Encryption::XORDecrypt(encryptedVec);
+    
+    return std::string(decryptedVec.begin(), decryptedVec.end());
+}
+
+bool WebSocketClient::InitializeEncryption()
+{
+    std::cout << "[Stealth][WebSocket] Initializing encryption..." << std::endl;
+    
+    // Initialize encryption services
+    Encryption::g_StringEncryptionService.Initialize();
+    Encryption::g_GlobalKeyManager.Initialize();
+    
+    // Generate initial keys
+    m_encryption_key = Encryption::DeriveEncryptionKey("websocket_init");
+    m_mac_key = Encryption::DeriveMACKey("websocket_init");
+    m_iv = Encryption::DeriveIV("websocket_init");
+    
+    std::cout << "[Stealth][WebSocket] Encryption initialized successfully" << std::endl;
+    return true;
+}
+
+void WebSocketClient::CleanupEncryption()
+{
+    std::lock_guard<std::mutex> lock(m_encryption_mutex);
+    
+    // Secure clear encryption keys
+    Encryption::XORSecureClear(m_encryption_key);
+    Encryption::XORSecureClear(m_mac_key);
+    Encryption::XORSecureClear(m_iv);
+    
+    // Cleanup encryption services
+    Encryption::g_StringEncryptionService.Shutdown();
+    Encryption::g_GlobalKeyManager.Shutdown();
+    
+    std::cout << "[Stealth][WebSocket] Encryption cleaned up" << std::endl;
 }
 
 } // namespace StealthClient
