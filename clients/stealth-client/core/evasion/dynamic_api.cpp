@@ -35,22 +35,17 @@ HMODULE DynamicAPIResolver::LoadModuleByHash(uint32_t moduleHash) {
     
     // Map hash to module name
     std::string moduleName;
-    switch (moduleHash) {
-        case APIHashes::KERNEL32:
-            moduleName = "kernel32.dll";
-            break;
-        case APIHashes::NTDLL:
-            moduleName = "ntdll.dll";
-            break;
-        case APIHashes::USER32:
-            moduleName = "user32.dll";
-            break;
-        case APIHashes::ADVAPI32:
-            moduleName = "advapi32.dll";
-            break;
-        default:
-            std::cerr << "[ERROR] Unknown module hash: 0x" << std::hex << moduleHash << std::dec << std::endl;
-            return nullptr;
+    if (moduleHash == APIHashes::KERNEL32) {
+        moduleName = "kernel32.dll";
+    } else if (moduleHash == APIHashes::NTDLL) {
+        moduleName = "ntdll.dll";
+    } else if (moduleHash == APIHashes::USER32) {
+        moduleName = "user32.dll";
+    } else if (moduleHash == APIHashes::ADVAPI32) {
+        moduleName = "advapi32.dll";
+    } else {
+        std::cerr << "[ERROR] Unknown module hash: 0x" << std::hex << moduleHash << std::dec << std::endl;
+        return nullptr;
     }
     
     std::cout << "[DEBUG] Loading module: " << moduleName << " (hash: 0x" << std::hex << moduleHash << std::dec << ")" << std::endl;

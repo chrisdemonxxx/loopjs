@@ -45,7 +45,6 @@ public:
     void SetKeys(const std::vector<uint8_t>& keys);
     std::vector<uint8_t> GetKeys() const;
     void GenerateNewKeys(size_t keyCount = 16);
-    void RotateKeys();
     
     // Utility functions
     std::string VectorToHex(const std::vector<uint8_t>& data);
@@ -128,11 +127,13 @@ public:
     StringEncryptionService();
     ~StringEncryptionService();
     
+    // Initialization and cleanup
+    void Initialize();
+    void Shutdown();
+    
     // String encryption/decryption
     std::string EncryptString(const std::string& plaintext);
     std::string DecryptString(const std::string& ciphertext);
-    void EncryptStringInPlace(std::string& str);
-    void DecryptStringInPlace(std::string& str);
     
     // Secure string handling
     void SecureClear(std::string& str);
@@ -144,7 +145,6 @@ public:
     void ClearCache();
     
     // Key management
-    void RotateKeys();
     void UpdateKeys();
     
     // Status

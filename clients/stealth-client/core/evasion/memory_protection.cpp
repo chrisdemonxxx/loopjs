@@ -526,12 +526,12 @@ bool MemoryProtectionBypass::IsValidGadget(void* address, size_t size) {
     }
     
     // Check if address is readable
-    __try {
+    try {
         volatile char test = *reinterpret_cast<char*>(address);
         (void)test; // Suppress unused variable warning
         return true;
     }
-    __except (EXCEPTION_EXECUTE_HANDLER) {
+    catch (...) {
         return false;
     }
 }

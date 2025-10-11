@@ -9,6 +9,7 @@
 #include "core/evasion/hardware_evasion.h"
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 namespace StealthClient {
 

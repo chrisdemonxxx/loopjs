@@ -20,31 +20,20 @@ endif()
 # Try to find packages, but make them optional for now
 find_package(PkgConfig QUIET)
 
-# Try to find libwebsockets
-if(PkgConfig_FOUND)
-    pkg_check_modules(LIBWEBSOCKETS libwebsockets)
-endif()
+# Use local nlohmann/json header
+set(NLOHMANN_JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann)
+set(nlohmann_json_FOUND TRUE)
 
-# Try to find nlohmann/json
-find_package(nlohmann_json QUIET)
+# Use simple WebSocket implementation (no external dependencies)
+set(USE_SIMPLE_WEBSOCKET TRUE)
 
-# If not found, we'll use simple alternatives
-if(NOT LIBWEBSOCKETS_FOUND)
-    message(WARNING "libwebsockets not found, using simple WebSocket implementation")
-    set(USE_SIMPLE_WEBSOCKET TRUE)
-endif()
-
-if(NOT nlohmann_json_FOUND)
-    message(WARNING "nlohmann/json not found, using simple JSON implementation")
-    set(USE_SIMPLE_JSON TRUE)
-endif()
+message(STATUS "Using local nlohmann/json from: ${NLOHMANN_JSON_INCLUDE_DIR}")
+message(STATUS "Using simple WebSocket implementation (no external dependencies)")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
-if(LIBWEBSOCKETS_FOUND)
-    include_directories(${LIBWEBSOCKETS_INCLUDE_DIRS})
-endif()
+include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
 
 # Source files
 set(SOURCES
@@ -91,14 +80,7 @@ set(HEADERS
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-# Link libraries
-if(LIBWEBSOCKETS_FOUND)
-    target_link_libraries(${PROJECT_NAME} ${LIBWEBSOCKETS_LIBRARIES})
-endif()
-
-if(nlohmann_json_FOUND)
-    target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
-endif()
+# nlohmann/json is header-only, no linking needed
 
 # Windows-specific libraries
 if(WIN32)
@@ -142,16 +124,8 @@ install(TARGETS ${PROJECT_NAME}
 # Print configuration info
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
-if(LIBWEBSOCKETS_FOUND)
-    message(STATUS "libwebsockets version: ${LIBWEBSOCKETS_VERSION}")
-else()
-    message(STATUS "libwebsockets: NOT FOUND (using simple implementation)")
-endif()
-if(nlohmann_json_FOUND)
-    message(STATUS "nlohmann/json version: ${nlohmann_json_VERSION}")
-else()
-    message(STATUS "nlohmann/json: NOT FOUND (using simple implementation)")
-endif()
+message(STATUS "WebSocket: Using simple implementation (no external dependencies)")
+message(STATUS "nlohmann/json: Using local header-only version")
 
 # Create a simple build script for Windows
 if(WIN32)

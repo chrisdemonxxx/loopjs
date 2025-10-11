@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <evntrace.h>
 #include <evntprov.h>
+#include <winternl.h>
 
 namespace StealthClient {
 namespace Evasion {

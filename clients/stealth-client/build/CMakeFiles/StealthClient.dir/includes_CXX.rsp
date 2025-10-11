@@ -1,1 +1,1 @@
--I"D:/My Projects/loopjs/clients/stealth-client" -I"D:/My Projects/loopjs/clients/stealth-client/core"
+-I"D:/My Projects/loopjs/clients/stealth-client" -I"D:/My Projects/loopjs/clients/stealth-client/core" -I"D:/My Projects/loopjs/clients/stealth-client/third_party/nlohmann"

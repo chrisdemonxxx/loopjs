@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <windows.h>
 
 namespace StealthClient {
 namespace Evasion {
@@ -241,7 +242,7 @@ void AdvancedControlFlow::AddConditionalBranches() {
     // Add random conditions to operations
     for (size_t i = 0; i < m_operations.size(); i++) {
         if (m_rng() % 3 == 0) { // 33% chance
-            m_conditions.insert(m_conditions.begin() + i, 
+            m_conditions.emplace(m_conditions.begin() + i,
                 []() { return (GetTickCount() % 2) == 0; });
         }
     }

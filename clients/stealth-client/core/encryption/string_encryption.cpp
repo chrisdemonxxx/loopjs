@@ -13,6 +13,7 @@ namespace Encryption {
 StringEncryptionManager g_StringEncryptionManager;
 StringEncryptionUtils g_StringEncryptionUtils;
 GlobalStringEncryptionService g_GlobalStringEncryptionService;
+StringEncryptionService g_StringEncryptionService;
 
 // SecureString implementation
 SecureString::SecureString() : m_isEncrypted(false) {
@@ -562,6 +563,66 @@ void ClearAllEncryptedStrings() {
 
 std::string GetStringEncryptionStatus() {
     return g_GlobalStringEncryptionService.GetServiceStatus();
+}
+
+// StringEncryptionService implementation
+StringEncryptionService::StringEncryptionService() {
+    std::cout << "[DEBUG] StringEncryptionService constructor called" << std::endl;
+}
+
+StringEncryptionService::~StringEncryptionService() {
+    SecureClearAll();
+}
+
+void StringEncryptionService::Initialize() {
+    std::cout << "[DEBUG] StringEncryptionService::Initialize called" << std::endl;
+    // Initialize the service
+}
+
+void StringEncryptionService::Shutdown() {
+    std::cout << "[DEBUG] StringEncryptionService::Shutdown called" << std::endl;
+    SecureClearAll();
+}
+
+std::string StringEncryptionService::EncryptString(const std::string& plaintext) {
+    return g_XORCipher.EncryptString(plaintext);
+}
+
+std::string StringEncryptionService::DecryptString(const std::string& ciphertext) {
+    return g_XORCipher.DecryptString(ciphertext);
+}
+
+void StringEncryptionService::SecureClear(std::string& str) {
+    g_XORCipher.SecureClear(str);
+}
+
+void StringEncryptionService::SecureClearAll() {
+    m_encryptedStrings.clear();
+}
+
+void StringEncryptionService::CacheEncryptedString(const std::string& key, const std::string& encrypted) {
+    m_encryptedStrings[key] = encrypted;
+}
+
+std::string StringEncryptionService::GetCachedEncryptedString(const std::string& key) {
+    auto it = m_encryptedStrings.find(key);
+    return (it != m_encryptedStrings.end()) ? it->second : "";
+}
+
+void StringEncryptionService::ClearCache() {
+    m_encryptedStrings.clear();
+}
+
+void StringEncryptionService::UpdateKeys() {
+    g_XORCipher.GenerateNewKeys();
+}
+
+size_t StringEncryptionService::GetCachedStringCount() const {
+    return m_encryptedStrings.size();
+}
+
+std::string StringEncryptionService::GetServiceStatus() const {
+    return "StringEncryptionService: Active, Cached Strings: " + std::to_string(m_encryptedStrings.size());
 }
 
 } // namespace Encryption

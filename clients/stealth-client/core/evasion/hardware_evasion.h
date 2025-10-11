@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace StealthClient {
 namespace Evasion {
@@ -103,15 +104,6 @@ public:
     
     // Individual bypass methods
     bool BypassCET();
-    bool BypassSMEP();
-    bool BypassSMAP();
-    bool BypassNX();
-    bool BypassDEP();
-    bool BypassASLR();
-    bool BypassCFG();
-    bool BypassHVCI();
-    bool BypassKPTI();
-    bool BypassRetpoline();
     
     // Advanced bypass techniques
     bool UseROPToBypassCET();

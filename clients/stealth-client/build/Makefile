@@ -173,6 +173,30 @@ StealthClient/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/build
 .PHONY : StealthClient/fast
 
+anti_detection.obj: anti_detection.cpp.obj
+.PHONY : anti_detection.obj
+
+# target to build an object file
+anti_detection.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/anti_detection.cpp.obj
+.PHONY : anti_detection.cpp.obj
+
+anti_detection.i: anti_detection.cpp.i
+.PHONY : anti_detection.i
+
+# target to preprocess a source file
+anti_detection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/anti_detection.cpp.i
+.PHONY : anti_detection.cpp.i
+
+anti_detection.s: anti_detection.cpp.s
+.PHONY : anti_detection.s
+
+# target to generate assembly for a file
+anti_detection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/anti_detection.cpp.s
+.PHONY : anti_detection.cpp.s
+
 command_handler.obj: command_handler.cpp.obj
 .PHONY : command_handler.obj
 
@@ -196,6 +220,270 @@ command_handler.s: command_handler.cpp.s
 command_handler.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/command_handler.cpp.s
 .PHONY : command_handler.cpp.s
+
+core/encryption/dynamic_keys.obj: core/encryption/dynamic_keys.cpp.obj
+.PHONY : core/encryption/dynamic_keys.obj
+
+# target to build an object file
+core/encryption/dynamic_keys.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj
+.PHONY : core/encryption/dynamic_keys.cpp.obj
+
+core/encryption/dynamic_keys.i: core/encryption/dynamic_keys.cpp.i
+.PHONY : core/encryption/dynamic_keys.i
+
+# target to preprocess a source file
+core/encryption/dynamic_keys.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.i
+.PHONY : core/encryption/dynamic_keys.cpp.i
+
+core/encryption/dynamic_keys.s: core/encryption/dynamic_keys.cpp.s
+.PHONY : core/encryption/dynamic_keys.s
+
+# target to generate assembly for a file
+core/encryption/dynamic_keys.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.s
+.PHONY : core/encryption/dynamic_keys.cpp.s
+
+core/encryption/string_encryption.obj: core/encryption/string_encryption.cpp.obj
+.PHONY : core/encryption/string_encryption.obj
+
+# target to build an object file
+core/encryption/string_encryption.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj
+.PHONY : core/encryption/string_encryption.cpp.obj
+
+core/encryption/string_encryption.i: core/encryption/string_encryption.cpp.i
+.PHONY : core/encryption/string_encryption.i
+
+# target to preprocess a source file
+core/encryption/string_encryption.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.i
+.PHONY : core/encryption/string_encryption.cpp.i
+
+core/encryption/string_encryption.s: core/encryption/string_encryption.cpp.s
+.PHONY : core/encryption/string_encryption.s
+
+# target to generate assembly for a file
+core/encryption/string_encryption.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.s
+.PHONY : core/encryption/string_encryption.cpp.s
+
+core/encryption/xor_cipher.obj: core/encryption/xor_cipher.cpp.obj
+.PHONY : core/encryption/xor_cipher.obj
+
+# target to build an object file
+core/encryption/xor_cipher.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj
+.PHONY : core/encryption/xor_cipher.cpp.obj
+
+core/encryption/xor_cipher.i: core/encryption/xor_cipher.cpp.i
+.PHONY : core/encryption/xor_cipher.i
+
+# target to preprocess a source file
+core/encryption/xor_cipher.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.i
+.PHONY : core/encryption/xor_cipher.cpp.i
+
+core/encryption/xor_cipher.s: core/encryption/xor_cipher.cpp.s
+.PHONY : core/encryption/xor_cipher.s
+
+# target to generate assembly for a file
+core/encryption/xor_cipher.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.s
+.PHONY : core/encryption/xor_cipher.cpp.s
+
+core/evasion/control_flow.obj: core/evasion/control_flow.cpp.obj
+.PHONY : core/evasion/control_flow.obj
+
+# target to build an object file
+core/evasion/control_flow.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj
+.PHONY : core/evasion/control_flow.cpp.obj
+
+core/evasion/control_flow.i: core/evasion/control_flow.cpp.i
+.PHONY : core/evasion/control_flow.i
+
+# target to preprocess a source file
+core/evasion/control_flow.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.i
+.PHONY : core/evasion/control_flow.cpp.i
+
+core/evasion/control_flow.s: core/evasion/control_flow.cpp.s
+.PHONY : core/evasion/control_flow.s
+
+# target to generate assembly for a file
+core/evasion/control_flow.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.s
+.PHONY : core/evasion/control_flow.cpp.s
+
+core/evasion/dynamic_api.obj: core/evasion/dynamic_api.cpp.obj
+.PHONY : core/evasion/dynamic_api.obj
+
+# target to build an object file
+core/evasion/dynamic_api.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj
+.PHONY : core/evasion/dynamic_api.cpp.obj
+
+core/evasion/dynamic_api.i: core/evasion/dynamic_api.cpp.i
+.PHONY : core/evasion/dynamic_api.i
+
+# target to preprocess a source file
+core/evasion/dynamic_api.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.i
+.PHONY : core/evasion/dynamic_api.cpp.i
+
+core/evasion/dynamic_api.s: core/evasion/dynamic_api.cpp.s
+.PHONY : core/evasion/dynamic_api.s
+
+# target to generate assembly for a file
+core/evasion/dynamic_api.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.s
+.PHONY : core/evasion/dynamic_api.cpp.s
+
+core/evasion/etw_evasion.obj: core/evasion/etw_evasion.cpp.obj
+.PHONY : core/evasion/etw_evasion.obj
+
+# target to build an object file
+core/evasion/etw_evasion.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj
+.PHONY : core/evasion/etw_evasion.cpp.obj
+
+core/evasion/etw_evasion.i: core/evasion/etw_evasion.cpp.i
+.PHONY : core/evasion/etw_evasion.i
+
+# target to preprocess a source file
+core/evasion/etw_evasion.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.i
+.PHONY : core/evasion/etw_evasion.cpp.i
+
+core/evasion/etw_evasion.s: core/evasion/etw_evasion.cpp.s
+.PHONY : core/evasion/etw_evasion.s
+
+# target to generate assembly for a file
+core/evasion/etw_evasion.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.s
+.PHONY : core/evasion/etw_evasion.cpp.s
+
+core/evasion/hardware_evasion.obj: core/evasion/hardware_evasion.cpp.obj
+.PHONY : core/evasion/hardware_evasion.obj
+
+# target to build an object file
+core/evasion/hardware_evasion.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj
+.PHONY : core/evasion/hardware_evasion.cpp.obj
+
+core/evasion/hardware_evasion.i: core/evasion/hardware_evasion.cpp.i
+.PHONY : core/evasion/hardware_evasion.i
+
+# target to preprocess a source file
+core/evasion/hardware_evasion.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.i
+.PHONY : core/evasion/hardware_evasion.cpp.i
+
+core/evasion/hardware_evasion.s: core/evasion/hardware_evasion.cpp.s
+.PHONY : core/evasion/hardware_evasion.s
+
+# target to generate assembly for a file
+core/evasion/hardware_evasion.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.s
+.PHONY : core/evasion/hardware_evasion.cpp.s
+
+core/evasion/memory_protection.obj: core/evasion/memory_protection.cpp.obj
+.PHONY : core/evasion/memory_protection.obj
+
+# target to build an object file
+core/evasion/memory_protection.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj
+.PHONY : core/evasion/memory_protection.cpp.obj
+
+core/evasion/memory_protection.i: core/evasion/memory_protection.cpp.i
+.PHONY : core/evasion/memory_protection.i
+
+# target to preprocess a source file
+core/evasion/memory_protection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.i
+.PHONY : core/evasion/memory_protection.cpp.i
+
+core/evasion/memory_protection.s: core/evasion/memory_protection.cpp.s
+.PHONY : core/evasion/memory_protection.s
+
+# target to generate assembly for a file
+core/evasion/memory_protection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.s
+.PHONY : core/evasion/memory_protection.cpp.s
+
+core/evasion/process_doppelganging.obj: core/evasion/process_doppelganging.cpp.obj
+.PHONY : core/evasion/process_doppelganging.obj
+
+# target to build an object file
+core/evasion/process_doppelganging.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj
+.PHONY : core/evasion/process_doppelganging.cpp.obj
+
+core/evasion/process_doppelganging.i: core/evasion/process_doppelganging.cpp.i
+.PHONY : core/evasion/process_doppelganging.i
+
+# target to preprocess a source file
+core/evasion/process_doppelganging.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.i
+.PHONY : core/evasion/process_doppelganging.cpp.i
+
+core/evasion/process_doppelganging.s: core/evasion/process_doppelganging.cpp.s
+.PHONY : core/evasion/process_doppelganging.s
+
+# target to generate assembly for a file
+core/evasion/process_doppelganging.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.s
+.PHONY : core/evasion/process_doppelganging.cpp.s
+
+core/evasion/sandbox_detection.obj: core/evasion/sandbox_detection.cpp.obj
+.PHONY : core/evasion/sandbox_detection.obj
+
+# target to build an object file
+core/evasion/sandbox_detection.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj
+.PHONY : core/evasion/sandbox_detection.cpp.obj
+
+core/evasion/sandbox_detection.i: core/evasion/sandbox_detection.cpp.i
+.PHONY : core/evasion/sandbox_detection.i
+
+# target to preprocess a source file
+core/evasion/sandbox_detection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.i
+.PHONY : core/evasion/sandbox_detection.cpp.i
+
+core/evasion/sandbox_detection.s: core/evasion/sandbox_detection.cpp.s
+.PHONY : core/evasion/sandbox_detection.s
+
+# target to generate assembly for a file
+core/evasion/sandbox_detection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.s
+.PHONY : core/evasion/sandbox_detection.cpp.s
+
+core/evasion/string_obfuscation.obj: core/evasion/string_obfuscation.cpp.obj
+.PHONY : core/evasion/string_obfuscation.obj
+
+# target to build an object file
+core/evasion/string_obfuscation.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj
+.PHONY : core/evasion/string_obfuscation.cpp.obj
+
+core/evasion/string_obfuscation.i: core/evasion/string_obfuscation.cpp.i
+.PHONY : core/evasion/string_obfuscation.i
+
+# target to preprocess a source file
+core/evasion/string_obfuscation.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.i
+.PHONY : core/evasion/string_obfuscation.cpp.i
+
+core/evasion/string_obfuscation.s: core/evasion/string_obfuscation.cpp.s
+.PHONY : core/evasion/string_obfuscation.s
+
+# target to generate assembly for a file
+core/evasion/string_obfuscation.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\StealthClient.dir\build.make CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.s
+.PHONY : core/evasion/string_obfuscation.cpp.s
 
 json_utils.obj: json_utils.cpp.obj
 .PHONY : json_utils.obj
@@ -306,9 +594,45 @@ help:
 	@echo ... list_install_components
 	@echo ... rebuild_cache
 	@echo ... StealthClient
+	@echo ... anti_detection.obj
+	@echo ... anti_detection.i
+	@echo ... anti_detection.s
 	@echo ... command_handler.obj
 	@echo ... command_handler.i
 	@echo ... command_handler.s
+	@echo ... core/encryption/dynamic_keys.obj
+	@echo ... core/encryption/dynamic_keys.i
+	@echo ... core/encryption/dynamic_keys.s
+	@echo ... core/encryption/string_encryption.obj
+	@echo ... core/encryption/string_encryption.i
+	@echo ... core/encryption/string_encryption.s
+	@echo ... core/encryption/xor_cipher.obj
+	@echo ... core/encryption/xor_cipher.i
+	@echo ... core/encryption/xor_cipher.s
+	@echo ... core/evasion/control_flow.obj
+	@echo ... core/evasion/control_flow.i
+	@echo ... core/evasion/control_flow.s
+	@echo ... core/evasion/dynamic_api.obj
+	@echo ... core/evasion/dynamic_api.i
+	@echo ... core/evasion/dynamic_api.s
+	@echo ... core/evasion/etw_evasion.obj
+	@echo ... core/evasion/etw_evasion.i
+	@echo ... core/evasion/etw_evasion.s
+	@echo ... core/evasion/hardware_evasion.obj
+	@echo ... core/evasion/hardware_evasion.i
+	@echo ... core/evasion/hardware_evasion.s
+	@echo ... core/evasion/memory_protection.obj
+	@echo ... core/evasion/memory_protection.i
+	@echo ... core/evasion/memory_protection.s
+	@echo ... core/evasion/process_doppelganging.obj
+	@echo ... core/evasion/process_doppelganging.i
+	@echo ... core/evasion/process_doppelganging.s
+	@echo ... core/evasion/sandbox_detection.obj
+	@echo ... core/evasion/sandbox_detection.i
+	@echo ... core/evasion/sandbox_detection.s
+	@echo ... core/evasion/string_obfuscation.obj
+	@echo ... core/evasion/string_obfuscation.i
+	@echo ... core/evasion/string_obfuscation.s
 	@echo ... json_utils.obj
 	@echo ... json_utils.i
 	@echo ... json_utils.s

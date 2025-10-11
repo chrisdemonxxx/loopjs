@@ -2,6 +2,10 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <random>
+#include <chrono>
+#include <winternl.h>
 
 namespace StealthClient {
 namespace Evasion {

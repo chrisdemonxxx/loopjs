@@ -143,13 +143,205 @@ CMakeFiles/StealthClient.dir/json_utils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/json_utils.cpp.s"
 	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\json_utils.cpp" -o CMakeFiles\StealthClient.dir\json_utils.cpp.s
 
+CMakeFiles/StealthClient.dir/anti_detection.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/anti_detection.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/anti_detection.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/anti_detection.cpp
+CMakeFiles/StealthClient.dir/anti_detection.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/StealthClient.dir/anti_detection.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/anti_detection.cpp.obj -MF CMakeFiles\StealthClient.dir\anti_detection.cpp.obj.d -o CMakeFiles\StealthClient.dir\anti_detection.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\anti_detection.cpp"
+
+CMakeFiles/StealthClient.dir/anti_detection.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/anti_detection.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\anti_detection.cpp" > CMakeFiles\StealthClient.dir\anti_detection.cpp.i
+
+CMakeFiles/StealthClient.dir/anti_detection.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/anti_detection.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\anti_detection.cpp" -o CMakeFiles\StealthClient.dir\anti_detection.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/dynamic_api.cpp
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\dynamic_api.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\dynamic_api.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\dynamic_api.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\dynamic_api.cpp" > CMakeFiles\StealthClient.dir\core\evasion\dynamic_api.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\dynamic_api.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\dynamic_api.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/string_obfuscation.cpp
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\string_obfuscation.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\string_obfuscation.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\string_obfuscation.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\string_obfuscation.cpp" > CMakeFiles\StealthClient.dir\core\evasion\string_obfuscation.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\string_obfuscation.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\string_obfuscation.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/etw_evasion.cpp
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\etw_evasion.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\etw_evasion.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\etw_evasion.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\etw_evasion.cpp" > CMakeFiles\StealthClient.dir\core\evasion\etw_evasion.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\etw_evasion.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\etw_evasion.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/sandbox_detection.cpp
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\sandbox_detection.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\sandbox_detection.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\sandbox_detection.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\sandbox_detection.cpp" > CMakeFiles\StealthClient.dir\core\evasion\sandbox_detection.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\sandbox_detection.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\sandbox_detection.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/control_flow.cpp
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\control_flow.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\control_flow.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\control_flow.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\control_flow.cpp" > CMakeFiles\StealthClient.dir\core\evasion\control_flow.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\control_flow.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\control_flow.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/memory_protection.cpp
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\memory_protection.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\memory_protection.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\memory_protection.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\memory_protection.cpp" > CMakeFiles\StealthClient.dir\core\evasion\memory_protection.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\memory_protection.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\memory_protection.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/process_doppelganging.cpp
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\process_doppelganging.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\process_doppelganging.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\process_doppelganging.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\process_doppelganging.cpp" > CMakeFiles\StealthClient.dir\core\evasion\process_doppelganging.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\process_doppelganging.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\process_doppelganging.cpp.s
+
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/evasion/hardware_evasion.cpp
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj -MF CMakeFiles\StealthClient.dir\core\evasion\hardware_evasion.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\evasion\hardware_evasion.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\evasion\hardware_evasion.cpp"
+
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\evasion\hardware_evasion.cpp" > CMakeFiles\StealthClient.dir\core\evasion\hardware_evasion.cpp.i
+
+CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\evasion\hardware_evasion.cpp" -o CMakeFiles\StealthClient.dir\core\evasion\hardware_evasion.cpp.s
+
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/encryption/xor_cipher.cpp
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj -MF CMakeFiles\StealthClient.dir\core\encryption\xor_cipher.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\encryption\xor_cipher.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\encryption\xor_cipher.cpp"
+
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\encryption\xor_cipher.cpp" > CMakeFiles\StealthClient.dir\core\encryption\xor_cipher.cpp.i
+
+CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\encryption\xor_cipher.cpp" -o CMakeFiles\StealthClient.dir\core\encryption\xor_cipher.cpp.s
+
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/encryption/dynamic_keys.cpp
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj -MF CMakeFiles\StealthClient.dir\core\encryption\dynamic_keys.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\encryption\dynamic_keys.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\encryption\dynamic_keys.cpp"
+
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\encryption\dynamic_keys.cpp" > CMakeFiles\StealthClient.dir\core\encryption\dynamic_keys.cpp.i
+
+CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\encryption\dynamic_keys.cpp" -o CMakeFiles\StealthClient.dir\core\encryption\dynamic_keys.cpp.s
+
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj: CMakeFiles/StealthClient.dir/flags.make
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj: CMakeFiles/StealthClient.dir/includes_CXX.rsp
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj: D:/My\ Projects/loopjs/clients/stealth-client/core/encryption/string_encryption.cpp
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj: CMakeFiles/StealthClient.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj -MF CMakeFiles\StealthClient.dir\core\encryption\string_encryption.cpp.obj.d -o CMakeFiles\StealthClient.dir\core\encryption\string_encryption.cpp.obj -c "D:\My Projects\loopjs\clients\stealth-client\core\encryption\string_encryption.cpp"
+
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "D:\My Projects\loopjs\clients\stealth-client\core\encryption\string_encryption.cpp" > CMakeFiles\StealthClient.dir\core\encryption\string_encryption.cpp.i
+
+CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "D:\My Projects\loopjs\clients\stealth-client\core\encryption\string_encryption.cpp" -o CMakeFiles\StealthClient.dir\core\encryption\string_encryption.cpp.s
+
 # Object files for target StealthClient
 StealthClient_OBJECTS = \
 "CMakeFiles/StealthClient.dir/main.cpp.obj" \
 "CMakeFiles/StealthClient.dir/websocket_client.cpp.obj" \
 "CMakeFiles/StealthClient.dir/command_handler.cpp.obj" \
 "CMakeFiles/StealthClient.dir/system_info.cpp.obj" \
-"CMakeFiles/StealthClient.dir/json_utils.cpp.obj"
+"CMakeFiles/StealthClient.dir/json_utils.cpp.obj" \
+"CMakeFiles/StealthClient.dir/anti_detection.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj" \
+"CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj"
 
 # External object files for target StealthClient
 StealthClient_EXTERNAL_OBJECTS =
@@ -159,11 +351,23 @@ bin/StealthClient.exe: CMakeFiles/StealthClient.dir/websocket_client.cpp.obj
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/command_handler.cpp.obj
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/system_info.cpp.obj
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/json_utils.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/anti_detection.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/dynamic_api.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/string_obfuscation.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/etw_evasion.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/sandbox_detection.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/control_flow.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/memory_protection.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/process_doppelganging.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/evasion/hardware_evasion.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/encryption/xor_cipher.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/encryption/dynamic_keys.cpp.obj
+bin/StealthClient.exe: CMakeFiles/StealthClient.dir/core/encryption/string_encryption.cpp.obj
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/build.make
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/linkLibs.rsp
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/objects1.rsp
 bin/StealthClient.exe: CMakeFiles/StealthClient.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable bin\StealthClient.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="D:\My Projects\loopjs\clients\stealth-client\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_18) "Linking CXX executable bin\StealthClient.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\StealthClient.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
