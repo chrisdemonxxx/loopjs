@@ -93,7 +93,10 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
       if (response.data.success) {
         toast.success('API key saved successfully');
         setShowAIConfigModal(false);
-        checkAIStatus(); // Recheck status
+        // Force immediate status check
+        await checkAIStatus();
+        // Also check again after a short delay to ensure status is updated
+        setTimeout(() => checkAIStatus(), 1000);
       }
     } catch (error) {
       console.error('Failed to save API key:', error);

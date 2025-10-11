@@ -60,12 +60,17 @@ router.post('/process-command', async (req, res) => {
  * Get AI service status (public endpoint)
  */
 router.get('/status', (req, res) => {
-        res.json({
-            success: true,
-        provider: 'gemini',
-        available: isGeminiAvailable,
-            timestamp: new Date().toISOString()
-        });
+  const isGeminiAvailable = process.env.GEMINI_API_KEY && 
+    process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here' &&
+    process.env.GEMINI_API_KEY.trim() !== '';
+    
+  res.json({
+    success: true,
+    provider: 'gemini',
+    available: isGeminiAvailable,
+    configured: isGeminiAvailable,
+    timestamp: new Date().toISOString()
+  });
 });
 
 /**
@@ -123,52 +128,58 @@ const authorize = require('../middleware/rbac');
 
 // POST /api/ai/config - Save/Update Gemini API Key
 router.post('/config', protect, authorize(['admin']), async (req, res) => {
-    try {
-        const { apiKey } = req.body;
-        
-        if (!apiKey) {
-            return res.status(400).json({
-                success: false,
-                error: 'API key is required'
-            });
-        }
-
-        // Save to environment variable (for current session)
-        process.env.GEMINI_API_KEY = apiKey;
-        
-        // Try to persist to file, but don't fail if it doesn't work
-        try {
-            const envPath = path.join(__dirname, '..', '.env');
-            let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
-            
-            if (envContent.includes('GEMINI_API_KEY=')) {
-                envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey}`);
-            } else {
-                envContent += `\nGEMINI_API_KEY=${apiKey}\n`;
-            }
-            
-            await fs.writeFile(envPath, envContent);
-            console.log('[AI] API key saved to .env file');
-        } catch (fileError) {
-            console.warn('[AI] Could not save to .env file (this is normal in Cloud Run):', fileError.message);
-            // Don't fail the request - the API key is still set in memory
-        }
-        
-        // Reinitialize Gemini AI processor
-        const geminiAIProcessor = new GeminiAICommandProcessor();
-        
-        res.json({
-            success: true,
-            message: 'API key configured successfully',
-            available: true
-        });
-    } catch (error) {
-        console.error('Error saving API key:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to save API key'
-        });
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey || !apiKey.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'API key is required'
+      });
     }
+
+    // Save to environment variable (for current session)
+    process.env.GEMINI_API_KEY = apiKey.trim();
+    
+    // Try to persist to file, but don't fail if it doesn't work
+    try {
+      const envPath = path.join(__dirname, '..', '.env');
+      let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
+      
+      if (envContent.includes('GEMINI_API_KEY=')) {
+        envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey.trim()}`);
+      } else {
+        envContent += `\nGEMINI_API_KEY=${apiKey.trim()}\n`;
+      }
+      
+      await fs.writeFile(envPath, envContent);
+      console.log('[AI] API key saved to .env file');
+    } catch (fileError) {
+      console.warn('[AI] Could not save to .env file (this is normal in Cloud Run):', fileError.message);
+      // Don't fail the request - the API key is still set in memory
+    }
+    
+    // Reinitialize Gemini AI processor
+    const geminiAIProcessor = new GeminiAICommandProcessor();
+    
+    // Verify the API key works
+    const isAvailable = process.env.GEMINI_API_KEY && 
+      process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here' &&
+      process.env.GEMINI_API_KEY.trim() !== '';
+    
+    res.json({
+      success: true,
+      message: 'API key configured successfully',
+      available: isAvailable,
+      configured: isAvailable
+    });
+  } catch (error) {
+    console.error('Error saving API key:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save API key'
+    });
+  }
 });
 
 // GET /api/ai/config - Get current configuration status

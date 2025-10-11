@@ -233,11 +233,32 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ activeTab }) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    // Save settings to localStorage or API
-    localStorage.setItem('panelSettings', JSON.stringify(settings));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      // Save to backend first
+      const response = await request({
+        url: '/api/settings',
+        method: 'POST',
+        data: { settings }
+      });
+
+      if (response.data.success) {
+        // Also save to localStorage as backup
+        localStorage.setItem('panelSettings', JSON.stringify(settings));
+        setSaved(true);
+        toast.success('Settings saved successfully');
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        throw new Error('Failed to save settings to server');
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      // Fallback to localStorage only
+      localStorage.setItem('panelSettings', JSON.stringify(settings));
+      setSaved(true);
+      toast.warning('Settings saved locally only');
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const handleReset = () => {
@@ -263,12 +284,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ activeTab }) => {
     setSettings(defaultSettings);
   };
 
-  // Load settings from localStorage on component mount
+  // Load settings from backend first, then localStorage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('panelSettings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
+    const loadSettings = async () => {
+      try {
+        const response = await request({
+          url: '/api/settings',
+          method: 'GET'
+        });
+
+        if (response.data.success && response.data.settings) {
+          setSettings(response.data.settings);
+        } else {
+          // Fallback to localStorage
+          const savedSettings = localStorage.getItem('panelSettings');
+          if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load settings from server:', error);
+        // Fallback to localStorage
+        const savedSettings = localStorage.getItem('panelSettings');
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
+      }
+    };
+
+    loadSettings();
   }, []);
 
   const renderGeneralSettings = () => (

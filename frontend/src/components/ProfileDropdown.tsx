@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FiUser, 
-  FiSettings, 
   FiLogOut, 
   FiEdit, 
   FiCamera, 
   FiKey, 
   FiShield,
-  FiMonitor,
   FiX,
   FiSave,
   FiEye,
@@ -205,8 +203,13 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onLogout }) => {
       <div className="relative" ref={dropdownRef}>
         {/* Profile Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          style={{ zIndex: 1000 }}
         >
           {user?.profilePicture ? (
             <img
@@ -231,7 +234,10 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onLogout }) => {
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+          <div 
+            className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700"
+            style={{ zIndex: 1001 }}
+          >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-3">
                 {user?.profilePicture ? (

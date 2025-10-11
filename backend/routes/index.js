@@ -18,6 +18,7 @@ const aiRoute = require('./ai');
 const authorize = require('../middleware/rbac');
 const audit = require('../middleware/audit');
 const { authRateLimit } = require('../middleware/security');
+const settingsRoute = require('./settings');
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
 router.use('/user', userRoute); // User profile management routes
 router.use('/ai', aiRoute); // AI processing routes (no global auth - individual routes handle auth)
+router.use('/settings', settingsRoute); // Add settings routes
 
 // Allow specific client endpoints without authentication (must come before general /info route)
 router.post('/info/register-client', require('../controllers/info.controller').registerClientAction);
