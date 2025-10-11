@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import UserTable from '../components/UserTable';
-import Terminal, { TerminalRef } from '../components/Terminal';
-import EnhancedTerminal from '../components/EnhancedTerminal';
+import UnifiedTerminal from '../components/UnifiedTerminal';
 import TaskScheduler from '../components/TaskScheduler';
 import Settings from '../components/Settings';
 import AgentSection from '../components/AgentSection';
@@ -20,7 +19,6 @@ interface DashboardPageProps {
   onLogout: () => void;
   onSendCommand: (agentId: string, command: string, correlationId: string) => void;  // Update signature
   onRegisterPending: (taskId: string, agentId: string, historyId: string) => void;
-  terminalRef: React.RefObject<TerminalRef>;
   naturalLanguageHistory: any[];
   setNaturalLanguageHistory: React.Dispatch<React.SetStateAction<any[]>>;
   wsConnectionStatus?: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -34,11 +32,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   onTasksClicked, 
   onLogout,
   onSendCommand,
-  onRegisterPending,
-  terminalRef,
   naturalLanguageHistory,
   setNaturalLanguageHistory,
-  wsConnectionStatus,
   learningStats
 }) => {
   const { mode } = useTheme();
@@ -96,19 +91,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     
     switch (action) {
       case 'reboot':
-        onSendCommand(client.uuid, 'shutdown /r /t 0', `reboot_${Date.now()}`);
+        onSendCommand(client.id, 'shutdown /r /t 0', `reboot_${Date.now()}`);
         break;
       case 'screenshot':
-        onSendCommand(client.uuid, 'screenshot', `screenshot_${Date.now()}`);
+        onSendCommand(client.id, 'screenshot', `screenshot_${Date.now()}`);
         break;
       case 'system-info':
-        onSendCommand(client.uuid, 'systeminfo', `systeminfo_${Date.now()}`);
+        onSendCommand(client.id, 'systeminfo', `systeminfo_${Date.now()}`);
         break;
       case 'custom-command':
         // This would open a modal for custom command input
         const command = prompt('Enter custom command:');
         if (command) {
-          onSendCommand(client.uuid, command, `custom_${Date.now()}`);
+          onSendCommand(client.id, command, `custom_${Date.now()}`);
         }
         break;
       default:
@@ -181,7 +176,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className="premium-client-grid">
                   {onlineAgents.map((client) => (
                     <ClientCard
-                      key={client.uuid}
+                      key={client.id}
                       client={client}
                       onAction={handleClientAction}
                     />
@@ -209,13 +204,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 
                 <div className="premium-client-grid">
                   {offlineAgents.map((client) => (
-                    <div key={client.uuid} className="premium-client-card opacity-75">
+                    <div key={client.id} className="premium-client-card opacity-75">
                       <div className="premium-client-header">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                           <div>
                             <h3 className="premium-client-name">{client.computerName}</h3>
-                            <p className="text-sm text-gray-500 font-mono">{client.uuid}</p>
+                            <p className="text-sm text-gray-500 font-mono">{client.id}</p>
                           </div>
                         </div>
                       </div>
@@ -263,21 +258,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       case 'terminal':
         return (
           <div className="space-y-6">
-            {/* Enhanced Terminal Component */}
-            <EnhancedTerminal
+            {/* Unified Terminal Component */}
+            <UnifiedTerminal
               selectedAgent={selectedTerminalAgent}
               onSelectAgent={setSelectedTerminalAgent}
+              agents={onlineAgents}
               onCommandSent={(command) => {
-                console.log('Enhanced terminal command sent:', command);
-                const agent = command.targetUuid || selectedTerminalAgent?.uuid;
+                console.log('Terminal command sent:', command);
+                const agent = command.targetUuid || selectedTerminalAgent?.id;
                 if (agent && command.command) {
                   onSendCommand(agent, command.command, command.id || command.correlationId);
                 }
               }}
-              terminalRef={terminalRef}
-              naturalLanguageHistory={naturalLanguageHistory}
-              setNaturalLanguageHistory={setNaturalLanguageHistory}
-              agents={onlineAgents}
+              commandHistory={naturalLanguageHistory}
+              setCommandHistory={setNaturalLanguageHistory}
             />
           </div>
         );
