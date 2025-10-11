@@ -2,6 +2,10 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
+# Add build argument for cache busting
+ARG BUILD_DATE
+ARG GIT_COMMIT
+
 COPY package*.json ./
 
 RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
@@ -11,6 +15,7 @@ RUN chmod -R +x node_modules/.bin
 
 COPY . .
 
+# Build with environment variables
 RUN npm run build
 
 FROM nginx:alpine

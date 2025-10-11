@@ -46,6 +46,8 @@ jobs:
           echo "Starting backend deployment..."
           echo "Project ID: ${{ env.PROJECT_ID }}"
           echo "Region: ${{ env.REGION }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Build timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           cd backend
           # Submit build using cloudbuild.yaml configuration
@@ -65,6 +67,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
+            --tag commit-${{ github.sha }} \
             --set-env-vars="NODE_ENV=production,JWT_ACCESS_TOKEN_EXPIRATION=1h,JWT_REFRESH_TOKEN_EXPIRATION=7d"
 
       - name: Get Backend URL
@@ -109,18 +112,19 @@ jobs:
           echo "Starting frontend deployment..."
           echo "Project ID: ${{ env.PROJECT_ID }}"
           echo "Region: ${{ env.REGION }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Build timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           cd frontend
-          # Submit build using cloudbuild.yaml configuration
-          gcloud builds submit --config cloudbuild.yaml
+          # Submit build with no-cache
+          gcloud builds submit --config cloudbuild.yaml --substitutions=COMMIT_SHA=${{ github.sha }},BUILD_ID=$(date +%s)
           
-          # Wait for build to complete
           echo "Waiting for build to complete..."
           sleep 30
           
-          # Deploy to Cloud Run
+          # Deploy with tag to force new revision
           gcloud run deploy loopjs-frontend \
-            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend \
+            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend:latest \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -128,7 +132,14 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --port 8080
+            --port 8080 \
+            --tag commit-${{ github.sha }} \
+            --no-traffic  # Deploy without traffic first
+          
+          # Route all traffic to new revision
+          gcloud run services update-traffic loopjs-frontend \
+            --region ${{ env.REGION }} \
+            --to-latest
 
       - name: Get Frontend URL
         id: url
