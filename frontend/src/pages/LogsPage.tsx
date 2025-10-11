@@ -15,6 +15,7 @@ import {
 import { FiTerminal, FiPaperclip } from 'react-icons/fi';
 import request from '../axios';
 import toast from 'react-hot-toast';
+import { WS_URL } from '../config';
 
 interface Task {
   _id: string;
@@ -197,9 +198,7 @@ const LogsPage: React.FC = () => {
   // WebSocket connection for real-time updates
   useEffect(() => {
     const connectWebSocket = () => {
-      const wsUrl = process.env.NODE_ENV === 'production' 
-        ? 'wss://loopjs-backend-361659024403.us-central1.run.app/ws'
-        : 'ws://localhost:8080/ws';
+      const wsUrl = WS_URL;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
