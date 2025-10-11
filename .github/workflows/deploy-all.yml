@@ -41,14 +41,16 @@ jobs:
           echo "Checking Cloud Run permissions..."
           gcloud run services list --region ${{ env.REGION }} || echo "No existing services or permission issue"
 
-      - name: Deploy Backend to Cloud Run
+      - name: Build and Deploy Backend to Cloud Run
         run: |
           echo "Starting backend deployment..."
           echo "Project ID: ${{ env.PROJECT_ID }}"
           echo "Region: ${{ env.REGION }}"
           
+          cd backend
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/loopjs-backend
           gcloud run deploy loopjs-backend \
-            --source ./backend \
+            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-backend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -56,7 +58,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --verbosity=debug
+            --set-env-vars="NODE_ENV=production"
 
       - name: Get Backend URL
         id: url
@@ -95,14 +97,16 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Deploy Frontend to Cloud Run
+      - name: Build and Deploy Frontend to Cloud Run
         run: |
           echo "Starting frontend deployment..."
           echo "Project ID: ${{ env.PROJECT_ID }}"
           echo "Region: ${{ env.REGION }}"
           
+          cd frontend
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend
           gcloud run deploy loopjs-frontend \
-            --source ./frontend \
+            --image gcr.io/${{ env.PROJECT_ID }}/loopjs-frontend \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -110,8 +114,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --timeout 300 \
-            --port 8080 \
-            --verbosity=debug
+            --port 8080
 
       - name: Get Frontend URL
         id: url
