@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { FiUsers, FiDatabase, FiTrash2, FiSave, FiEye, FiEyeOff, FiPlus, FiEdit, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import axios from 'axios';
+import request from '../axios';
 import { toast } from 'react-hot-toast';
 
 type ThemeMode = 'light' | 'dark' | 'hacker-elite' | 'premium-cyber';
@@ -177,12 +178,7 @@ const Settings: React.FC = () => {
   const saveTelegramConfig = async () => {
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        toast.error('Authentication required');
-        return;
-      }
-
+      
       const configData = {
         enabled: telegramConfig.enabled,
         botToken: telegramConfig.botToken,
@@ -190,8 +186,11 @@ const Settings: React.FC = () => {
         notifications: telegramConfig.notifications
       };
 
-      const response = await axios.post('/api/telegram/config', configData, {
-        headers: { Authorization: `Bearer ${token}` }
+      // Use the configured request function instead of axios directly
+      const response = await request({
+        url: '/telegram/config',
+        method: 'POST',
+        data: configData
       });
 
       if (response.data.status === 'success') {

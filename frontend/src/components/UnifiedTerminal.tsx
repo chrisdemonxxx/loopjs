@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Agent } from '../types';
 import { FiSend, FiTrash2, FiTerminal, FiPaperclip, FiMessageSquare, FiCommand, FiDownload, FiCamera, FiMonitor, FiList, FiGlobe, FiUser, FiWifi, FiFolder, FiPower, FiRefreshCw, FiX, FiZap } from 'react-icons/fi';
 import axios from 'axios';
+import request from '../axios';
 import toast from 'react-hot-toast';
 
 interface UnifiedTerminalProps {
@@ -83,11 +84,11 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
 
   const handleSaveAPIKey = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.post('/api/ai/config', 
-        { apiKey },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await request({
+        url: '/ai/config',
+        method: 'POST',
+        data: { apiKey }
+      });
 
       if (response.data.success) {
         toast.success('API key saved successfully');

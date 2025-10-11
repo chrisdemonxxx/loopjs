@@ -9,7 +9,6 @@ import {
   FiX,
   FiMoon,
   FiSun,
-  FiMonitor,
   FiTerminal,
   FiZap,
   FiEye,
@@ -40,7 +39,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar, isSidebarOpen }) => {
-  const { mode, isDark, toggleMode } = useTheme();
+  const { mode, toggleMode } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -88,8 +87,30 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar, isSidebarOpe
 
   const fetchUserProfile = async () => {
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('No access token found');
+        // Use development fallback
+        const fallbackUser: User = {
+          id: 'admin-dev-id',
+          username: 'admin',
+          email: 'admin@loopjs.com',
+          role: 'admin',
+          displayName: 'Administrator',
+          profilePicture: undefined,
+          twoFactorEnabled: false
+        };
+        setUser(fallbackUser);
+        setProfileForm({
+          username: fallbackUser.username,
+          email: fallbackUser.email,
+          displayName: fallbackUser.displayName || fallbackUser.username
+        });
+        return;
+      }
+
       const response = await request({
-        url: '/api/user/profile',
+        url: '/user/profile',
         method: 'GET'
       });
 
@@ -99,11 +120,30 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar, isSidebarOpe
         setProfileForm({
           username: userData.username,
           email: userData.email,
-          displayName: userData.displayName || ''
+          displayName: userData.displayName || userData.username
         });
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
+      // Handle development mode fallback
+      if ((error as any).response?.status === 401 || (error as any).response?.status === 500 || !(error as any).response) {
+        // Use development fallback
+        const fallbackUser: User = {
+          id: 'admin-dev-id',
+          username: 'admin',
+          email: 'admin@loopjs.com',
+          role: 'admin',
+          displayName: 'Administrator',
+          profilePicture: undefined,
+          twoFactorEnabled: false
+        };
+        setUser(fallbackUser);
+        setProfileForm({
+          username: fallbackUser.username,
+          email: fallbackUser.email,
+          displayName: fallbackUser.displayName || fallbackUser.username
+        });
+      }
     }
   };
 

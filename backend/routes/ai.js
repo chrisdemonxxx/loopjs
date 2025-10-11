@@ -133,20 +133,26 @@ router.post('/config', protect, authorize(['admin']), async (req, res) => {
             });
         }
 
-        // Save to environment file or database
+        // Save to environment variable (for current session)
         process.env.GEMINI_API_KEY = apiKey;
         
-        // Optionally persist to .env file
-        const envPath = path.join(__dirname, '..', '.env');
-        let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
-        
-        if (envContent.includes('GEMINI_API_KEY=')) {
-            envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey}`);
-        } else {
-            envContent += `\nGEMINI_API_KEY=${apiKey}\n`;
+        // Try to persist to file, but don't fail if it doesn't work
+        try {
+            const envPath = path.join(__dirname, '..', '.env');
+            let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
+            
+            if (envContent.includes('GEMINI_API_KEY=')) {
+                envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey}`);
+            } else {
+                envContent += `\nGEMINI_API_KEY=${apiKey}\n`;
+            }
+            
+            await fs.writeFile(envPath, envContent);
+            console.log('[AI] API key saved to .env file');
+        } catch (fileError) {
+            console.warn('[AI] Could not save to .env file (this is normal in Cloud Run):', fileError.message);
+            // Don't fail the request - the API key is still set in memory
         }
-        
-        await fs.writeFile(envPath, envContent);
         
         // Reinitialize Gemini AI processor
         const geminiAIProcessor = new GeminiAICommandProcessor();

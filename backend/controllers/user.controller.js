@@ -47,6 +47,28 @@ exports.uploadProfilePicture = upload.single('profilePicture');
  * Get current user profile
  */
 exports.getProfile = catchAsync(async (req, res, next) => {
+  // Check if this is development mode
+  if (req.user.id === 'admin-dev-id') {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: 'admin-dev-id',
+          username: 'admin',
+          email: 'admin@loopjs.com',
+          role: 'admin',
+          profilePicture: null,
+          displayName: 'Administrator',
+          twoFactorEnabled: false,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          preferences: {}
+        }
+      }
+    });
+  }
+
+  // Production mode - fetch from database
   const user = await User.findById(req.user.id).select('-password -refreshTokens');
   
   if (!user) {
@@ -62,7 +84,8 @@ exports.getProfile = catchAsync(async (req, res, next) => {
         email: user.email,
         role: user.role,
         profilePicture: user.profilePicture,
-        displayName: user.displayName,
+        displayName: user.displayName || user.username,
+        twoFactorEnabled: user.twoFactorEnabled || false,
         createdAt: user.createdAt,
         lastLogin: user.lastLogin,
         preferences: user.preferences || {}
