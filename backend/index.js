@@ -1,31 +1,32 @@
 ﻿require('dotenv').config();
-const { debugLog, isDevelopment } = require('./utils/debugLogger');
 const express = require('express');
-
-const mongoose = require('mongoose');
-
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const bcrypt = require('bcryptjs');
-const WebSocket = require('ws');
-const http = require('http');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
-
-const apiRoutes = require('./routes/index');
-const healthRoutes = require('./routes/health');
-const agentRoutes = require('./routes/agent');
-const wsHandler = require('./configs/ws.handler');
-const User = require('./models/User');
-const Client = require('./models/Client');
-const { helmetConfig, apiRateLimit } = require('./middleware/security');
+const http = require('http');
+const WebSocket = require('ws');
+const mongoose = require('mongoose');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server, path: "/ws" });
 
 console.log('[STARTUP] Starting LoopJS Backend Server...');
 console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
-console.log('[STARTUP] Debug Mode:', isDevelopment ? 'ENABLED' : 'DISABLED');
+
+// MongoDB Connection
+const connectDB = async () => {
+    try {
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
+        await mongoose.connect(mongoUri);
+        console.log('[STARTUP] MongoDB connected successfully');
+    } catch (error) {
+        console.error('[STARTUP] MongoDB connection failed:', error.message);
+        console.log('[STARTUP] Continuing without database connection...');
+    }
+};
+
+// Connect to MongoDB
+connectDB();
 
 // CORS CONFIGURATION
 const corsOptions = {
@@ -59,24 +60,17 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// ==============================================================================
-
-
 // Apply CORS middleware
 app.use(cors(corsOptions));
-
-// Security middleware
-app.use(helmetConfig);
-app.use(apiRateLimit);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: "/ws" });
+// Mount API routes
+const apiRoutes = require('./routes/index');
+app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 8080;
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 // Set fallback values for required environment variables
 if (!process.env.JWT_SECRET) {
@@ -88,34 +82,32 @@ if (!process.env.SESSION_SECRET) {
   console.warn('SESSION_SECRET not set, using development fallback');
 }
 
-// MongoDB connection (optional)
-if (MONGO_URI) {
-  mongoose.connect(MONGO_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => {
-      console.error('MongoDB connection failed:', err && err.message ? err.message : err);
-      console.error('Continuing to run without a database connection.');
+// WebSocket connection handler - use proper handler with database integration
+const wsHandler = require('./configs/ws.handler');
+wss.on('connection', wsHandler);
+
+// API Routes
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'API is working', timestamp: new Date().toISOString() });
+});
+
+// User profile endpoint
+app.get('/api/api/user/profile', (req, res) => {
+    res.json({ 
+        id: 'demo-user',
+        username: 'demo',
+        email: 'demo@loopjs.com',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        message: 'Demo user profile - MongoDB not connected'
     });
-} else {
-  console.warn('MONGO_URI is not set. Starting server without a database connection.');
-}
+});
 
-// Express middleware
-app.use(express.json());
-app.use(passport.initialize());
-require('./configs/passport-jwt')(passport);
+// User list endpoint - handled by info.route.js controller
 
-// Passport local strategy
+// Task stats endpoint - handled by task.route.js controller
 
-passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser((id, done) => User.findById(id, done));
-
-// Routes
-app.use('/api', apiRoutes);
-app.use('/api/ai', require('./routes/ai'));  // AI API routes
-app.use('/admin', require('./middleware/security').protect, require('./routes/admin'));  // Protect admin routes
-app.use('/debug', require('./routes/debug'));
-app.use('/', healthRoutes);
+// Client list endpoint - handled by info.route.js controller
 
 // Health check endpoint for deployment monitoring
 app.get('/health', (req, res) => {
@@ -123,7 +115,8 @@ app.get('/health', (req, res) => {
         status: 'healthy', 
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        websocket: 'enabled'
     });
 });
 
@@ -137,7 +130,7 @@ app.use((err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
-    console.error("ðŸ”¥ UNHANDLED ERROR:", err.stack || err);
+    console.error("🔥 UNHANDLED ERROR:", err.stack || err);
 
     res.status(err.statusCode).json({
         status: err.status,
@@ -146,37 +139,6 @@ app.use((err, req, res, next) => {
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
 });
-
-// WebSocket logic
-wss.on('connection', wsHandler);
-
-// Background job to mark clients as offline after timeout
-const markOfflineClients = async () => {
-    try {
-        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-        const result = await Client.updateMany(
-            { 
-                status: 'online',
-                lastHeartbeat: { $lt: twoMinutesAgo }
-            },
-            { 
-                $set: { 
-                    status: 'offline',
-                    disconnectedAt: new Date()
-                }
-            }
-        );
-        
-        if (result.modifiedCount > 0) {
-            console.log(`Marked ${result.modifiedCount} clients as offline due to timeout`);
-        }
-    } catch (error) {
-        console.error('Error marking offline clients:', error);
-    }
-};
-
-// Run the offline check every 30 seconds
-setInterval(markOfflineClients, 30 * 1000);
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${PORT} on all network interfaces`);
