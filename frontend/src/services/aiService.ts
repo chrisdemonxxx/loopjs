@@ -242,12 +242,12 @@ class AIService {
    */
   async testConnection() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/ai/statistics`, {
+      const response = await axios.get(`${API_BASE_URL}/api/ai/status`, {
         headers: this.getAuthHeaders(),
         timeout: 5000
       });
 
-      return response.status === 200;
+      return response.data.success && response.data.available;
     } catch (error) {
       console.error('[AI SERVICE] Connection test failed:', error);
       return false;
