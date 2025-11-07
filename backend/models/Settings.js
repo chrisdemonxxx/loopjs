@@ -26,6 +26,12 @@ const SettingsSchema = new mongoose.Schema({
   // AI Settings
   aiEnabled: { type: Boolean, default: false },
   aiProvider: { type: String, default: 'gemini' },
+  geminiApiKey: { type: String, default: '' },
+  huggingfaceApiKey: { type: String, default: '' },
+  vllmApiKey: { type: String, default: '' },
+  vllmTrained: { type: Boolean, default: false },
+  vllmModelName: { type: String, default: 'microsoft/DialoGPT-large' },
+  hfPointGeneratorModel: { type: String, default: 'gpt2' },
   
   // Telegram Settings
   telegramEnabled: { type: Boolean, default: false },

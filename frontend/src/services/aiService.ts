@@ -238,6 +238,58 @@ class AIService {
   }
 
   /**
+   * Generate command execution points using Hugging Face Point Generator
+   */
+  async generatePoints(userInput: string, clientInfo: any, context: any = {}) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/generate-points`, {
+        userInput,
+        clientInfo,
+        context
+      }, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error generating points:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Switch to VL LM as primary provider (admin only)
+   */
+  async switchToVLLM() {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/switch-to-vllm`, {}, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error switching to VL LM:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Test all AI services
+   */
+  async testAllServices() {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/test-all`, {}, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error testing services:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Test AI service connection
    */
   async testConnection() {
@@ -247,10 +299,31 @@ class AIService {
         timeout: 5000
       });
 
-      return response.data.success && response.data.available;
+      // Handle new unified status format
+      if (response.data.success) {
+        const providers = response.data.providers || {};
+        return providers.gemini?.available || providers.vllm?.available || false;
+      }
+      return false;
     } catch (error) {
       console.error('[AI SERVICE] Connection test failed:', error);
       return false;
+    }
+  }
+
+  /**
+   * Get AI service status
+   */
+  async getStatus() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/ai/status`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error getting status:', error);
+      throw error;
     }
   }
 }

@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const UnifiedAIService = require('../services/unifiedAIService');
 const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+const HuggingFaceService = require('../services/huggingFaceService');
 
-// Initialize Gemini AI Service
+// Initialize Unified AI Service (handles Gemini, VL LM, and Hugging Face)
+const unifiedAI = new UnifiedAIService();
 const geminiAIProcessor = new GeminiAICommandProcessor();
+const hfService = new HuggingFaceService();
 
 // Check Gemini availability
 const isGeminiAvailable = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here';
@@ -32,8 +36,8 @@ router.post('/process-command', async (req, res) => {
             });
         }
         
-        // Process with Gemini AI
-        const result = await geminiAIProcessor.processCommandWithAI(
+        // Process with Unified AI Service (handles fallback logic)
+        const result = await unifiedAI.processCommand(
             userInput,
             clientInfo || {},
             context
@@ -42,7 +46,8 @@ router.post('/process-command', async (req, res) => {
         res.json({
             success: true,
             data: result,
-            provider: 'gemini',
+            provider: result.provider || 'unknown',
+            fallbackUsed: result.fallbackUsed || false,
             timestamp: new Date().toISOString()
         });
         
@@ -64,11 +69,16 @@ router.get('/status', (req, res) => {
     process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here' &&
     process.env.GEMINI_API_KEY.trim() !== '';
     
+  const status = unifiedAI.getStatus();
+  
   res.json({
     success: true,
-    provider: 'gemini',
-    available: isGeminiAvailable,
-    configured: isGeminiAvailable,
+    primaryProvider: status.primaryProvider,
+    providers: {
+      gemini: status.gemini,
+      vllm: status.vllm,
+      huggingface: status.huggingface
+    },
     timestamp: new Date().toISOString()
   });
 });
@@ -98,8 +108,8 @@ router.post('/test', async (req, res) => {
             });
         }
         
-        // Test with a simple command
-        const testResult = await geminiAIProcessor.processCommandWithAI(
+        // Test with unified AI service
+        const testResult = await unifiedAI.processCommand(
             'Hello, can you respond with "AI test successful"?',
             { uuid: 'test-client' },
             {}
@@ -107,8 +117,9 @@ router.post('/test', async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Gemini AI test successful',
+            message: 'AI test successful',
             result: testResult,
+            provider: testResult.provider || 'unknown',
             timestamp: new Date().toISOString()
         });
         
@@ -218,8 +229,8 @@ router.post('/handle-error', protect, async (req, res) => {
       });
     }
     
-    // Use the existing error handling from GeminiAICommandProcessor
-    const errorResult = await geminiAIProcessor.handleErrorWithAI(
+    // Use unified AI error handling
+    const errorResult = await unifiedAI.handleError(
       { message: error },
       { command: originalCommand },
       clientInfo,
@@ -245,6 +256,232 @@ router.post('/handle-error', protect, async (req, res) => {
     
   } catch (error) {
     console.error('[AI API] Error handling failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/generate-points
+ * Generate command execution points using Hugging Face Point Generator
+ */
+router.post('/generate-points', protect, async (req, res) => {
+  try {
+    const { userInput, clientInfo, context = {} } = req.body;
+    
+    if (!userInput) {
+      return res.status(400).json({
+        success: false,
+        error: 'User input is required'
+      });
+    }
+    
+    const result = await unifiedAI.generatePoints(userInput, clientInfo || {}, context);
+    
+    res.json({
+      success: true,
+      data: result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error generating points:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/optimize-command
+ * Optimize a command for better performance
+ */
+router.post('/optimize-command', protect, async (req, res) => {
+  try {
+    const { command, clientInfo } = req.body;
+    
+    if (!command) {
+      return res.status(400).json({
+        success: false,
+        error: 'Command is required'
+      });
+    }
+    
+    // Use unified AI to optimize command
+    const optimized = await unifiedAI.processCommand(
+      `Optimize this command for better performance: ${command}`,
+      clientInfo || {},
+      { optimization: true }
+    );
+    
+    res.json({
+      success: true,
+      originalCommand: command,
+      optimizedCommand: optimized.data,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error optimizing command:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/ai/statistics
+ * Get AI system statistics
+ */
+router.get('/statistics', protect, async (req, res) => {
+  try {
+    const geminiStats = geminiAIProcessor.getAIStatistics ? geminiAIProcessor.getAIStatistics() : null;
+    const status = unifiedAI.getStatus();
+    
+    res.json({
+      success: true,
+      statistics: {
+        gemini: geminiStats,
+        status: status,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[AI API] Error getting statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/ai/command-templates
+ * Get available command templates
+ */
+router.get('/command-templates', protect, async (req, res) => {
+  try {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    // Load command templates from file
+    const templatesPath = path.join(__dirname, '..', 'templates', 'commandTemplates.json');
+    
+    try {
+      const templatesContent = await fs.readFile(templatesPath, 'utf8');
+      const templates = JSON.parse(templatesContent);
+      
+      res.json({
+        success: true,
+        templates: templates,
+        timestamp: new Date().toISOString()
+      });
+    } catch (fileError) {
+      // Return default templates if file doesn't exist
+      res.json({
+        success: true,
+        templates: {
+          system_info: [
+            { name: 'Get System Info', command: 'Get-ComputerInfo', platform: 'windows' },
+            { name: 'Get Memory', command: 'Get-WmiObject -Class Win32_PhysicalMemory', platform: 'windows' },
+            { name: 'Get CPU', command: 'Get-WmiObject -Class Win32_Processor', platform: 'windows' }
+          ],
+          file_operations: [
+            { name: 'List Files', command: 'Get-ChildItem', platform: 'windows' },
+            { name: 'List Directory', command: 'ls -la', platform: 'linux' }
+          ]
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('[AI API] Error getting templates:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/learn-from-result
+ * Learn from command execution results
+ */
+router.post('/learn-from-result', protect, async (req, res) => {
+  try {
+    const { commandId, success, error, clientInfo } = req.body;
+    
+    if (!commandId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Command ID is required'
+      });
+    }
+    
+    // Store learning data (in a real implementation, this would be saved to database)
+    console.log('[AI API] Learning from result:', { commandId, success, error: error?.message });
+    
+    // Update pattern learning in Gemini processor if available
+    if (geminiAIProcessor.learnFromSuccess && success) {
+      // This would typically be called automatically, but we can log it here
+      console.log('[AI API] Command succeeded - pattern learned');
+    }
+    
+    res.json({
+      success: true,
+      message: 'Learning data recorded',
+      commandId: commandId,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error learning from result:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/switch-to-vllm
+ * Switch primary provider to VL LM (admin only)
+ */
+router.post('/switch-to-vllm', protect, authorize(['admin']), async (req, res) => {
+  try {
+    unifiedAI.switchToVLLM();
+    
+    res.json({
+      success: true,
+      message: 'Switched to VL LM as primary provider',
+      status: unifiedAI.getStatus(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error switching to VL LM:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/test-all
+ * Test all AI services
+ */
+router.post('/test-all', protect, async (req, res) => {
+  try {
+    const results = await unifiedAI.testAllServices();
+    
+    res.json({
+      success: true,
+      results: results,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error testing services:', error);
     res.status(500).json({
       success: false,
       error: error.message

@@ -1,12 +1,14 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 const { validateWebSocketMessage } = require('../middleware/validation');
 const jwt = require('jsonwebtoken');
 const telegramService = require('../services/telegramService');
+const UnifiedAIService = require('../services/unifiedAIService');
 
-// AI Services removed - using only Gemini AI integration
+// Initialize Unified AI Service
+const unifiedAI = new UnifiedAIService();
 
 // Store all connected clients (unified approach)
 const connectedClients = new Map(); // Map of uuid -> websocket
@@ -495,8 +497,20 @@ const wsHandler = (ws, req) => {
                         // Create error object for AI processing
                         const error = new Error(output);
                         
-                        // AI retry functionality removed - using simple fallback
-                        const retryCommand = null;
+                        // Use Unified AI Service for error handling
+                        const retryResult = await unifiedAI.handleError(
+                            error,
+                            { command: originalTask.command },
+                            clientInfo,
+                            originalTask.params.aiProcessing.retryCount
+                        );
+                        
+                        const retryCommand = retryResult.success ? {
+                            command: retryResult.data.command || retryResult.data.fixedCommand,
+                            retryCount: retryResult.data.retryCount || (originalTask.params.aiProcessing.retryCount + 1),
+                            fixApplied: retryResult.data.explanation || retryResult.data.changes_made?.join(', ') || 'AI fix applied',
+                            errorReason: output
+                        } : null;
                         
                         if (retryCommand) {
                             console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
@@ -547,10 +561,14 @@ const wsHandler = (ws, req) => {
                 
                 // Update task in database
                 if (taskId) {
+                    // Calculate execution time properly
+                    const taskCreatedAt = originalTask?.createdAt || new Date();
+                    const executionTimeMs = Date.now() - new Date(taskCreatedAt).getTime();
+                    
                     const updateData = {
                         output: output,
                         completedAt: new Date(),
-                        executionTimeMs: Date.now() - (new Date().getTime() - 60000) // Rough estimate
+                        executionTimeMs: executionTimeMs > 0 ? executionTimeMs : 0
                     };
                     
                     if (status === 'success') {
@@ -841,14 +859,43 @@ const wsHandler = (ws, req) => {
                     
                     console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
                     
-                    // AI command processing removed - using simple command generation
-                    const optimizedCommand = {
-                        command: `echo "AI command processing not available - ${category} ${action}"`,
-                        type: 'powershell',
-                        timeout: 300
-                    };
+                    // Process command with Unified AI Service
+                    let optimizedCommand;
+                    try {
+                        // Build user input from category/action/params
+                        const userInput = params.userInput || `${category} ${action} ${JSON.stringify(params)}`;
+                        
+                        const aiResult = await unifiedAI.processCommand(userInput, clientInfo, {
+                            category,
+                            action,
+                            params
+                        });
+                        
+                        if (aiResult.success && aiResult.data) {
+                            optimizedCommand = {
+                                command: aiResult.data.command,
+                                type: aiResult.data.type || 'powershell',
+                                timeout: aiResult.data.timeout || 300,
+                                explanation: aiResult.data.explanation,
+                                aiProcessed: true,
+                                provider: aiResult.provider || 'unknown'
+                            };
+                            console.log(`[AI COMMAND] AI processed command (${aiResult.provider}):`, optimizedCommand);
+                        } else {
+                            throw new Error('AI processing failed');
+                        }
+                    } catch (aiError) {
+                        console.error(`[AI COMMAND] AI processing error, using fallback:`, aiError);
+                        // Fallback to simple command generation
+                        optimizedCommand = {
+                            command: `echo "AI command processing failed - ${category} ${action}"`,
+                            type: 'powershell',
+                            timeout: 300,
+                            aiProcessed: false
+                        };
+                    }
                     
-                    console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
+                    console.log(`[AI COMMAND] Final command:`, optimizedCommand);
                     
                     // Generate task ID
                     const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -860,7 +907,12 @@ const wsHandler = (ws, req) => {
                         command: optimizedCommand.command,
                         params: {
                             originalParams: params,
-                            fallback: true
+                            aiProcessing: {
+                                processed: optimizedCommand.aiProcessed || false,
+                                provider: optimizedCommand.provider || 'fallback',
+                                retryCount: 0,
+                                maxRetries: 3
+                            }
                         },
                         createdBy: clientId || 'admin',
                         platform: targetClient.platform || 'unknown',

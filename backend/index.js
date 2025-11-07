@@ -1,8 +1,13 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
-// Set critical environment variable fallbacks IMMEDIATELY
+// Set critical environment variable fallbacks IMMEDIATELY (only in development)
 if (!process.env.JWT_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+        console.error('[CRITICAL] JWT_SECRET is required in production!');
+        process.exit(1);
+    }
     process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
+    console.warn('[WARNING] Using fallback JWT_SECRET - NOT SECURE FOR PRODUCTION!');
 }
 if (!process.env.JWT_ACCESS_TOKEN_EXPIRATION) {
     process.env.JWT_ACCESS_TOKEN_EXPIRATION = '1h';
@@ -54,10 +59,14 @@ async function initializeApp() {
     try {
         console.log('[INIT] Loading application components...');
         
-        // Set environment fallbacks
+        // Set environment fallbacks (only in development)
         if (!process.env.JWT_SECRET) {
+            if (process.env.NODE_ENV === 'production') {
+                console.error('[CRITICAL] JWT_SECRET is required in production!');
+                process.exit(1);
+            }
             process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
-            console.warn('[INIT] JWT_SECRET not set, using fallback');
+            console.warn('[WARNING] Using fallback JWT_SECRET - NOT SECURE FOR PRODUCTION!');
         }
         if (!process.env.SESSION_SECRET) {
             process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
@@ -86,9 +95,14 @@ async function initializeApp() {
                     'https://loopjs.vidai.sbs'
                 ];
                 
-                // Allow requests with no origin (like mobile apps, curl requests)
+                // Allow requests with no origin only in development (like mobile apps, curl requests)
                 if (!origin) {
-                    console.log('CORS: Allowing request with no origin');
+                    if (process.env.NODE_ENV === 'production') {
+                        console.log('CORS: Blocking request with no origin in production');
+                        callback(new Error('Not allowed by CORS'));
+                        return;
+                    }
+                    console.log('CORS: Allowing request with no origin (development mode)');
                     callback(null, true);
                 } else if (allowedOrigins.indexOf(origin) !== -1) {
                     console.log(`CORS: Allowing origin: ${origin}`);
@@ -106,9 +120,13 @@ async function initializeApp() {
         const apiRoutes = require('./routes/index');
         app.use('/api', apiRoutes);
         
-        // Connect MongoDB (non-blocking)
+        // Connect MongoDB (non-blocking, but log warnings in production)
         connectDB().catch(err => {
             console.error('[INIT] MongoDB error:', err.message);
+            if (process.env.NODE_ENV === 'production') {
+                console.error('[CRITICAL] Database connection failed in production!');
+                // Don't exit - allow server to start but functionality will be limited
+            }
         });
         
         // Initialize WebSocket
@@ -130,14 +148,51 @@ async function initializeApp() {
 async function connectDB() {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
-        await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000,
-            connectTimeoutMS: 5000,
-            socketTimeoutMS: 5000,
-        });
+        
+        // Connection pool configuration for production
+        const connectionOptions = {
+            serverSelectionTimeoutMS: process.env.NODE_ENV === 'production' ? 10000 : 5000,
+            connectTimeoutMS: process.env.NODE_ENV === 'production' ? 10000 : 5000,
+            socketTimeoutMS: process.env.NODE_ENV === 'production' ? 45000 : 5000,
+            // Connection pool settings
+            maxPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5,
+            minPoolSize: process.env.NODE_ENV === 'production' ? 2 : 1,
+            maxIdleTimeMS: 30000,
+            // Retry settings
+            retryWrites: true,
+            retryReads: true,
+            // Buffer settings
+            bufferMaxEntries: 0,
+            bufferCommands: false
+        };
+        
+        await mongoose.connect(mongoUri, connectionOptions);
         console.log('[INIT] ✅ MongoDB connected');
+        console.log('[INIT] Connection pool configured:', {
+            maxPoolSize: connectionOptions.maxPoolSize,
+            minPoolSize: connectionOptions.minPoolSize
+        });
+        
+        // Handle connection events
+        mongoose.connection.on('error', (err) => {
+            console.error('[MONGODB] Connection error:', err);
+        });
+        
+        mongoose.connection.on('disconnected', () => {
+            console.warn('[MONGODB] Disconnected from MongoDB');
+        });
+        
+        mongoose.connection.on('reconnected', () => {
+            console.log('[MONGODB] Reconnected to MongoDB');
+        });
+        
     } catch (error) {
         console.error('[INIT] MongoDB connection failed:', error.message);
+        if (process.env.NODE_ENV === 'production') {
+            console.error('[CRITICAL] Database connection required in production!');
+            // In production, we might want to retry or exit
+            // For now, we'll continue but log the error
+        }
     }
 }
 
