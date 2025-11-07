@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -747,25 +747,39 @@ const wsHandler = (ws, req) => {
                 const { sessionId, status, error, frameData, screenInfo } = data;
                 
                 // Update agent HVNC session status
-                if (sessionId) {
-                    const updateData = {
-                        'hvncSession.status': status,
-                        'hvncSession.lastUpdate': new Date()
-                    };
-                    
-                    if (error) {
-                        updateData['hvncSession.error'] = error;
+                    if (sessionId) {
+                        const updateOperations = {
+                            $set: {
+                                'hvncSession.status': status,
+                                'hvncSession.lastUpdate': new Date()
+                            }
+                        };
+
+                        if (screenInfo) {
+                            updateOperations.$set['hvncSession.screenInfo'] = screenInfo;
+                        }
+
+                        if (status === 'stopped' || status === 'error') {
+                            updateOperations.$set['hvncSession.endedAt'] = new Date();
+                        }
+
+                        if (status === 'active') {
+                            updateOperations.$unset = updateOperations.$unset || {};
+                            updateOperations.$unset['hvncSession.endedAt'] = '';
+                        }
+
+                        if (error) {
+                            updateOperations.$set['hvncSession.error'] = error;
+                        } else {
+                            updateOperations.$unset = updateOperations.$unset || {};
+                            updateOperations.$unset['hvncSession.error'] = '';
+                        }
+                        
+                        await Client.findOneAndUpdate(
+                            { uuid: ws.uuid },
+                            updateOperations
+                        );
                     }
-                    
-                    if (screenInfo) {
-                        updateData['hvncSession.screenInfo'] = screenInfo;
-                    }
-                    
-                    await Client.findOneAndUpdate(
-                        { uuid: ws.uuid },
-                        { $set: updateData }
-                    );
-                }
                 
                 // Broadcast HVNC response to admin sessions
                 broadcastToAdminSessions({
@@ -1159,15 +1173,34 @@ const wsHandler = (ws, req) => {
         } else if (ws.uuid && ws.clientType === 'client') {
             connectedClients.delete(ws.uuid);
             console.log('Client disconnected:', ws.uuid);
-            
+
+            const now = new Date();
+            const clientDocument = await Client.findOne({ uuid: ws.uuid }, { hvncSession: 1 });
+
+            const updateSet = {
+                status: 'offline',
+                lastSeen: now
+            };
+            let updateUnset = null;
+
+            if (clientDocument && clientDocument.hvncSession && clientDocument.hvncSession.sessionId) {
+                updateSet['hvncSession.status'] = 'stopped';
+                updateSet['hvncSession.lastUpdate'] = now;
+                updateSet['hvncSession.endedAt'] = now;
+                updateUnset = { 'hvncSession.error': '' };
+            }
+
+            const updatePayload = {
+                $set: updateSet
+            };
+
+            if (updateUnset) {
+                updatePayload.$unset = updateUnset;
+            }
+
             const updatedClient = await Client.findOneAndUpdate(
                 { uuid: ws.uuid },
-                { 
-                    $set: { 
-                        status: 'offline',
-                        lastSeen: new Date()
-                    }
-                },
+                updatePayload,
                 { new: true }
             );
             
