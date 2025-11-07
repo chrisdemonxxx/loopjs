@@ -73,57 +73,65 @@ const HackerTeamCard: React.FC<HackerTeamCardProps> = ({
 
   const iconVariants = {
     initial: { rotate: 0, scale: 1 },
-    hover: { 
-      rotate: 360, 
+    hover: {
+      rotate: 360,
       scale: 1.2,
-      transition: { duration: 0.6, ease: "easeInOut" }
+      transition: { duration: 0.6, ease: 'easeInOut' as const }
     }
   };
 
   return (
-    <motion.div
-      className={`hacker-team-card ${getAnimationClass()} ${isSelected ? 'selected' : ''}`}
-      variants={cardVariants}
-      initial="initial"
-      animate={isSelected ? "selected" : "initial"}
-      whileHover="hover"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      onClick={() => onSelect(theme)}
-      style={{
-        '--primary-color': primaryColor,
-        '--secondary-color': secondaryColor,
-        background: `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}10)`,
-        borderColor: isSelected ? primaryColor : `${primaryColor}30`
-      } as React.CSSProperties}
-    >
+      <motion.div
+        className={`hacker-team-card ${getAnimationClass()} ${isSelected ? 'selected' : ''}`}
+        variants={cardVariants}
+        initial="initial"
+        animate={isSelected ? 'selected' : 'initial'}
+        whileHover="hover"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        onClick={() => onSelect(theme)}
+        style={{
+          '--primary-color': primaryColor,
+          '--secondary-color': secondaryColor,
+          background: `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}10)`,
+          borderColor: isSelected ? primaryColor : `${primaryColor}30`
+        } as React.CSSProperties}
+      >
       {/* Background Effects */}
       <div className="card-background-effects">
         {animationType === 'matrix' && (
           <div className="matrix-rain">
             {Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="matrix-char" style={{ left: `${i * 5}%`, animationDelay: `${i * 0.1}s` }}>
-                {String.fromCharCode(0x30A0 + Math.random() * 96)}
+              <div
+                key={i}
+                className="matrix-char"
+                style={{ left: `${i * 5}%`, animationDelay: `${i * 0.1}s` }}
+              >
+                {String.fromCharCode(0x30a0 + Math.random() * 96)}
               </div>
             ))}
           </div>
         )}
-        
+
         {animationType === 'cyber' && (
           <div className="cyber-grid">
             <div className="grid-lines horizontal"></div>
             <div className="grid-lines vertical"></div>
           </div>
         )}
-        
+
         {animationType === 'neural' && (
           <div className="neural-nodes">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="neural-node" style={{ 
-                left: `${20 + i * 10}%`, 
-                top: `${30 + (i % 3) * 20}%`,
-                animationDelay: `${i * 0.2}s`
-              }}></div>
+              <div
+                key={i}
+                className="neural-node"
+                style={{
+                  left: `${20 + i * 10}%`,
+                  top: `${30 + (i % 3) * 20}%`,
+                  animationDelay: `${i * 0.2}s`
+                }}
+              ></div>
             ))}
           </div>
         )}
@@ -131,19 +139,19 @@ const HackerTeamCard: React.FC<HackerTeamCardProps> = ({
 
       {/* Card Content */}
       <div className="card-content">
-        <motion.div 
+        <motion.div
           className="team-icon"
           variants={iconVariants}
-          animate={isHovered ? "hover" : "initial"}
+          animate={isHovered ? 'hover' : 'initial'}
         >
           {teamIcon}
         </motion.div>
-        
+
         <div className="team-info">
           <h3 className="team-name">{teamName}</h3>
           <p className="team-description">{description}</p>
         </div>
-        
+
         {/* Status Indicator */}
         <div className={`status-indicator ${isSelected ? 'active' : ''}`}>
           <div className="status-dot"></div>
@@ -152,7 +160,7 @@ const HackerTeamCard: React.FC<HackerTeamCardProps> = ({
       </div>
 
       {/* Hover Overlay */}
-      <motion.div 
+      <motion.div
         className="hover-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 1 : 0 }}
@@ -177,7 +185,7 @@ const HackerTeamCard: React.FC<HackerTeamCardProps> = ({
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut' as const
           }}
         />
       )}

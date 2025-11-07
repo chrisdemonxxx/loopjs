@@ -56,7 +56,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   onSendCommand,
   naturalLanguageHistory,
   setNaturalLanguageHistory,
-  learningStats
+  learningStats,
+  wsConnectionStatus = 'disconnected'
 }) => {
   const { mode } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
@@ -109,6 +110,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   // Calculate stats from real data
   const onlineAgents = tableData.filter(agent => agent.status === 'online');
   const offlineAgents = tableData.filter(agent => agent.status === 'offline');
+
+  const connectionStatusMeta: Record<typeof wsConnectionStatus, { label: string; dotClass: string }> = {
+    connected: { label: 'Connected', dotClass: 'bg-success animate-pulse' },
+    connecting: { label: 'Connecting', dotClass: 'bg-warning animate-pulse' },
+    disconnected: { label: 'Disconnected', dotClass: 'bg-gray-400' },
+    error: { label: 'Error', dotClass: 'bg-danger' }
+  };
+
+  const activeConnectionStatus = connectionStatusMeta[wsConnectionStatus];
 
   // Update selectedTerminalAgent when onlineAgents changes
   useEffect(() => {
@@ -549,8 +559,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm" style={{color: 'var(--text-secondary)'}}>OPERATIONAL</span>
+              <div className={`w-2 h-2 rounded-full ${activeConnectionStatus.dotClass}`}></div>
+              <span className="text-sm" style={{color: 'var(--text-secondary)'}}>
+                {activeConnectionStatus.label}
+              </span>
             </div>
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef} style={{ zIndex: 9998 }}>

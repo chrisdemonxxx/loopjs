@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Agent } from '../services/agentService';
+import { Agent } from '../types';
 
 interface TerminalProps {
   agents: Agent[];
@@ -136,82 +136,6 @@ Ready for commands...`,
     (commandEntry as any).timeoutId = timeoutId;
 
     setCurrentCommand('');
-  };
-
-  const getSimulatedOutput = (command: string): string => {
-    const cmd = command.toLowerCase().trim();
-    
-    if (cmd === 'help') {
-      return `🔴 AVAILABLE COMMANDS:
-whoami          - Display current user
-systeminfo      - Display system information
-dir [path]      - List directory contents
-tasklist        - List running processes
-netstat -an     - Display network connections
-ipconfig        - Display network configuration
-screenshot      - Take a screenshot
-download [file] - Download file from target
-upload [file]   - Upload file to target
-keylog start    - Start keylogger
-keylog stop     - Stop keylogger
-persistence     - Install persistence
-cleanup         - Remove traces
-shell           - Interactive shell access`;
-    }
-    
-    if (cmd === 'tasklist') {
-      return `Image Name                     PID Session Name        Session#    Mem Usage
-========================= ======== ================ =========== ============
-System Idle Process              0 Services                   0          8 K
-System                           4 Services                   0        284 K
-smss.exe                       348 Services                   0      1,024 K
-csrss.exe                      424 Services                   0      4,096 K
-winlogon.exe                   448 Console                    1      2,048 K
-services.exe                   492 Services                   0      3,072 K
-lsass.exe                      504 Services                   0      6,144 K
-explorer.exe                  1234 Console                    1     15,360 K`;
-    }
-    
-    if (cmd === 'ipconfig') {
-      return `Windows IP Configuration
-
-Ethernet adapter Ethernet:
-   Connection-specific DNS Suffix  . : 
-   IPv4 Address. . . . . . . . . . . : 192.168.1.100
-   Subnet Mask . . . . . . . . . . . : 255.255.255.0
-   Default Gateway . . . . . . . . . : 192.168.1.1
-
-Wireless LAN adapter Wi-Fi:
-   Connection-specific DNS Suffix  . : 
-   IPv4 Address. . . . . . . . . . . : 10.0.0.50
-   Subnet Mask . . . . . . . . . . . : 255.255.255.0
-   Default Gateway . . . . . . . . . : 10.0.0.1`;
-    }
-    
-    if (cmd === 'screenshot') {
-      return `[+] Screenshot captured successfully
-[+] Saved as: screenshot_${Date.now()}.png
-[+] File size: 1.2 MB
-[+] Resolution: 1920x1080
-[+] Upload initiated...
-[+] File available in downloads section`;
-    }
-    
-    if (cmd.startsWith('keylog')) {
-      if (cmd.includes('start')) {
-        return `[+] Keylogger started successfully
-[+] Logging to: keylog_${Date.now()}.txt
-[+] Stealth mode: ENABLED
-[+] Capture rate: 100%`;
-      } else {
-        return `[+] Keylogger stopped
-[+] Session duration: 15m 32s
-[+] Keys captured: 1,247
-[+] Log file ready for download`;
-      }
-    }
-    
-    return `Command executed successfully on ${agents.find(a => a.id === selectedAgent)?.name}`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -395,7 +319,7 @@ Wireless LAN adapter Wi-Fi:
                         <div className="text-gray-300">IP: {agent.ipAddress}</div>
                         <div className="text-gray-300">OS: {agent.operatingSystem}</div>
                         <div className="text-gray-300">Arch: {agent.architecture}</div>
-                        <div className={`text-sm ${agent.status === 'Online' ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`text-sm ${agent.status === 'online' ? 'text-green-400' : 'text-red-400'}`}>
                           Status: {agent.status}
                         </div>
                       </div>

@@ -18,18 +18,16 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ clients }) => {
   const [selectedClient, setSelectedClient] = useState<ClientLocation | null>(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 20, lng: 0 });
   const [zoom, setZoom] = useState(2);
 
   // Calculate map center based on client locations
   useEffect(() => {
     if (clients.length > 0) {
       const onlineClients = clients.filter(client => client.status === 'online');
-      if (onlineClients.length > 0) {
-        const avgLat = onlineClients.reduce((sum, client) => sum + client.lat, 0) / onlineClients.length;
-        const avgLng = onlineClients.reduce((sum, client) => sum + client.lng, 0) / onlineClients.length;
-        setMapCenter({ lat: avgLat, lng: avgLng });
-        setZoom(onlineClients.length === 1 ? 6 : 4);
+      if (onlineClients.length === 1) {
+        setZoom(6);
+      } else if (onlineClients.length > 1) {
+        setZoom(4);
       }
     }
   }, [clients]);

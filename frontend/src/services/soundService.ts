@@ -1,18 +1,7 @@
-import { ThemeMode } from '../contexts/ThemeContext';
-
 export type SoundEvent = 'connection' | 'disconnection' | 'custom' | 'login' | 'error' | 'success';
 
-interface ThemeSounds {
-  connection: string;
-  disconnection: string;
-  custom: string;
-  login: string;
-  error: string;
-  success: string;
-}
-
 // Sound frequencies and patterns for different themes
-const themeSoundConfigs: Record<ThemeMode, ThemeSounds> = {
+const themeSoundConfigs = {
   light: {
     connection: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT',
     disconnection: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT',
@@ -125,13 +114,15 @@ const themeSoundConfigs: Record<ThemeMode, ThemeSounds> = {
     error: 'hologram-error',
     success: 'hologram-success'
   }
-};
+  } as const;
+
+type SoundTheme = keyof typeof themeSoundConfigs;
 
 class SoundService {
   private audioContext: AudioContext | null = null;
   private soundEnabled: boolean = true;
   private volume: number = 0.7;
-  private currentTheme: ThemeMode = 'hacker';
+  private currentTheme: SoundTheme = 'hacker';
   private audioCache: Map<string, AudioBuffer> = new Map();
 
   constructor() {
@@ -163,8 +154,14 @@ class SoundService {
     }
   }
 
-  setTheme(theme: ThemeMode) {
-    this.currentTheme = theme;
+  private isSupportedTheme(theme: string): theme is SoundTheme {
+    return Object.prototype.hasOwnProperty.call(themeSoundConfigs, theme);
+  }
+
+  setTheme(theme: string) {
+    if (this.isSupportedTheme(theme)) {
+      this.currentTheme = theme;
+    }
   }
 
   setSoundEnabled(enabled: boolean) {
@@ -213,7 +210,6 @@ class SoundService {
   private generateThemeSound(event: SoundEvent): AudioBuffer | null {
     if (!this.audioContext) return null;
 
-    const themeConfig = themeSoundConfigs[this.currentTheme];
     const soundKey = `${this.currentTheme}-${event}`;
 
     // Check cache first
@@ -520,10 +516,15 @@ class SoundService {
   }
 
   async playSound(event: SoundEvent): Promise<void> {
-    // DISABLED FOR TESTING - All sounds disabled
-    return;
-    
-    if (!this.soundEnabled || !this.audioContext) return;
+    if (!this.soundEnabled) {
+      return;
+    }
+
+    await this.ensureAudioContext();
+
+    if (!this.audioContext) {
+      return;
+    }
 
     try {
       // Resume audio context if suspended (required for user interaction)

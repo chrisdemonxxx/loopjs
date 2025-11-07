@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Dashboard from './Dashboard';
@@ -30,8 +30,6 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
@@ -70,12 +68,6 @@ const Layout: React.FC<LayoutProps> = ({
     }
   };
 
-  // Update active tab based on current route
-  useEffect(() => {
-    const path = location.pathname.substring(1) || 'dashboard';
-    setActiveTab(path);
-  }, [location]);
-
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -83,12 +75,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        toggleSidebar={toggleSidebar}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
+        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -134,12 +121,15 @@ const Layout: React.FC<LayoutProps> = ({
                />
                <Route path="/roles" element={<UserManagement />} />
                <Route path="/audit" element={<AuditLogs />} />
-               <Route path="/commands" element={
-                 <CommandInterface 
-                   selectedUser={selectedUser} 
-                   onExecuteCommand={handleExecuteCommand} 
-                 />
-               } />
+                <Route
+                  path="/commands"
+                  element={
+                    <CommandInterface
+                      selectedAgent={selectedUser}
+                      onExecuteCommand={handleExecuteCommand}
+                    />
+                  }
+                />
                <Route path="/settings" element={<Settings />} />
                <Route path="/general" element={<Settings />} />
                <Route path="/security" element={<Settings />} />

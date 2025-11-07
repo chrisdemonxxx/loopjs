@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Agent } from '../types';
-import { 
-  FiMonitor, 
-  FiShield, 
-  FiClock, 
-  FiMapPin, 
-  FiCpu, 
+import {
+  FiMonitor,
+  FiShield,
+  FiClock,
+  FiMapPin,
+  FiCpu,
   FiHardDrive,
   FiMoreVertical,
-  FiPower,
   FiRefreshCw,
   FiCamera,
   FiTerminal,
@@ -31,20 +30,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
     if (days > 0) return `${days}d ${hours}h`;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
-  };
-
-  const formatLastActive = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
   };
 
   const getOSDisplay = () => {
@@ -74,7 +59,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
           <div className="premium-client-status"></div>
           <div>
             <h3 className="premium-client-name">{client.computerName}</h3>
-            <p className="text-sm font-mono" style={{color: 'var(--text-tertiary)'}}>{client.uuid}</p>
+              <p className="text-sm font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {client.id}
+              </p>
           </div>
         </div>
         

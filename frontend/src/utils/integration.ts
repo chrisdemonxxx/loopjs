@@ -10,7 +10,7 @@
  */
 
 import request from '../axios';
-import { API_URL, WS_URL } from '../config';
+import { WS_URL } from '../config';
 import { toastService } from '../services/toastService';
 
 // Types

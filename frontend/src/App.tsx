@@ -533,6 +533,7 @@ export default function App() {
           onRegisterPending={handleRegisterPending}
           naturalLanguageHistory={naturalLanguageHistory}
           setNaturalLanguageHistory={setNaturalLanguageHistory}
+            wsConnectionStatus={wsConnectionStatus}
         />
       </NotificationProvider>
     </ThemeProvider>

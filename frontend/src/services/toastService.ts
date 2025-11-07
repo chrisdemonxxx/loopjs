@@ -1,6 +1,5 @@
 import toast, { ToastOptions } from 'react-hot-toast';
 import { soundService } from './soundService';
-import { useTheme } from '../contexts/ThemeContext';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning' | 'connection' | 'disconnection' | 'custom';
 
@@ -18,31 +17,29 @@ class ToastService {
 
   private async playToastSound(soundType: string) {
     const theme = this.getThemeMode();
-    
+    soundService.setTheme(theme);
+
     switch (soundType) {
       case 'connection':
-        await soundService.playConnectionSound(theme);
+        await soundService.playConnectionSound();
         break;
       case 'disconnection':
-        await soundService.playDisconnectionSound(theme);
-        break;
-      case 'custom':
-        await soundService.playCustomEventSound(theme);
+        await soundService.playDisconnectionSound();
         break;
       case 'success':
-        await soundService.playCustomEventSound(theme);
+        await soundService.playSuccessSound();
         break;
       case 'error':
-        await soundService.playDisconnectionSound(theme);
+        await soundService.playErrorSound();
         break;
       case 'info':
-        await soundService.playConnectionSound(theme);
+        await soundService.playLoginSound();
         break;
       case 'warning':
-        await soundService.playCustomEventSound(theme);
-        break;
+      case 'custom':
       default:
-        await soundService.playCustomEventSound(theme);
+        await soundService.playCustomSound();
+        break;
     }
   }
 
