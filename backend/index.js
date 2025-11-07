@@ -1,7 +1,7 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
-// Set critical environment variable fallbacks IMMEDIATELY
-if (!process.env.JWT_SECRET) {
+// Set critical environment variable fallbacks IMMEDIATELY (development only)
+if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'production') {
     process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
 }
 if (!process.env.JWT_ACCESS_TOKEN_EXPIRATION) {
@@ -54,10 +54,14 @@ async function initializeApp() {
     try {
         console.log('[INIT] Loading application components...');
         
-        // Set environment fallbacks
+        // Set environment fallbacks (only in development)
         if (!process.env.JWT_SECRET) {
+            if (process.env.NODE_ENV === 'production') {
+                console.error('[INIT] ❌ CRITICAL: JWT_SECRET must be set in production!');
+                throw new Error('JWT_SECRET environment variable is required in production');
+            }
             process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
-            console.warn('[INIT] JWT_SECRET not set, using fallback');
+            console.warn('[INIT] JWT_SECRET not set, using fallback (DEVELOPMENT ONLY)');
         }
         if (!process.env.SESSION_SECRET) {
             process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
@@ -86,9 +90,13 @@ async function initializeApp() {
                     'https://loopjs.vidai.sbs'
                 ];
                 
-                // Allow requests with no origin (like mobile apps, curl requests)
-                if (!origin) {
-                    console.log('CORS: Allowing request with no origin');
+                // In production, require origin for security
+                if (!origin && process.env.NODE_ENV === 'production') {
+                    console.log('CORS: Blocking request with no origin in production');
+                    callback(new Error('CORS: Origin required in production'));
+                } else if (!origin) {
+                    // Allow in development for testing
+                    console.log('CORS: Allowing request with no origin (development mode)');
                     callback(null, true);
                 } else if (allowedOrigins.indexOf(origin) !== -1) {
                     console.log(`CORS: Allowing origin: ${origin}`);

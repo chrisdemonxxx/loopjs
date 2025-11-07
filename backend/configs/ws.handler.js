@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -495,8 +495,27 @@ const wsHandler = (ws, req) => {
                         // Create error object for AI processing
                         const error = new Error(output);
                         
-                        // AI retry functionality removed - using simple fallback
-                        const retryCommand = null;
+                        // Use Unified AI Service for error handling and retry
+                        const UnifiedAIService = require('../services/unifiedAIService');
+                        const unifiedAI = new UnifiedAIService();
+                        
+                        const errorResult = await unifiedAI.handleErrorWithAI(
+                            error,
+                            { command: originalTask.command },
+                            clientInfo,
+                            originalTask.params.aiProcessing.retryCount || 0
+                        );
+                        
+                        let retryCommand = null;
+                        if (errorResult.success && errorResult.data) {
+                            retryCommand = {
+                                command: errorResult.data.command || errorResult.data.fixedCommand,
+                                retryCount: errorResult.data.retryCount || (originalTask.params.aiProcessing.retryCount || 0) + 1,
+                                fixApplied: errorResult.data.explanation || errorResult.data.changes_made?.join(', '),
+                                errorReason: error.message,
+                                provider: errorResult.data.provider || 'unified'
+                            };
+                        }
                         
                         if (retryCommand) {
                             console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
@@ -841,14 +860,46 @@ const wsHandler = (ws, req) => {
                     
                     console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
                     
-                    // AI command processing removed - using simple command generation
-                    const optimizedCommand = {
-                        command: `echo "AI command processing not available - ${category} ${action}"`,
-                        type: 'powershell',
-                        timeout: 300
-                    };
+                    // Use Unified AI Service for command processing
+                    let optimizedCommand;
+                    try {
+                        const UnifiedAIService = require('../services/unifiedAIService');
+                        const unifiedAI = new UnifiedAIService();
+                        
+                        // Build user input from category, action, and params
+                        const userInput = params.userInput || `${category} ${action} ${JSON.stringify(params)}`;
+                        
+                        const aiResult = await unifiedAI.processCommandWithAI(
+                            userInput,
+                            clientInfo,
+                            { category, action, params }
+                        );
+                        
+                        if (aiResult.success && aiResult.data) {
+                            optimizedCommand = {
+                                command: aiResult.data.command,
+                                type: aiResult.data.type || 'powershell',
+                                timeout: aiResult.data.timeout || 300,
+                                explanation: aiResult.data.explanation,
+                                aiProcessed: true,
+                                provider: aiResult.data.provider || 'unified'
+                            };
+                            console.log(`[AI COMMAND] AI processed command:`, optimizedCommand);
+                        } else {
+                            throw new Error('AI processing returned unsuccessful result');
+                        }
+                    } catch (aiError) {
+                        console.error(`[AI COMMAND] AI processing failed, using fallback:`, aiError);
+                        // Fallback to simple command generation
+                        optimizedCommand = {
+                            command: `echo "AI command processing failed - ${category} ${action}"`,
+                            type: 'powershell',
+                            timeout: 300,
+                            aiProcessed: false
+                        };
+                    }
                     
-                    console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
+                    console.log(`[AI COMMAND] Using command:`, optimizedCommand);
                     
                     // Generate task ID
                     const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

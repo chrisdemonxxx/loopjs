@@ -238,6 +238,75 @@ class AIService {
   }
 
   /**
+   * Generate points using Hugging Face Point Generator
+   */
+  async generatePoints(prompt: string, context: any = {}) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/generate-points`, {
+        prompt,
+        context
+      }, {
+        headers: this.getAuthHeaders(),
+        timeout: 30000
+      });
+
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.error || 'Point generation failed');
+      }
+    } catch (error) {
+      console.error('[AI SERVICE] Error generating points:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get AI service status with all providers
+   */
+  async getStatus() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/ai/status`, {
+        headers: this.getAuthHeaders(),
+        timeout: 5000
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error getting status:', error);
+      return {
+        success: false,
+        available: false,
+        providers: {
+          gemini: { available: false },
+          vllm: { available: false },
+          huggingface: { available: false }
+        }
+      };
+    }
+  }
+
+  /**
+   * Update AI configuration
+   */
+  async updateConfig(config: {
+    primaryProvider?: string;
+    useVLLMAsBackup?: boolean;
+    vllmTrained?: boolean;
+  }) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/config/update`, config, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[AI SERVICE] Error updating config:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Test AI service connection
    */
   async testConnection() {

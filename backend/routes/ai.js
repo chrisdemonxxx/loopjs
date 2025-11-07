@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+const UnifiedAIService = require('../services/unifiedAIService');
 
-// Initialize Gemini AI Service
-const geminiAIProcessor = new GeminiAICommandProcessor();
+// Initialize Unified AI Service (manages Gemini + VL LM + Hugging Face)
+const unifiedAI = new UnifiedAIService();
 
-// Check Gemini availability
-const isGeminiAvailable = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here';
+// Check availability
+const aiStatus = unifiedAI.getStatus();
+const isGeminiAvailable = aiStatus.gemini.available;
+const isVLLMAvailable = aiStatus.vllm.available;
+const isHuggingFaceAvailable = aiStatus.huggingface.available;
 
 /**
  * POST /api/ai/process-command
@@ -25,15 +28,16 @@ router.post('/process-command', async (req, res) => {
             });
         }
         
-        if (!isGeminiAvailable) {
+        // Check if any AI provider is available
+        if (!isGeminiAvailable && !isVLLMAvailable) {
             return res.status(400).json({
                 success: false,
-                error: 'Gemini AI is not configured. Please set GEMINI_API_KEY environment variable.'
+                error: 'No AI provider configured. Please set GEMINI_API_KEY or HUGGINGFACE_API_KEY environment variable.'
             });
         }
         
-        // Process with Gemini AI
-        const result = await geminiAIProcessor.processCommandWithAI(
+        // Process with Unified AI Service (Gemini primary, VL LM backup)
+        const result = await unifiedAI.processCommandWithAI(
             userInput,
             clientInfo || {},
             context
@@ -41,8 +45,8 @@ router.post('/process-command', async (req, res) => {
         
         res.json({
             success: true,
-            data: result,
-            provider: 'gemini',
+            data: result.data || result,
+            provider: result.data?.provider || 'unified',
             timestamp: new Date().toISOString()
         });
         
@@ -60,15 +64,19 @@ router.post('/process-command', async (req, res) => {
  * Get AI service status (public endpoint)
  */
 router.get('/status', (req, res) => {
-  const isGeminiAvailable = process.env.GEMINI_API_KEY && 
-    process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here' &&
-    process.env.GEMINI_API_KEY.trim() !== '';
+  const status = unifiedAI.getStatus();
     
   res.json({
     success: true,
-    provider: 'gemini',
-    available: isGeminiAvailable,
-    configured: isGeminiAvailable,
+    providers: {
+      gemini: status.gemini,
+      vllm: status.vllm,
+      huggingface: status.huggingface
+    },
+    primaryProvider: status.primaryProvider,
+    useVLLMAsBackup: status.useVLLMAsBackup,
+    vllmTrained: status.vllmTrained,
+    available: status.gemini.available || status.vllm.available,
     timestamp: new Date().toISOString()
   });
 });
@@ -91,15 +99,16 @@ router.get('/test', (req, res) => {
  */
 router.post('/test', async (req, res) => {
     try {
-        if (!isGeminiAvailable) {
+        // Check if any AI provider is available
+        if (!isGeminiAvailable && !isVLLMAvailable) {
             return res.status(400).json({
                 success: false,
-                error: 'Gemini AI is not configured'
+                error: 'No AI provider configured'
             });
         }
         
         // Test with a simple command
-        const testResult = await geminiAIProcessor.processCommandWithAI(
+        const testResult = await unifiedAI.processCommandWithAI(
             'Hello, can you respond with "AI test successful"?',
             { uuid: 'test-client' },
             {}
@@ -107,8 +116,9 @@ router.post('/test', async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Gemini AI test successful',
+            message: 'AI test successful',
             result: testResult,
+            provider: testResult.data?.provider || 'unified',
             timestamp: new Date().toISOString()
         });
         
@@ -126,52 +136,94 @@ const path = require('path');
 const { protect } = require('../middleware/security');
 const authorize = require('../middleware/rbac');
 
-// POST /api/ai/config - Save/Update Gemini API Key
+// POST /api/ai/config - Save/Update API Keys (Gemini, Hugging Face, VL LM)
 router.post('/config', protect, authorize(['admin']), async (req, res) => {
   try {
-    const { apiKey } = req.body;
+    const { geminiApiKey, huggingfaceApiKey, vllmApiKey } = req.body;
     
-    if (!apiKey || !apiKey.trim()) {
+    // Update Gemini API key if provided
+    if (geminiApiKey) {
+      process.env.GEMINI_API_KEY = geminiApiKey.trim();
+    }
+    
+    // Update Hugging Face API key if provided (used for both HF and VL LM)
+    if (huggingfaceApiKey) {
+      process.env.HUGGINGFACE_API_KEY = huggingfaceApiKey.trim();
+      // VL LM can use the same key
+      if (!vllmApiKey) {
+        process.env.VLLM_API_KEY = huggingfaceApiKey.trim();
+      }
+    }
+    
+    // Update VL LM API key if provided separately
+    if (vllmApiKey) {
+      process.env.VLLM_API_KEY = vllmApiKey.trim();
+    }
+    
+    // Check if at least one API key is provided
+    if (!geminiApiKey && !huggingfaceApiKey && !vllmApiKey) {
       return res.status(400).json({
         success: false,
-        error: 'API key is required'
+        error: 'At least one API key is required (geminiApiKey, huggingfaceApiKey, or vllmApiKey)'
       });
     }
-
-    // Save to environment variable (for current session)
-    process.env.GEMINI_API_KEY = apiKey.trim();
     
     // Try to persist to file, but don't fail if it doesn't work
     try {
       const envPath = path.join(__dirname, '..', '.env');
       let envContent = await fs.readFile(envPath, 'utf8').catch(() => '');
       
-      if (envContent.includes('GEMINI_API_KEY=')) {
-        envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${apiKey.trim()}`);
-      } else {
-        envContent += `\nGEMINI_API_KEY=${apiKey.trim()}\n`;
+      // Update Gemini API key
+      if (geminiApiKey) {
+        if (envContent.includes('GEMINI_API_KEY=')) {
+          envContent = envContent.replace(/GEMINI_API_KEY=.*/g, `GEMINI_API_KEY=${geminiApiKey.trim()}`);
+        } else {
+          envContent += `\nGEMINI_API_KEY=${geminiApiKey.trim()}\n`;
+        }
+      }
+      
+      // Update Hugging Face API key
+      if (huggingfaceApiKey) {
+        if (envContent.includes('HUGGINGFACE_API_KEY=')) {
+          envContent = envContent.replace(/HUGGINGFACE_API_KEY=.*/g, `HUGGINGFACE_API_KEY=${huggingfaceApiKey.trim()}`);
+        } else {
+          envContent += `\nHUGGINGFACE_API_KEY=${huggingfaceApiKey.trim()}\n`;
+        }
+      }
+      
+      // Update VL LM API key
+      if (vllmApiKey) {
+        if (envContent.includes('VLLM_API_KEY=')) {
+          envContent = envContent.replace(/VLLM_API_KEY=.*/g, `VLLM_API_KEY=${vllmApiKey.trim()}`);
+        } else {
+          envContent += `\nVLLM_API_KEY=${vllmApiKey.trim()}\n`;
+        }
       }
       
       await fs.writeFile(envPath, envContent);
-      console.log('[AI] API key saved to .env file');
+      console.log('[AI] API keys saved to .env file');
     } catch (fileError) {
       console.warn('[AI] Could not save to .env file (this is normal in Cloud Run):', fileError.message);
-      // Don't fail the request - the API key is still set in memory
+      // Don't fail the request - the API keys are still set in memory
     }
     
-    // Reinitialize Gemini AI processor
-    const geminiAIProcessor = new GeminiAICommandProcessor();
+    // Reinitialize unified AI service
+    const newUnifiedAI = new UnifiedAIService();
+    Object.assign(unifiedAI, newUnifiedAI);
     
     // Verify the API key works
-    const isAvailable = process.env.GEMINI_API_KEY && 
-      process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here' &&
-      process.env.GEMINI_API_KEY.trim() !== '';
+    const status = unifiedAI.getStatus();
     
     res.json({
       success: true,
-      message: 'API key configured successfully',
-      available: isAvailable,
-      configured: isAvailable
+      message: 'API keys configured successfully',
+      available: status.gemini.available || status.vllm.available || status.huggingface.available,
+      configured: {
+        gemini: status.gemini.available,
+        vllm: status.vllm.available,
+        huggingface: status.huggingface.available
+      },
+      providers: status
     });
   } catch (error) {
     console.error('Error saving API key:', error);
@@ -185,12 +237,16 @@ router.post('/config', protect, authorize(['admin']), async (req, res) => {
 // GET /api/ai/config - Get current configuration status
 router.get('/config', protect, async (req, res) => {
     try {
-        const hasApiKey = !!(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here');
+        const status = unifiedAI.getStatus();
         
         res.json({
             success: true,
-            configured: hasApiKey,
-            available: isGeminiAvailable
+            configured: status.gemini.available || status.vllm.available,
+            available: status.gemini.available || status.vllm.available,
+            providers: status,
+            primaryProvider: status.primaryProvider,
+            useVLLMAsBackup: status.useVLLMAsBackup,
+            vllmTrained: status.vllmTrained
         });
     } catch (error) {
         console.error('Error getting AI config:', error);
@@ -211,15 +267,16 @@ router.post('/handle-error', protect, async (req, res) => {
     
     console.log('[AI API] Handling command error:', error);
     
-    if (!isGeminiAvailable) {
+    // Check if any AI provider is available
+    if (!isGeminiAvailable && !isVLLMAvailable) {
       return res.status(400).json({
         success: false,
-        error: 'Gemini AI is not configured for error handling'
+        error: 'No AI provider configured for error handling'
       });
     }
     
-    // Use the existing error handling from GeminiAICommandProcessor
-    const errorResult = await geminiAIProcessor.handleErrorWithAI(
+    // Use unified AI service error handling
+    const errorResult = await unifiedAI.handleErrorWithAI(
       { message: error },
       { command: originalCommand },
       clientInfo,
@@ -230,10 +287,11 @@ router.post('/handle-error', protect, async (req, res) => {
       res.json({
         success: true,
         data: {
-          fixedCommand: errorResult.fixedCommand,
-          explanation: errorResult.explanation,
-          changesMade: errorResult.changesMade,
-          retryCount: retryCount + 1
+          fixedCommand: errorResult.data?.command || errorResult.fixedCommand,
+          explanation: errorResult.data?.explanation || errorResult.explanation,
+          changesMade: errorResult.data?.changes_made || errorResult.changesMade,
+          retryCount: errorResult.data?.retryCount || retryCount + 1,
+          provider: errorResult.data?.provider || 'unified'
         }
       });
     } else {
@@ -248,6 +306,94 @@ router.post('/handle-error', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/generate-points
+ * Generate points/coordinates using Hugging Face Point Generator
+ */
+router.post('/generate-points', protect, async (req, res) => {
+  try {
+    const { prompt, context = {} } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Prompt is required for point generation'
+      });
+    }
+    
+    if (!isHuggingFaceAvailable) {
+      return res.status(400).json({
+        success: false,
+        error: 'Hugging Face API key not configured. Please set HUGGINGFACE_API_KEY environment variable.'
+      });
+    }
+    
+    console.log('[AI API] Generating points with Hugging Face:', prompt);
+    
+    const result = await unifiedAI.generatePoints(prompt, context);
+    
+    res.json({
+      success: true,
+      data: result,
+      provider: 'huggingface',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('[AI API] Error generating points:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/config/update
+ * Update AI configuration (provider selection, training status, etc.)
+ */
+router.post('/config/update', protect, authorize(['admin']), async (req, res) => {
+  try {
+    const { primaryProvider, useVLLMAsBackup, vllmTrained } = req.body;
+    
+    unifiedAI.updateConfig({
+      primaryProvider,
+      useVLLMAsBackup,
+      vllmTrained
+    });
+    
+    // Update environment variables
+    if (primaryProvider) {
+      process.env.AI_PRIMARY_PROVIDER = primaryProvider;
+    }
+    if (useVLLMAsBackup !== undefined) {
+      process.env.AI_USE_VLLM_BACKUP = useVLLMAsBackup ? 'true' : 'false';
+    }
+    if (vllmTrained !== undefined) {
+      process.env.VLLM_TRAINED = vllmTrained ? 'true' : 'false';
+    }
+    
+    const status = unifiedAI.getStatus();
+    
+    res.json({
+      success: true,
+      message: 'AI configuration updated successfully',
+      config: {
+        primaryProvider: status.primaryProvider,
+        useVLLMAsBackup: status.useVLLMAsBackup,
+        vllmTrained: status.vllmTrained
+      }
+    });
+    
+  } catch (error) {
+    console.error('[AI API] Error updating config:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update AI configuration'
     });
   }
 });

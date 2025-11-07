@@ -25,7 +25,12 @@ const SettingsSchema = new mongoose.Schema({
   
   // AI Settings
   aiEnabled: { type: Boolean, default: false },
-  aiProvider: { type: String, default: 'gemini' },
+  aiProvider: { type: String, default: 'gemini' }, // 'gemini', 'vllm', 'unified'
+  aiPrimaryProvider: { type: String, default: 'gemini' },
+  aiUseVLLMAsBackup: { type: Boolean, default: true },
+  vllmTrained: { type: Boolean, default: false },
+  huggingfaceApiKey: { type: String, default: '' },
+  vllmApiKey: { type: String, default: '' },
   
   // Telegram Settings
   telegramEnabled: { type: Boolean, default: false },
