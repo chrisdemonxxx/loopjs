@@ -11,9 +11,8 @@ import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
-  FiEye,
-  FiChevronDown,
-  FiCalendar
+    FiEye,
+    FiChevronDown
 } from 'react-icons/fi';
 
 interface AuditLog {

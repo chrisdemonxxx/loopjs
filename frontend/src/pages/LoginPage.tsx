@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { FiUser, FiLock, FiEye, FiEyeOff, FiShield, FiTerminal, FiWifi } from "react-icons/fi";
-import request from "../axios";
+import { useState } from 'react';
+import { AxiosError } from 'axios';
+import { FiUser, FiLock, FiEye, FiEyeOff, FiShield, FiTerminal, FiWifi } from 'react-icons/fi';
+import request from '../axios';
 
 export default function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
@@ -13,42 +14,43 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
     setIsLoading(true);
     try {
       if (!username || !password) {
-        setError("Please enter both username and password");
+        setError('Please enter both username and password');
         return;
       }
-      
+
       const res = await request({
-        method: "POST",
-        url: "/login",
+        method: 'POST',
+        url: '/login',
         data: { username, password },
         headers: {
-          "Content-Type": "application/json",
-        },
+          'Content-Type': 'application/json'
+        }
       });
-      
+
       if (res.status === 200 && res.data && res.data.accessToken) {
         const accessToken = res.data.accessToken;
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("userRole", res.data.user?.role || "");
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('userRole', res.data.user?.role || '');
         console.log('Token stored in localStorage:', accessToken);
         onLogin();
       } else {
-        setError("Login failed: Invalid server response");
-        console.error("Invalid login response:", res);
+        setError('Login failed: Invalid server response');
+        console.error('Invalid login response:', res);
       }
     } catch (err) {
-      console.error("Login error:", err);
-      if (err.response) {
-        if (err.response.status === 401) {
-          setError("Invalid username or password");
+      console.error('Login error:', err);
+      const axiosError = err as AxiosError<{ error?: string }>;
+      if (axiosError.response) {
+        if (axiosError.response.status === 401) {
+          setError('Invalid username or password');
         } else {
-          setError(`Login failed: ${err.response.data?.error || 'Server error'}`); 
+          setError(`Login failed: ${axiosError.response.data?.error || 'Server error'}`);
         }
-      } else if (err.request) {
-        setError("Network error. Please check your connection.");
+      } else if (axiosError.request) {
+        setError('Network error. Please check your connection.');
       } else {
-        setError("Login failed. Please try again.");
+        setError('Login failed. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -206,7 +208,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
         </div>
       </div>
 
-      <style jsx="true">{`
+        <style>{`
         @keyframes scan-vertical {
           0% { top: -2px; }
           100% { top: 100%; }

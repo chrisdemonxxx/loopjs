@@ -1,18 +1,16 @@
 import React from 'react';
-import { 
-  FiMonitor, 
-  FiFolder, 
-  FiTerminal, 
+import {
+  FiMonitor,
+  FiFolder,
+  FiTerminal,
   FiSettings,
   FiShield,
-  FiWifi,
   FiCamera,
   FiMic,
   FiMapPin,
   FiSmartphone,
-  FiHardDrive,
   FiCpu,
-  FiMemoryStick
+  FiTarget
 } from 'react-icons/fi';
 import { 
   SiWindows, 
@@ -114,7 +112,7 @@ const PlatformCapabilities: React.FC<PlatformCapabilitiesProps> = ({
           },
           {
             name: 'Process Injection',
-            icon: <FiMemoryStick className="w-5 h-5" />,
+            icon: <FiTarget className="w-5 h-5" />,
             available: true,
             description: 'Advanced process manipulation',
             category: 'security'

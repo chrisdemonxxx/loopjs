@@ -1,42 +1,44 @@
 import React from 'react';
+import { Agent } from '../../types';
 
-const ControlPanel = ({ client }) => {
+interface ControlPanelProps {
+  client: Agent | null;
+  onRunCommand?: (command: string) => void;
+}
+
+const ControlPanel: React.FC<ControlPanelProps> = ({ client, onRunCommand }) => {
   if (!client) {
     return (
-      <div className="bg-gray-800 text-white p-4 rounded-lg">
-        <h2 className="text-xl font-bold mb-4">Control Panel</h2>
-        <p>Select a client to enable controls.</p>
+      <div className="bg-white dark:bg-boxdark rounded-lg border border-stroke dark:border-strokedark p-6 text-center text-bodydark2">
+        Select a client to view quick actions.
       </div>
     );
   }
 
-  const handleCommand = (command) => {
-    console.log(`Executing command ${command} on client ${client.id}`);
-    // Implement actual command execution here
-  };
+  const quickCommands = [
+    { id: 'systeminfo', label: 'System Info' },
+    { id: 'ipconfig', label: 'Network Info' },
+    { id: 'screenshot', label: 'Screenshot' }
+  ];
 
   return (
-    <div className="bg-gray-800 text-white p-4 rounded-lg">
-      <h2 className="text-xl font-bold mb-4">Control Panel for {client.name}</h2>
-      <div className="flex flex-col space-y-2">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => handleCommand('screenshot')}
-        >
-          Take Screenshot
-        </button>
-        <button
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => handleCommand('keylog')}
-        >
-          Start Keylogger
-        </button>
-        <button
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => handleCommand('terminate')}
-        >
-          Terminate Agent
-        </button>
+    <div className="bg-white dark:bg-boxdark rounded-lg border border-stroke dark:border-strokedark p-6 space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold text-black dark:text-white">{client.computerName}</h3>
+        <p className="text-xs text-bodydark2">
+          {client.platform} • {client.ipAddress}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {quickCommands.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onRunCommand?.(item.id)}
+            className="px-4 py-3 border border-stroke dark:border-strokedark rounded-lg text-sm hover:bg-primary/10 transition-colors"
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </div>
   );

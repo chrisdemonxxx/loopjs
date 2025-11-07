@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   FiHome, 
   FiUsers, 
   FiSettings, 
-  FiMonitor, 
-  FiActivity, 
-  FiShield, 
-  FiDatabase,
+  FiMonitor,
   FiX,
-  FiChevronDown,
-  FiChevronRight,
   FiTerminal,
   FiCalendar,
   FiCpu
@@ -19,8 +14,6 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
 interface MenuItem {
@@ -31,131 +24,68 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// Simplified menu items - only essential features
-const getMenuItems = (userRole: string): MenuItem[] => [
-  {
-    id: 'dashboard',
-    label: 'Overview',
-    icon: <FiHome className="w-5 h-5" />,
-    path: '/dashboard'
-  },
-  {
-    id: 'clients',
-    label: 'Clients',
-    icon: <FiUsers className="w-5 h-5" />,
-    path: '/clients'
-  },
-  {
-    id: 'agent',
-    label: 'Agent',
-    icon: <FiCpu className="w-5 h-5" />,
-    path: '/agent'
-  },
-  {
-    id: 'terminal',
-    label: 'Terminal',
-    icon: <FiTerminal className="w-5 h-5" />,
-    path: '/terminal'
-  },
-  {
-    id: 'tasks',
-    label: 'Tasks',
-    icon: <FiCalendar className="w-5 h-5" />,
-    path: '/tasks'
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: <FiSettings className="w-5 h-5" />,
-    path: '/settings'
-  }
-];
-
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [userRole, setUserRole] = useState<string>('admin');
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  
-  // Get user role from localStorage on component mount
-  useEffect(() => {
-    const role = localStorage.getItem('userRole') || 'admin';
-    setUserRole(role);
-    setMenuItems(getMenuItems(role));
-  }, []);
 
-  const toggleExpanded = (itemId: string) => {
-    setExpandedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
+  const menuItems: MenuItem[] = [
+    {
+      id: 'dashboard',
+      label: 'Overview',
+      icon: <FiHome className="w-5 h-5" />,
+      path: '/dashboard'
+    },
+    {
+      id: 'clients',
+      label: 'Clients',
+      icon: <FiUsers className="w-5 h-5" />,
+      path: '/clients'
+    },
+    {
+      id: 'agent',
+      label: 'Agent',
+      icon: <FiCpu className="w-5 h-5" />,
+      path: '/agent'
+    },
+    {
+      id: 'terminal',
+      label: 'Terminal',
+      icon: <FiTerminal className="w-5 h-5" />,
+      path: '/terminal'
+    },
+    {
+      id: 'tasks',
+      label: 'Tasks',
+      icon: <FiCalendar className="w-5 h-5" />,
+      path: '/tasks'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <FiSettings className="w-5 h-5" />,
+      path: '/settings'
+    }
+  ];
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   const renderMenuItem = (item: MenuItem) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems.includes(item.id);
     const isItemActive = item.path ? isActive(item.path) : false;
 
     return (
       <div key={item.id} className="mb-2">
-        {hasChildren ? (
-          <div>
-            <button
-              onClick={() => toggleExpanded(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-colors ${
-                isItemActive 
-                  ? 'bg-primary text-white' 
-                  : 'text-bodydark hover:bg-gray-2 dark:hover:bg-meta-4'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                {item.icon}
-                <span className="font-medium">{item.label}</span>
-              </div>
-              {isExpanded ? (
-                <FiChevronDown className="w-4 h-4" />
-              ) : (
-                <FiChevronRight className="w-4 h-4" />
-              )}
-            </button>
-            
-            {isExpanded && (
-              <div className="ml-8 mt-2 space-y-1">
-                {item.children!.map(child => (
-                  <Link
-                    key={child.id}
-                    to={child.path!}
-                    className={`flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                      isActive(child.path!)
-                        ? 'bg-primary text-white'
-                        : 'text-bodydark2 hover:bg-gray-2 dark:hover:bg-meta-4'
-                    }`}
-                  >
-                    {child.icon}
-                    <span>{child.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link
-            to={item.path!}
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-              isItemActive 
-                ? 'bg-primary text-white' 
-                : 'text-bodydark hover:bg-gray-2 dark:hover:bg-meta-4'
-            }`}
-          >
-            {item.icon}
-            <span className="font-medium">{item.label}</span>
-          </Link>
-        )}
+        <Link
+          to={item.path!}
+          className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+            isItemActive
+              ? 'bg-primary text-white'
+              : 'text-bodydark hover:bg-gray-2 dark:hover:bg-meta-4'
+          }`}
+        >
+          {item.icon}
+          <span className="font-medium">{item.label}</span>
+        </Link>
       </div>
     );
   };

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -37,17 +37,17 @@ class AIService {
       }
     } catch (error) {
       console.error('[AI SERVICE] Error processing natural language:', error);
-      
+
       // Fallback to simple command generation
       console.log('[AI SERVICE] Falling back to simple command generation');
-      return this.generateFallbackCommand(userInput, clientInfo);
+      return this.generateFallbackCommand(userInput);
     }
   }
 
   /**
    * Generate fallback command when AI is unavailable
    */
-  private generateFallbackCommand(userInput: string, clientInfo: any) {
+  private generateFallbackCommand(userInput: string) {
     const input = userInput.toLowerCase();
     
     // Simple pattern matching for common requests
@@ -138,8 +138,11 @@ class AIService {
 
       return response.data;
     } catch (error) {
-      console.error('[AI SERVICE] Error processing command:', error);
-      console.error('[AI SERVICE] Error details:', error.response?.data);
+      const axiosError = error as AxiosError;
+      console.error('[AI SERVICE] Error processing command:', axiosError);
+      if (axiosError.response) {
+        console.error('[AI SERVICE] Error details:', axiosError.response.data);
+      }
       throw error;
     }
   }

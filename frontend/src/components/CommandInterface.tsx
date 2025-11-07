@@ -1,280 +1,326 @@
-import React, { useState, useEffect } from 'react';
-import { User, CommandCategory, PlatformCapabilities } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Agent } from '../types';
+import { API_URL } from '../config';
+
+interface CommandDefinition {
+  name: string;
+  description?: string;
+  syntax?: string;
+}
+
+interface CommandCategory {
+  name: string;
+  description?: string;
+  commands: CommandDefinition[];
+}
 
 interface CommandInterfaceProps {
-  selectedUser: User | null;
+  selectedAgent: Agent | null;
   onExecuteCommand: (command: string, args?: string[]) => void;
 }
 
-const CommandInterface: React.FC<CommandInterfaceProps> = ({ selectedUser, onExecuteCommand }) => {
-  const [availableCommands, setAvailableCommands] = useState<CommandCategory[]>([]);
-  const [platformCapabilities, setPlatformCapabilities] = useState<PlatformCapabilities | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [customCommand, setCustomCommand] = useState<string>('');
-  const [commandArgs, setCommandArgs] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+const placeholderCategories: CommandCategory[] = [
+  {
+    name: 'system',
+    description: 'Popular operating system commands',
+    commands: [
+      { name: 'systeminfo', description: 'Collect detailed operating system information' },
+      { name: 'whoami', description: 'Display current user context' }
+    ]
+  },
+  {
+    name: 'network',
+    description: 'Connectivity and discovery helpers',
+    commands: [
+      { name: 'ipconfig /all', description: 'Enumerate network adapters on Windows' },
+      { name: 'ping 8.8.8.8', description: 'Validate outbound connectivity to the internet' }
+    ]
+  }
+];
 
-  // Fetch available commands and capabilities when user changes
+const CommandInterface: React.FC<CommandInterfaceProps> = ({ selectedAgent, onExecuteCommand }) => {
+  const [categories, setCategories] = useState<CommandCategory[]>(placeholderCategories);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(placeholderCategories[0]?.name ?? null);
+  const [customCommand, setCustomCommand] = useState('');
+  const [commandArgs, setCommandArgs] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!selectedUser) {
-      setAvailableCommands([]);
-      setPlatformCapabilities(null);
-      return;
-    }
+    let isMounted = true;
 
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchCommands = async () => {
+      if (!selectedAgent) {
+        setCategories(placeholderCategories);
+        setSelectedCategory(placeholderCategories[0]?.name ?? null);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
       try {
-        // Fetch available commands
-        const commandsResponse = await fetch(`/api/commands/available/${selectedUser.id}`);
-        if (commandsResponse.ok) {
-          const capabilities = await commandsResponse.json();
-          setPlatformCapabilities(capabilities);
-          setAvailableCommands(capabilities.commandCategories || []);
+        const response = await fetch(`${API_URL}/commands/available/${selectedAgent.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to fetch commands (${response.status})`);
         }
-      } catch (error) {
-        console.error('Failed to fetch command data:', error);
+
+        const data = await response.json();
+
+        const rawCategories =
+          data?.commandCategories ??
+          data?.data?.commandCategories ??
+          data?.categories ??
+          [];
+
+        const normalisedCategories: CommandCategory[] = Array.isArray(rawCategories)
+          ? rawCategories.map((category: any) => ({
+              name: String(category?.name ?? 'custom'),
+              description: category?.description ?? '',
+              commands: Array.isArray(category?.commands)
+                ? category.commands
+                    .filter((cmd: any) => cmd && cmd.name)
+                    .map((cmd: any) => ({
+                      name: String(cmd.name),
+                      description: cmd.description ?? '',
+                      syntax: cmd.syntax ?? ''
+                    }))
+                : []
+            }))
+          : Object.entries(rawCategories as Record<string, any>).map(([name, value]) => {
+              const commands = Array.isArray(value)
+                ? value
+                : value?.commands ?? [];
+              return {
+                name,
+                description: value?.description ?? '',
+                commands: commands
+                  .filter((cmd: any) => cmd && cmd.name)
+                  .map((cmd: any) => ({
+                    name: String(cmd.name),
+                    description: cmd.description ?? '',
+                    syntax: cmd.syntax ?? ''
+                  }))
+              };
+            });
+
+        if (isMounted && normalisedCategories.length > 0) {
+          setCategories(normalisedCategories);
+          setSelectedCategory(normalisedCategories[0]?.name ?? null);
+        } else if (isMounted) {
+          setCategories(placeholderCategories);
+          setSelectedCategory(placeholderCategories[0]?.name ?? null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setCategories(placeholderCategories);
+          setSelectedCategory(placeholderCategories[0]?.name ?? null);
+          setError(err instanceof Error ? err.message : 'Failed to load available commands');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [selectedUser]);
+    fetchCommands();
 
-  const handleExecuteCommand = (command: string) => {
-    if (!selectedUser) return;
-    
-    const args = commandArgs.trim() ? commandArgs.split(' ') : [];
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAgent?.id]);
+
+  const selectedAgentFeatures = useMemo(() => {
+    if (!selectedAgent?.features) {
+      return [];
+    }
+
+    const featureEntries = Object.entries(selectedAgent.features);
+    return featureEntries
+      .filter(([, enabled]) => Boolean(enabled))
+      .map(([key]) => key);
+  }, [selectedAgent]);
+
+  const handleExecute = (command: string) => {
+    const args = commandArgs.trim() ? commandArgs.trim().split(/\s+/) : undefined;
     onExecuteCommand(command, args);
     setCommandArgs('');
   };
 
-  const handleExecuteCustomCommand = () => {
-    if (!customCommand.trim() || !selectedUser) return;
-    
-    const args = commandArgs.trim() ? commandArgs.split(' ') : [];
-    onExecuteCommand(customCommand.trim(), args);
+  const handleCustomCommand = () => {
+    const trimmed = customCommand.trim();
+    if (!trimmed) {
+      return;
+    }
+    const args = commandArgs.trim() ? commandArgs.trim().split(/\s+/) : undefined;
+    onExecuteCommand(trimmed, args);
     setCustomCommand('');
     setCommandArgs('');
   };
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case 'windows': return '🪟';
-      case 'linux': return '🐧';
-      case 'macos': return '🍎';
-      default: return '💻';
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'system': return '⚙️';
-      case 'network': return '🌐';
-      case 'file': return '📁';
-      case 'process': return '⚡';
-      case 'registry': return '📋';
-      case 'persistence': return '🔒';
-      case 'evasion': return '🥷';
-      case 'injection': return '💉';
-      case 'reconnaissance': return '🔍';
-      default: return '📝';
-    }
-  };
-
-  if (!selectedUser) {
+  if (!selectedAgent) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 text-center">
-        <div className="text-gray-500 mb-4">
-          <span className="text-4xl">🎯</span>
-        </div>
-        <h3 className="text-lg font-semibold text-white mb-2">No Agent Selected</h3>
-        <p className="text-gray-400">Select an agent from the table to view available commands</p>
+      <div className="bg-white dark:bg-boxdark rounded-lg border border-stroke dark:border-strokedark p-8 text-center">
+        <div className="text-4xl mb-4">🎯</div>
+        <h2 className="text-xl font-semibold text-black dark:text-white mb-2">Select an Agent</h2>
+        <p className="text-bodydark2">Choose an agent from the dashboard to explore available commands.</p>
       </div>
     );
   }
 
+  const category = categories.find((item) => item.name === selectedCategory);
+
   return (
-    <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-gray-800 px-6 py-4 border-b border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <span className="text-2xl">{getPlatformIcon(selectedUser.platform)}</span>
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
+        <div className="px-6 py-4 border-b border-stroke dark:border-strokedark flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-black dark:text-white">Command Library</h2>
+            <p className="text-sm text-bodydark2">
+              {selectedAgent.name} • {selectedAgent.platform} {selectedAgent.version}
+            </p>
+          </div>
+          <div
+            className={`px-2 py-1 rounded text-xs ${
+              selectedAgent.status === 'online'
+                ? 'bg-success/10 text-success'
+                : 'bg-danger/10 text-danger'
+            }`}
+          >
+            {selectedAgent.status.toUpperCase()}
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">Command Interface</h3>
-              <p className="text-sm text-gray-400">
-                {selectedUser.name} • {selectedUser.platform} {selectedUser.version}
+              <p className="text-xs text-bodydark2 uppercase tracking-wide mb-1">Architecture</p>
+              <p className="text-sm font-medium text-black dark:text-white">
+                {selectedAgent.architecture || 'Unknown'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-bodydark2 uppercase tracking-wide mb-1">Privileges</p>
+              <p className="text-sm font-medium text-black dark:text-white">
+                {selectedAgent.systemInfo?.isAdmin ? 'Administrator' : 'Standard user'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-bodydark2 uppercase tracking-wide mb-1">Active Features</p>
+              <p className="text-sm font-medium text-black dark:text-white">
+                {selectedAgentFeatures.length > 0 ? selectedAgentFeatures.join(', ') : 'None detected'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-bodydark2 uppercase tracking-wide mb-1">Sessions</p>
+              <p className="text-sm font-medium text-black dark:text-white">
+                {selectedAgent.connectionCount ?? 0}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 text-xs rounded ${
-              selectedUser.status === 'online' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
-            }`}>
-              {selectedUser.status}
-            </span>
-            {platformCapabilities && (
-              <span className="px-2 py-1 text-xs rounded bg-blue-900 text-blue-300">
-                {platformCapabilities.availableCommands?.length || 0} commands
-              </span>
+
+          <div>
+            <h3 className="text-sm font-semibold text-black dark:text-white mb-3">Command Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => setSelectedCategory(item.name)}
+                  className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                    item.name === selectedCategory
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-stroke dark:border-strokedark hover:border-primary/50 text-bodydark2'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+            {error && (
+              <p className="text-xs text-danger mt-2">
+                {error}. Displaying a basic command set while we retry.
+              </p>
             )}
           </div>
-        </div>
-      </div>
 
-      {loading ? (
-        <div className="p-6 text-center">
-          <div className="text-gray-400">Loading commands...</div>
-        </div>
-      ) : (
-        <div className="p-6">
-          {/* Platform Capabilities Summary */}
-          {platformCapabilities && (
-            <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-              <h4 className="text-sm font-semibold text-white mb-3">Agent Capabilities</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <span className="text-gray-400">Architecture:</span>
-                  <div className="text-blue-400 font-medium">{selectedUser.architecture || 'Unknown'}</div>
-                </div>
-                <div>
-                  <span className="text-gray-400">Privileges:</span>
-                  <div className={`font-medium ${selectedUser.systemInfo?.isAdmin ? 'text-red-400' : 'text-green-400'}`}>
-                    {selectedUser.systemInfo?.isAdmin ? 'Administrator' : 'Standard User'}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-400">Features:</span>
-                  <div className="text-purple-400 font-medium">
-                    {Object.values(selectedUser.features || {}).filter(feature => feature.enabled).length} available
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-400">Connection:</span>
-                  <div className="text-green-400 font-medium">
-                    {selectedUser.connectionCount || 0} sessions
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Command Categories */}
-          {availableCommands.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-white mb-3">Available Command Categories</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {availableCommands.map((category) => (
-                  <div
-                    key={category.name}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedCategory === category.name
-                        ? 'bg-blue-900 border-blue-600'
-                        : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
-                    }`}
-                    onClick={() => setSelectedCategory(selectedCategory === category.name ? '' : category.name)}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-lg">{getCategoryIcon(category.name)}</span>
-                      <span className="font-medium text-white capitalize">{category.name}</span>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {category.commands.length} commands available
-                    </div>
-                    {category.description && (
-                      <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Selected Category Commands */}
-          {selectedCategory && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-white mb-3">
-                {getCategoryIcon(selectedCategory)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Commands
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {availableCommands
-                  .find(cat => cat.name === selectedCategory)
-                  ?.commands.map((command) => (
-                    <div
-                      key={command.name}
-                      className="p-3 bg-gray-800 rounded border border-gray-700 hover:bg-gray-750 transition-colors"
+          <div>
+            <h3 className="text-sm font-semibold text-black dark:text-white mb-3">
+              {isLoading ? 'Loading commands…' : `Commands in ${selectedCategory ?? 'category'}`}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(category?.commands ?? []).map((command) => (
+                <div
+                  key={command.name}
+                  className="border border-stroke dark:border-strokedark rounded-lg p-3 bg-white dark:bg-boxdark"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-black dark:text-white">{command.name}</span>
+                    <button
+                      onClick={() => handleExecute(command.name)}
+                      className="text-xs px-2 py-1 rounded bg-primary text-white hover:bg-primary/90 transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-white">{command.name}</span>
-                        <button
-                          onClick={() => handleExecuteCommand(command.name)}
-                          className="px-2 py-1 text-xs bg-blue-900 text-blue-300 rounded hover:bg-blue-800 transition-colors"
-                        >
-                          Execute
-                        </button>
-                      </div>
-                      {command.description && (
-                        <div className="text-xs text-gray-400 mb-2">{command.description}</div>
-                      )}
-                      {command.syntax && (
-                        <div className="text-xs text-gray-500 font-mono bg-gray-900 p-1 rounded">
-                          {command.syntax}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
+                      Execute
+                    </button>
+                  </div>
+                  {command.description && (
+                    <p className="text-xs text-bodydark2 mb-2">{command.description}</p>
+                  )}
+                  {command.syntax && (
+                    <pre className="text-xs bg-gray-100 dark:bg-gray-800 text-bodydark2 rounded px-2 py-1 overflow-x-auto">
+                      {command.syntax}
+                    </pre>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Custom Command Input */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white">Custom Command</h4>
-            <div className="space-y-3">
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-black dark:text-white">Custom Command</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Command</label>
+                <label className="block text-xs text-bodydark2 mb-1">Command</label>
                 <input
                   type="text"
                   value={customCommand}
-                  onChange={(e) => setCustomCommand(e.target.value)}
-                  placeholder="Enter command..."
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  onChange={(event) => setCustomCommand(event.target.value)}
+                  placeholder="Enter command (e.g. tasklist)"
+                  className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded bg-white dark:bg-boxdark text-black dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Arguments (optional)</label>
+                <label className="block text-xs text-bodydark2 mb-1">Arguments (optional)</label>
                 <input
                   type="text"
                   value={commandArgs}
-                  onChange={(e) => setCommandArgs(e.target.value)}
-                  placeholder="Enter arguments separated by spaces..."
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  onChange={(event) => setCommandArgs(event.target.value)}
+                  placeholder="Example: /SVC /FO LIST"
+                  className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded bg-white dark:bg-boxdark text-black dark:text-white"
                 />
               </div>
-              <button
-                onClick={handleExecuteCustomCommand}
-                disabled={!customCommand.trim()}
-                className="w-full px-4 py-2 bg-green-900 text-green-300 rounded hover:bg-green-800 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
-              >
-                Execute Custom Command
-              </button>
             </div>
+            <button
+              onClick={handleCustomCommand}
+              disabled={!customCommand.trim()}
+              className="px-4 py-2 rounded bg-success text-white text-sm font-medium hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Send Command
+            </button>
           </div>
 
-          {/* Warning */}
-          <div className="mt-6 p-3 bg-yellow-900 border border-yellow-700 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <span className="text-yellow-400">⚠️</span>
-              <span className="text-xs text-yellow-300">
-                Commands are filtered based on the agent's platform and capabilities. 
-                Incompatible commands are automatically hidden.
-              </span>
-            </div>
+          <div className="border border-warning/30 bg-warning/10 rounded-lg px-4 py-3 text-xs text-warning">
+            Commands are sent directly over the secure WebSocket connection. Ensure you understand the
+            impact before running high-risk commands on production systems.
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,11 +1,10 @@
 import React from 'react';
-import { 
-  FiTerminal, 
-  FiMonitor, 
-  FiDownload, 
-  FiCpu, 
-  FiShield, 
-  FiLock, 
+import {
+  FiTerminal,
+  FiMonitor,
+  FiDownload,
+  FiCpu,
+  FiShield,
   FiDatabase,
   FiWifi,
   FiCamera,
