@@ -21,7 +21,8 @@ interface ClientCardProps {
 }
 
 const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
-  const [showActions, setShowActions] = useState(false);
+    const [showActions, setShowActions] = useState(false);
+    const hvncAvailable = client.features?.hvnc ?? false;
 
   const formatUptime = (uptime: number) => {
     const days = Math.floor(uptime / 86400);
@@ -87,12 +88,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
             <FiMoreVertical className="w-4 h-4" />
           </button>
           
-          {showActions && (
+            {showActions && (
             <div className="premium-dropdown show">
               <div className="premium-dropdown-item" onClick={() => onAction('reboot', client)}>
                 <FiRefreshCw className="w-4 h-4 mr-2" />
                 Reboot
               </div>
+                {hvncAvailable && (
+                  <div className="premium-dropdown-item" onClick={() => onAction('hvnc', client)}>
+                    <FiMonitor className="w-4 h-4 mr-2" />
+                    HVNC Control
+                  </div>
+                )}
               <div className="premium-dropdown-item" onClick={() => onAction('screenshot', client)}>
                 <FiCamera className="w-4 h-4 mr-2" />
                 Screenshot
@@ -158,9 +165,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
           className="premium-action-button"
           onClick={() => onAction('custom-command', client)}
         >
-          <FiTerminal className="w-3 h-3 mr-1" />
-          Command
-        </button>
+            <FiTerminal className="w-3 h-3 mr-1" />
+            Command
+          </button>
+          {hvncAvailable && (
+            <button
+              className="premium-action-button"
+              onClick={() => onAction('hvnc', client)}
+            >
+              <FiMonitor className="w-3 h-3 mr-1" />
+              HVNC
+            </button>
+          )}
       </div>
     </div>
   );

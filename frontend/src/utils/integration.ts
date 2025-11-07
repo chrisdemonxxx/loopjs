@@ -193,6 +193,11 @@ export const wsIntegration = {
         // Show error toast for failed authentication
         toastService.error(`Authentication failed: ${data.message}`);
         break;
+      
+      case 'hvnc_response':
+      case 'hvnc_frame':
+        // HVNC events are handled by the dedicated HVNC context
+        break;
         
       default:
         console.log('Unhandled WebSocket message type:', type);

