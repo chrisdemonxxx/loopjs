@@ -1,8 +1,10 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const VLLMService = require('./vlLMService');
 
 /**
  * Google Gemini AI-Powered Command Processor
- * Free alternative to OpenAI with excellent performance
+ * Primary LLM with VL LM as backup
+ * Uses Gemini initially, switches to VL LM once trained
  */
 class GeminiAICommandProcessor {
     constructor() {
@@ -19,6 +21,16 @@ class GeminiAICommandProcessor {
         } else {
             console.log('[GEMINI AI] Gemini API key not configured, using fallback mode');
             this.isAvailable = false;
+        }
+        
+        // Initialize VL LM as backup
+        this.vlLM = new VLLMService();
+        this.useVLLMAsPrimary = this.vlLM.isTrained;
+        
+        if (this.useVLLMAsPrimary) {
+            console.log('[GEMINI AI] VL LM is trained - using VL LM as PRIMARY, Gemini as backup');
+        } else {
+            console.log('[GEMINI AI] Using Gemini as PRIMARY, VL LM as backup');
         }
         
         this.conversationHistory = new Map(); // Store conversation context per client
@@ -85,14 +97,30 @@ Always respond with a JSON object containing:
     }
 
     /**
-     * Process command using Google Gemini AI
+     * Process command using Google Gemini AI (or VL LM if trained)
      */
     async processCommandWithAI(userInput, clientInfo, context = {}) {
         try {
+            // Check if VL LM should be used as primary
+            if (this.useVLLMAsPrimary && this.vlLM.isAvailable) {
+                console.log('[GEMINI AI] Using VL LM as primary (trained)');
+                try {
+                    return await this.vlLM.processCommand(userInput, clientInfo, context);
+                } catch (vlError) {
+                    console.log('[GEMINI AI] VL LM failed, falling back to Gemini:', vlError.message);
+                    // Fall through to Gemini
+                }
+            }
+            
             console.log('[GEMINI AI] Processing command with Gemini:', userInput);
             
             if (!this.isAvailable) {
-                console.log('[GEMINI AI] Gemini not available, falling back to rule-based processing');
+                // Try VL LM as backup if Gemini not available
+                if (this.vlLM.isAvailable) {
+                    console.log('[GEMINI AI] Gemini not available, using VL LM backup');
+                    return await this.vlLM.processCommand(userInput, clientInfo, context);
+                }
+                console.log('[GEMINI AI] Neither Gemini nor VL LM available, falling back to rule-based processing');
                 return await this.fallbackProcessing(userInput, clientInfo, context);
             }
             
@@ -326,8 +354,22 @@ Respond ONLY with valid JSON in the specified format.`;
         try {
             console.log('[GEMINI AI] Handling error with AI:', error.message);
             
+            // Try VL LM first if trained
+            if (this.useVLLMAsPrimary && this.vlLM.isAvailable) {
+                try {
+                    return await this.vlLM.handleError(error, originalCommand, clientInfo, retryCount);
+                } catch (vlError) {
+                    console.log('[GEMINI AI] VL LM error handling failed, trying Gemini');
+                }
+            }
+            
             if (!this.isAvailable) {
-                console.log('[GEMINI AI] Gemini not available for error handling');
+                // Try VL LM as backup
+                if (this.vlLM.isAvailable) {
+                    console.log('[GEMINI AI] Using VL LM for error handling');
+                    return await this.vlLM.handleError(error, originalCommand, clientInfo, retryCount);
+                }
+                console.log('[GEMINI AI] Neither Gemini nor VL LM available for error handling');
                 return await this.fallbackErrorHandling(error, originalCommand, clientInfo, retryCount);
             }
             

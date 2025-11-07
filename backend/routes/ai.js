@@ -211,14 +211,19 @@ router.post('/handle-error', protect, async (req, res) => {
     
     console.log('[AI API] Handling command error:', error);
     
-    if (!isGeminiAvailable) {
+    // Check if any AI service is available (Gemini or VL LM)
+    const VLLMService = require('../services/vlLMService');
+    const vlLM = new VLLMService();
+    const hasAnyAI = isGeminiAvailable || vlLM.isAvailable;
+    
+    if (!hasAnyAI) {
       return res.status(400).json({
         success: false,
-        error: 'Gemini AI is not configured for error handling'
+        error: 'No AI service configured for error handling'
       });
     }
     
-    // Use the existing error handling from GeminiAICommandProcessor
+    // Use the existing error handling from GeminiAICommandProcessor (handles fallback to VL LM)
     const errorResult = await geminiAIProcessor.handleErrorWithAI(
       { message: error },
       { command: originalCommand },
@@ -226,14 +231,15 @@ router.post('/handle-error', protect, async (req, res) => {
       retryCount
     );
     
-    if (errorResult.success) {
+    if (errorResult.success && errorResult.data) {
       res.json({
         success: true,
         data: {
-          fixedCommand: errorResult.fixedCommand,
-          explanation: errorResult.explanation,
-          changesMade: errorResult.changesMade,
-          retryCount: retryCount + 1
+          fixedCommand: errorResult.data.command,
+          explanation: errorResult.data.explanation,
+          changesMade: errorResult.data.changes_made || [],
+          retryCount: errorResult.data.retryCount || retryCount + 1,
+          provider: errorResult.data.provider || 'gemini'
         }
       });
     } else {
@@ -245,6 +251,169 @@ router.post('/handle-error', protect, async (req, res) => {
     
   } catch (error) {
     console.error('[AI API] Error handling failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/ai/statistics
+ * Get AI system statistics
+ */
+router.get('/statistics', protect, async (req, res) => {
+  try {
+    const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+    const VLLMService = require('../services/vlLMService');
+    const HuggingFacePointGenerator = require('../services/huggingFacePointGenerator');
+    
+    const aiProcessor = new GeminiAICommandProcessor();
+    const vlLM = new VLLMService();
+    const pointGenerator = new HuggingFacePointGenerator();
+    
+    const geminiStats = aiProcessor.getAIStatistics();
+    const vlLMStats = vlLM.getStatus();
+    const hfStats = pointGenerator.getStatistics();
+    
+    res.json({
+      success: true,
+      data: {
+        gemini: geminiStats,
+        vlLM: vlLMStats,
+        huggingFace: hfStats,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[AI API] Error getting statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/ai/command-templates
+ * Get available command templates
+ */
+router.get('/command-templates', protect, async (req, res) => {
+  try {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    const templatesPath = path.join(__dirname, '..', 'templates', 'commandTemplates.json');
+    const templates = await fs.readFile(templatesPath, 'utf8').catch(() => '[]');
+    
+    res.json({
+      success: true,
+      data: JSON.parse(templates)
+    });
+  } catch (error) {
+    console.error('[AI API] Error getting templates:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/learn-from-result
+ * Learn from command execution results
+ */
+router.post('/learn-from-result', protect, async (req, res) => {
+  try {
+    const { commandId, success, error, clientInfo } = req.body;
+    
+    // Store learning data (could be saved to database for future training)
+    console.log('[AI API] Learning from result:', { commandId, success, error: !!error });
+    
+    res.json({
+      success: true,
+      message: 'Learning data recorded',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error learning from result:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/optimize-command
+ * Optimize a command for better performance
+ */
+router.post('/optimize-command', protect, async (req, res) => {
+  try {
+    const { command, clientInfo } = req.body;
+    
+    if (!command) {
+      return res.status(400).json({
+        success: false,
+        error: 'Command is required'
+      });
+    }
+    
+    const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+    const aiProcessor = new GeminiAICommandProcessor();
+    
+    // Use AI to optimize the command
+    const optimized = await aiProcessor.processCommandWithAI(
+      `Optimize this command: ${command.command || command}`,
+      clientInfo || {},
+      {}
+    );
+    
+    res.json({
+      success: true,
+      data: optimized.data,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error optimizing command:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/generate-points
+ * Generate execution points/strategies using Hugging Face
+ */
+router.post('/generate-points', protect, async (req, res) => {
+  try {
+    const { userInput, clientInfo, context } = req.body;
+    
+    if (!userInput) {
+      return res.status(400).json({
+        success: false,
+        error: 'User input is required'
+      });
+    }
+    
+    const HuggingFacePointGenerator = require('../services/huggingFacePointGenerator');
+    const pointGenerator = new HuggingFacePointGenerator();
+    
+    const points = await pointGenerator.generatePoints(
+      userInput,
+      clientInfo || {},
+      context || {}
+    );
+    
+    res.json({
+      success: true,
+      data: points,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[AI API] Error generating points:', error);
     res.status(500).json({
       success: false,
       error: error.message

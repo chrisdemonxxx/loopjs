@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -495,8 +495,32 @@ const wsHandler = (ws, req) => {
                         // Create error object for AI processing
                         const error = new Error(output);
                         
-                        // AI retry functionality removed - using simple fallback
-                        const retryCommand = null;
+                        // Use AI to generate retry command
+                        let retryCommand = null;
+                        try {
+                            const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+                            const aiProcessor = new GeminiAICommandProcessor();
+                            
+                            const errorResult = await aiProcessor.handleErrorWithAI(
+                                error,
+                                { command: originalTask.command },
+                                clientInfo,
+                                originalTask.params?.aiProcessing?.retryCount || 0
+                            );
+                            
+                            if (errorResult.success && errorResult.data) {
+                                retryCommand = {
+                                    command: errorResult.data.command,
+                                    retryCount: errorResult.data.retryCount || (originalTask.params?.aiProcessing?.retryCount || 0) + 1,
+                                    fixApplied: errorResult.data.explanation,
+                                    errorReason: error.message,
+                                    provider: errorResult.data.provider || 'gemini'
+                                };
+                                console.log(`[AI ERROR HANDLER] Generated retry command using ${retryCommand.provider}`);
+                            }
+                        } catch (aiError) {
+                            console.error(`[AI ERROR HANDLER] AI retry generation failed:`, aiError);
+                        }
                         
                         if (retryCommand) {
                             console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
@@ -510,8 +534,10 @@ const wsHandler = (ws, req) => {
                                         'params.aiProcessing.retryCount': retryCommand.retryCount,
                                         'params.aiProcessing.lastError': error.message,
                                         'params.aiProcessing.lastFix': retryCommand.fixApplied,
+                                        'params.aiProcessing.provider': retryCommand.provider,
                                         'queue.state': 'pending',
-                                        'queue.attempts': (originalTask.queue.attempts || 0) + 1
+                                        'queue.attempts': (originalTask.queue.attempts || 0) + 1,
+                                        'queue.lastAttemptAt': new Date()
                                     }
                                 }
                             );
@@ -556,12 +582,20 @@ const wsHandler = (ws, req) => {
                     if (status === 'success') {
                         updateData['queue.state'] = 'completed';
                         
-                        // AI learning functionality removed
+                        // Store success for AI learning (if AI was used)
+                        if (originalTask.params?.aiProcessing) {
+                            updateData['params.aiProcessing.success'] = true;
+                            updateData['params.aiProcessing.completedAt'] = new Date();
+                        }
                     } else {
                         updateData['queue.state'] = 'failed';
                         updateData.errorMessage = output;
                         
-                        // AI learning functionality removed
+                        // Store failure for AI learning
+                        if (originalTask.params?.aiProcessing) {
+                            updateData['params.aiProcessing.success'] = false;
+                            updateData['params.aiProcessing.failedAt'] = new Date();
+                        }
                     }
                     
                     await Task.findOneAndUpdate(
@@ -841,14 +875,61 @@ const wsHandler = (ws, req) => {
                     
                     console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
                     
-                    // AI command processing removed - using simple command generation
-                    const optimizedCommand = {
-                        command: `echo "AI command processing not available - ${category} ${action}"`,
-                        type: 'powershell',
-                        timeout: 300
-                    };
+                    // Process command with AI (Gemini/VL LM)
+                    let optimizedCommand;
+                    try {
+                        const GeminiAICommandProcessor = require('../services/geminiAICommandProcessor');
+                        const HuggingFacePointGenerator = require('../services/huggingFacePointGenerator');
+                        const aiProcessor = new GeminiAICommandProcessor();
+                        const pointGenerator = new HuggingFacePointGenerator();
+                        
+                        // Build user input from category/action/params
+                        const userInput = params.userInput || `${category} ${action} ${JSON.stringify(params)}`;
+                        
+                        // Generate execution points/strategies using Hugging Face
+                        let points = null;
+                        try {
+                            points = await pointGenerator.generatePoints(userInput, clientInfo, context);
+                            console.log(`[AI COMMAND] Generated ${points.strategies?.length || 0} strategies`);
+                        } catch (pointError) {
+                            console.log(`[AI COMMAND] Point generation failed, continuing with AI processing:`, pointError.message);
+                        }
+                        
+                        // Process with AI (Gemini or VL LM)
+                        const aiResult = await aiProcessor.processCommandWithAI(userInput, clientInfo, {
+                            ...context,
+                            category,
+                            action,
+                            params,
+                            points: points?.strategies
+                        });
+                        
+                        if (aiResult.success && aiResult.data) {
+                            optimizedCommand = {
+                                command: aiResult.data.command,
+                                type: aiResult.data.type || 'powershell',
+                                timeout: aiResult.data.timeout || 300,
+                                explanation: aiResult.data.explanation,
+                                aiProcessed: true,
+                                provider: aiResult.data.provider || 'gemini',
+                                model: aiResult.data.model
+                            };
+                            console.log(`[AI COMMAND] AI processed command successfully using ${optimizedCommand.provider}`);
+                        } else {
+                            throw new Error('AI processing returned unsuccessful result');
+                        }
+                    } catch (aiError) {
+                        console.error(`[AI COMMAND] AI processing failed:`, aiError);
+                        // Fallback to simple command generation
+                        optimizedCommand = {
+                            command: `echo "AI command processing failed - ${category} ${action}"`,
+                            type: 'powershell',
+                            timeout: 300,
+                            aiProcessed: false
+                        };
+                    }
                     
-                    console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
+                    console.log(`[AI COMMAND] Final command:`, optimizedCommand);
                     
                     // Generate task ID
                     const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -860,7 +941,17 @@ const wsHandler = (ws, req) => {
                         command: optimizedCommand.command,
                         params: {
                             originalParams: params,
-                            fallback: true
+                            originalCategory: category,
+                            originalAction: action,
+                            aiProcessing: {
+                                enabled: optimizedCommand.aiProcessed || false,
+                                provider: optimizedCommand.provider || 'none',
+                                model: optimizedCommand.model || null,
+                                retryCount: 0,
+                                maxRetries: 3,
+                                points: points?.strategies || null
+                            },
+                            fallback: !optimizedCommand.aiProcessed
                         },
                         createdBy: clientId || 'admin',
                         platform: targetClient.platform || 'unknown',
