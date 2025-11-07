@@ -35,6 +35,9 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   const [aiConnected, setAiConnected] = useState(false);
   const [showAIConfigModal, setShowAIConfigModal] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [huggingfaceApiKey, setHuggingfaceApiKey] = useState('');
+  const [huggingfaceModel, setHuggingfaceModel] = useState('microsoft/DialoGPT-medium');
+  const [vlLmTrained, setVlLmTrained] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   // Update when parent changes
@@ -79,7 +82,23 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
       });
       
       if (response.data.success) {
-        setAiConnected(response.data.available);
+        // Check if any provider is available
+        const status = response.data;
+        setAiConnected(status.gemini?.available || status.huggingface?.available || false);
+        
+        // Load current config if available
+        if (status.gemini?.available && !apiKey) {
+          // Don't expose API key, just mark as configured
+        }
+        if (status.huggingface?.available && !huggingfaceApiKey) {
+          // Don't expose API key, just mark as configured
+        }
+        if (status.huggingface?.model) {
+          setHuggingfaceModel(status.huggingface.model);
+        }
+        if (status.vlLmTrained !== undefined) {
+          setVlLmTrained(status.vlLmTrained);
+        }
       } else {
         setAiConnected(false);
       }
@@ -94,7 +113,12 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
       const response = await request({
         url: '/ai/config',
         method: 'POST',
-        data: { apiKey }
+        data: { 
+          geminiApiKey: apiKey,
+          huggingfaceApiKey: huggingfaceApiKey,
+          huggingfaceModel: huggingfaceModel,
+          vlLmTrained: vlLmTrained
+        }
       });
 
       if (response.data.success) {
@@ -597,7 +621,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Configure Google Gemini AI
+                Configure AI Providers
               </h3>
               <button
                 onClick={() => setShowAIConfigModal(false)}
@@ -610,7 +634,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Gemini API Key
+                  Gemini API Key (Primary)
                 </label>
                 <input
                   type="password"
@@ -619,11 +643,55 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                   placeholder="Enter your Google Gemini API key"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Used initially until VL LM is trained
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hugging Face API Key (VL LM Backup)
+                </label>
+                <input
+                  type="password"
+                  value={huggingfaceApiKey || ''}
+                  onChange={(e) => setHuggingfaceApiKey(e.target.value)}
+                  placeholder="Enter your Hugging Face API key"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Used for Point Generator and as backup/future primary
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hugging Face Model
+                </label>
+                <input
+                  type="text"
+                  value={huggingfaceModel || 'microsoft/DialoGPT-medium'}
+                  onChange={(e) => setHuggingfaceModel(e.target.value)}
+                  placeholder="microsoft/DialoGPT-medium"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={vlLmTrained || false}
+                  onChange={(e) => setVlLmTrained(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label className="text-sm text-gray-700 dark:text-gray-300">
+                  VL LM is trained (switch to Hugging Face as primary)
+                </label>
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Get your free API key from Google AI Studio:
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                  <strong>Gemini:</strong> Get your free API key from Google AI Studio:
                   <a 
                     href="https://makersuite.google.com/app/apikey" 
                     target="_blank" 
@@ -631,6 +699,17 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                     className="underline ml-1"
                   >
                     https://makersuite.google.com/app/apikey
+                  </a>
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Hugging Face:</strong> Get your API key from:
+                  <a 
+                    href="https://huggingface.co/settings/tokens" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline ml-1"
+                  >
+                    https://huggingface.co/settings/tokens
                   </a>
                 </p>
               </div>
@@ -645,7 +724,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
               </button>
               <button
                 onClick={handleSaveAPIKey}
-                disabled={!apiKey.trim()}
+                disabled={!apiKey.trim() && !huggingfaceApiKey.trim()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
               >
                 Save & Connect

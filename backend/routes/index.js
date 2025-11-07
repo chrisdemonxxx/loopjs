@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const express = require('express');
 
 const passport = require('passport');
@@ -78,17 +78,25 @@ router.post('/login', authRateLimit, async (req, res) => {
   try {
     // Check if database is connected
     if (mongoose.connection.readyState !== 1) {
-      debugLog.auth('Database not connected - using development mode');
-      // Database not connected - use hardcoded admin for development
-      if (username === 'admin' && password === 'admin123') {
-        const accessToken = jwt.sign({ id: 'admin-dev-id' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION });
-        return res.json({ 
-          message: 'Logged in (development mode)', 
-          accessToken, 
-          user: { id: 'admin-dev-id', username: 'admin', role: 'admin' } 
-        });
+      // Only allow development fallback in development mode
+      if (process.env.NODE_ENV === 'development') {
+        debugLog.auth('Database not connected - using development mode');
+        // Database not connected - use hardcoded admin for development ONLY
+        if (username === 'admin' && password === 'admin123') {
+          const accessToken = jwt.sign({ id: 'admin-dev-id' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION });
+          return res.json({ 
+            message: 'Logged in (development mode)', 
+            accessToken, 
+            user: { id: 'admin-dev-id', username: 'admin', role: 'admin' } 
+          });
+        } else {
+          return res.status(401).json({ error: 'Invalid username or password' });
+        }
       } else {
-        return res.status(401).json({ error: 'Invalid username or password' });
+        // Production: require database connection
+        return res.status(503).json({ 
+          error: 'Database connection required. Service temporarily unavailable.' 
+        });
       }
     }
 

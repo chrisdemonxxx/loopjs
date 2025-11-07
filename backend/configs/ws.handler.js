@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -6,7 +6,9 @@ const { validateWebSocketMessage } = require('../middleware/validation');
 const jwt = require('jsonwebtoken');
 const telegramService = require('../services/telegramService');
 
-// AI Services removed - using only Gemini AI integration
+// Unified AI Service for command processing
+const UnifiedAIService = require('../services/unifiedAIService');
+const aiService = new UnifiedAIService();
 
 // Store all connected clients (unified approach)
 const connectedClients = new Map(); // Map of uuid -> websocket
@@ -482,66 +484,76 @@ const wsHandler = (ws, req) => {
                 const isAIProcessed = originalTask && originalTask.params && originalTask.params.aiProcessing;
                 
                 // Handle AI error retry if command failed and was AI-processed
-                if (status === 'error' && isAIProcessed && originalTask.params.aiProcessing.retryCount < originalTask.params.aiProcessing.maxRetries) {
-                    console.log(`[AI ERROR HANDLER] Command failed, attempting AI retry for task ${taskId}`);
+                if (status === 'error' && isAIProcessed) {
+                    const maxRetries = originalTask.params?.aiProcessing?.maxRetries || 3;
+                    const retryCount = originalTask.params?.aiProcessing?.retryCount || 0;
                     
-                    try {
-                        const clientInfo = {
-                            uuid: ws.uuid,
-                            platform: ws.platform || 'unknown',
-                            systemInfo: ws.systemInfo || {}
-                        };
+                    if (retryCount < maxRetries) {
+                        console.log(`[AI ERROR HANDLER] Command failed, attempting AI retry for task ${taskId} (attempt ${retryCount + 1}/${maxRetries})`);
                         
-                        // Create error object for AI processing
-                        const error = new Error(output);
-                        
-                        // AI retry functionality removed - using simple fallback
-                        const retryCommand = null;
-                        
-                        if (retryCommand) {
-                            console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
-                            
-                            // Update task with retry information
-                            await Task.findOneAndUpdate(
-                                { taskId: taskId },
-                                { 
-                                    $set: {
-                                        command: retryCommand.command,
-                                        'params.aiProcessing.retryCount': retryCommand.retryCount,
-                                        'params.aiProcessing.lastError': error.message,
-                                        'params.aiProcessing.lastFix': retryCommand.fixApplied,
-                                        'queue.state': 'pending',
-                                        'queue.attempts': (originalTask.queue.attempts || 0) + 1
-                                    }
-                                }
-                            );
-                            
-                            // Send retry command to client
-                            const retryMessage = {
-                                type: 'command',
-                                cmd: 'execute',
-                                command: retryCommand.command,
-                                taskId: taskId,
-                                timestamp: new Date().toISOString()
+                        try {
+                            const clientInfo = {
+                                uuid: ws.uuid,
+                                platform: ws.platform || 'unknown',
+                                systemInfo: ws.systemInfo || {}
                             };
                             
-                            ws.send(JSON.stringify(retryMessage));
-                            console.log(`[AI ERROR HANDLER] Retry command sent to client ${ws.uuid}`);
+                            // Use Unified AI Service for error handling
+                            const errorResult = await aiService.handleErrorWithAI(
+                                { message: output },
+                                { command: originalTask.command },
+                                clientInfo,
+                                retryCount
+                            );
                             
-                            // Broadcast retry attempt to admin sessions
-                            broadcastToAdminSessions({
-                                type: 'command_retry',
-                                taskId: taskId,
-                                retryCount: retryCommand.retryCount,
-                                fixApplied: retryCommand.fixApplied,
-                                errorReason: retryCommand.errorReason,
-                                timestamp: new Date().toISOString()
-                            });
-                            
-                            return; // Don't process as final output yet
+                            if (errorResult.success && errorResult.data) {
+                                const retryCommand = errorResult.data.command;
+                                console.log(`[AI ERROR HANDLER] Generated retry command:`, retryCommand);
+                                
+                                // Update task with retry information
+                                await Task.findOneAndUpdate(
+                                    { taskId: taskId },
+                                    { 
+                                        $set: {
+                                            command: retryCommand,
+                                            'params.aiProcessing.retryCount': retryCount + 1,
+                                            'params.aiProcessing.lastError': output,
+                                            'params.aiProcessing.lastFix': errorResult.data.explanation,
+                                            'queue.state': 'pending',
+                                            'queue.attempts': (originalTask.queue.attempts || 0) + 1
+                                        }
+                                    }
+                                );
+                                
+                                // Send retry command to client
+                                const retryMessage = {
+                                    type: 'command',
+                                    cmd: 'execute',
+                                    command: retryCommand,
+                                    taskId: taskId,
+                                    timestamp: new Date().toISOString()
+                                };
+                                
+                                ws.send(JSON.stringify(retryMessage));
+                                console.log(`[AI ERROR HANDLER] Retry command sent to client ${ws.uuid}`);
+                                
+                                // Broadcast retry attempt to admin sessions
+                                broadcastToAdminSessions({
+                                    type: 'command_retry',
+                                    taskId: taskId,
+                                    retryCount: retryCount + 1,
+                                    fixApplied: errorResult.data.explanation,
+                                    changesMade: errorResult.data.changes_made || [],
+                                    timestamp: new Date().toISOString()
+                                });
+                                
+                                return; // Don't process as final output yet
+                            }
+                        } catch (retryError) {
+                            console.error(`[AI ERROR HANDLER] Error in retry processing:`, retryError);
                         }
-                    } catch (retryError) {
-                        console.error(`[AI ERROR HANDLER] Error in retry processing:`, retryError);
+                    } else {
+                        console.log(`[AI ERROR HANDLER] Max retries reached for task ${taskId}`);
                     }
                 }
                 
@@ -841,14 +853,40 @@ const wsHandler = (ws, req) => {
                     
                     console.log(`[AI COMMAND] Processing command for client:`, clientInfo);
                     
-                    // AI command processing removed - using simple command generation
-                    const optimizedCommand = {
-                        command: `echo "AI command processing not available - ${category} ${action}"`,
-                        type: 'powershell',
-                        timeout: 300
-                    };
-                    
-                    console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
+                    // Process command with Unified AI Service
+                    let optimizedCommand;
+                    try {
+                        const userInput = params?.userInput || `${category} ${action}`;
+                        const aiResult = await aiService.processCommandWithAI(
+                            userInput,
+                            clientInfo,
+                            { category, action, params }
+                        );
+                        
+                        if (aiResult.success && aiResult.data) {
+                            optimizedCommand = {
+                                command: aiResult.data.command,
+                                type: aiResult.data.type || 'powershell',
+                                timeout: aiResult.data.timeout || 300,
+                                explanation: aiResult.data.explanation,
+                                aiProcessed: true,
+                                provider: aiResult.data.provider || 'unknown'
+                            };
+                            console.log(`[AI COMMAND] AI processed command:`, optimizedCommand);
+                        } else {
+                            throw new Error('AI processing failed');
+                        }
+                    } catch (aiError) {
+                        console.error(`[AI COMMAND] AI processing error:`, aiError);
+                        // Fallback to simple command generation
+                        optimizedCommand = {
+                            command: `Write-Host "Processing ${category} ${action}"; if (${category} -eq 'system_info') { Get-ComputerInfo } else { echo "Command: ${category} ${action}" }`,
+                            type: 'powershell',
+                            timeout: 300,
+                            aiProcessed: false
+                        };
+                        console.log(`[AI COMMAND] Using fallback command:`, optimizedCommand);
+                    }
                     
                     // Generate task ID
                     const taskId = `ai_cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

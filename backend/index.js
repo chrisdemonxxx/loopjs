@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
 // Set critical environment variable fallbacks IMMEDIATELY
 if (!process.env.JWT_SECRET) {
@@ -54,10 +54,15 @@ async function initializeApp() {
     try {
         console.log('[INIT] Loading application components...');
         
-        // Set environment fallbacks
+        // Set environment fallbacks ONLY in development
         if (!process.env.JWT_SECRET) {
-            process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
-            console.warn('[INIT] JWT_SECRET not set, using fallback');
+            if (process.env.NODE_ENV === 'development') {
+                process.env.JWT_SECRET = 'loopjs-dev-secret-key-2024';
+                console.warn('[INIT] JWT_SECRET not set, using development fallback');
+            } else {
+                console.error('[INIT] ERROR: JWT_SECRET is required in production!');
+                throw new Error('JWT_SECRET environment variable is required in production');
+            }
         }
         if (!process.env.SESSION_SECRET) {
             process.env.SESSION_SECRET = 'loopjs-session-secret-2024';
@@ -86,11 +91,20 @@ async function initializeApp() {
                     'https://loopjs.vidai.sbs'
                 ];
                 
-                // Allow requests with no origin (like mobile apps, curl requests)
+                // Allow requests with no origin ONLY in development
+                // In production, require valid origin for security
                 if (!origin) {
-                    console.log('CORS: Allowing request with no origin');
-                    callback(null, true);
-                } else if (allowedOrigins.indexOf(origin) !== -1) {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('CORS: Allowing request with no origin (development mode)');
+                        callback(null, true);
+                    } else {
+                        console.log('CORS: Blocking request with no origin (production mode)');
+                        callback(new Error('CORS: Origin required in production'));
+                    }
+                    return;
+                }
+                
+                if (allowedOrigins.indexOf(origin) !== -1) {
                     console.log(`CORS: Allowing origin: ${origin}`);
                     callback(null, true);
                 } else {
@@ -106,10 +120,19 @@ async function initializeApp() {
         const apiRoutes = require('./routes/index');
         app.use('/api', apiRoutes);
         
-        // Connect MongoDB (non-blocking)
-        connectDB().catch(err => {
-            console.error('[INIT] MongoDB error:', err.message);
-        });
+        // Connect MongoDB
+        // In production, wait for connection; in development, allow non-blocking
+        if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_DB !== 'false') {
+            await connectDB();
+            console.log('[INIT] MongoDB connection required in production - connected');
+        } else {
+            connectDB().catch(err => {
+                console.error('[INIT] MongoDB error:', err.message);
+                if (process.env.NODE_ENV === 'production') {
+                    console.warn('[INIT] Warning: MongoDB connection failed in production');
+                }
+            });
+        }
         
         // Initialize WebSocket
         const WebSocket = require('ws');
@@ -130,14 +153,37 @@ async function initializeApp() {
 async function connectDB() {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
+        
+        // Increase timeout for production
+        const timeout = process.env.NODE_ENV === 'production' ? 30000 : 5000;
+        
         await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000,
-            connectTimeoutMS: 5000,
-            socketTimeoutMS: 5000,
+            serverSelectionTimeoutMS: timeout,
+            connectTimeoutMS: timeout,
+            socketTimeoutMS: timeout,
+            maxPoolSize: 10,
+            minPoolSize: 2,
         });
         console.log('[INIT] ✅ MongoDB connected');
+        
+        // Handle connection events
+        mongoose.connection.on('error', (err) => {
+            console.error('[DB] MongoDB connection error:', err);
+        });
+        
+        mongoose.connection.on('disconnected', () => {
+            console.warn('[DB] MongoDB disconnected');
+        });
+        
+        mongoose.connection.on('reconnected', () => {
+            console.log('[DB] MongoDB reconnected');
+        });
+        
     } catch (error) {
         console.error('[INIT] MongoDB connection failed:', error.message);
+        if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_DB !== 'false') {
+            throw error; // Fail fast in production
+        }
     }
 }
 
