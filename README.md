@@ -99,6 +99,7 @@ React/TypeScript C2 Panel - Web-based control interface
 - Command execution interface
 - System information display
 - User management and authentication
+- **HVNC (Hidden Virtual Network Computing)**: Remote desktop control with hidden sessions
 
 ### ⚙️ Backend (`/backend`)
 Node.js/Express API Server with WebSocket support
@@ -116,6 +117,7 @@ Node.js/Express API Server with WebSocket support
 - Client registration and management
 - Task execution and monitoring
 - Audit logging and security
+- **HVNC Support**: Remote desktop control endpoints and WebSocket message routing
 
 ### 💻 Clients (`/clients`)
 Multiple client implementations for different platforms
@@ -131,6 +133,7 @@ Multiple client implementations for different platforms
 - Command execution
 - Self-updating capabilities
 - Stealth operation mode
+- **HVNC Implementation**: Hidden desktop sessions, screen capture, remote input control
 
 #### C# Client (`/clients/C# Client`)
 - **Source**: `Program.cs` - Main client implementation
@@ -332,8 +335,106 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Issues**: Report issues on GitHub
 - **Discussions**: Use GitHub Discussions for questions
 
+## 🖥️ HVNC (Hidden Virtual Network Computing)
+
+LoopJS includes a complete HVNC implementation for remote desktop control with hidden sessions.
+
+### Features
+- **Hidden Desktop Sessions**: Create invisible desktop sessions on Windows targets
+- **Real-time Screen Sharing**: Live screen capture with configurable quality (High/Medium/Low)
+- **Remote Input Control**: Full mouse and keyboard control over remote desktop
+- **Clipboard Synchronization**: Bidirectional clipboard sync between local and remote
+- **Adaptive Quality**: Dynamic FPS adjustment (5/15/30 FPS) based on network conditions
+- **Platform Support**: Windows (primary), with extensible architecture for other platforms
+
+### Quick Access Guide
+
+**From the C2 Panel:**
+1. Navigate to **Dashboard** or **Agents** page
+2. Select an **online agent** with HVNC capability
+3. Click the **HVNC** button in Quick Actions (purple button with monitor icon)
+4. Configure connection settings (Mode, Quality, FPS)
+5. Click **Connect** to start the session
+6. Interact with the remote desktop using mouse and keyboard
+7. Use toolbar controls for clipboard sync, screenshots, and fullscreen mode
+
+### Documentation
+- **📖 Complete UI Access Guide**: See [HVNC_UI_ACCESS_GUIDE.md](HVNC_UI_ACCESS_GUIDE.md) for detailed step-by-step instructions
+- **🔧 Implementation Details**: See [HVNC_IMPLEMENTATION_SUMMARY.md](HVNC_IMPLEMENTATION_SUMMARY.md) for technical documentation
+- **💻 Integration Guide**: See [HVNC_INTEGRATION_EXAMPLE.md](HVNC_INTEGRATION_EXAMPLE.md) for developer integration examples
+
+### API Endpoints
+```bash
+# Start HVNC session
+POST /api/agent/:id/hvnc/start
+{
+  "quality": "medium",
+  "fps": 15,
+  "mode": "hidden"
+}
+
+# Stop HVNC session
+POST /api/agent/:id/hvnc/stop
+{
+  "sessionId": "session-uuid"
+}
+
+# Get session status
+GET /api/agent/:id/hvnc/status/:sessionId
+
+# Send HVNC command (mouse/keyboard)
+POST /api/agent/:id/hvnc/command
+{
+  "sessionId": "session-uuid",
+  "command": "mouse_move",
+  "params": { "x": 100, "y": 200 }
+}
+
+# Take screenshot
+POST /api/agent/:id/hvnc/screenshot
+{
+  "sessionId": "session-uuid"
+}
+```
+
+### WebSocket Messages
+```javascript
+// Start HVNC (from admin to backend)
+{
+  "type": "hvnc_start",
+  "agentId": "client-uuid",
+  "settings": {
+    "quality": "medium",
+    "fps": 15,
+    "mode": "hidden"
+  }
+}
+
+// HVNC Frame (from client to admin)
+{
+  "type": "hvnc_frame",
+  "agentUuid": "client-uuid",
+  "frameData": "base64-encoded-jpeg",
+  "frameInfo": {
+    "width": 1920,
+    "height": 1080,
+    "timestamp": 1234567890
+  }
+}
+
+// HVNC Command (from admin to client)
+{
+  "type": "hvnc_command",
+  "targetId": "client-uuid",
+  "sessionId": "session-uuid",
+  "command": "mouse_move",
+  "params": { "x": 100, "y": 200 }
+}
+```
+
 ## 🎯 Roadmap
 
+- [x] HVNC (Hidden Virtual Network Computing) - ✅ Completed
 - [ ] Enhanced client capabilities
 - [ ] Mobile client support
 - [ ] Advanced monitoring features
