@@ -1,0 +1,81 @@
+name: Deploy to Render & Vercel
+
+# Deploy backend to Render and frontend to Vercel
+# DO NOT use Google Cloud - it's not active
+
+on:
+  push:
+    branches:
+      - main
+      paths:
+        - 'backend/**'
+        - 'frontend/**'
+        - '.github/workflows/deploy-render-vercel.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-backend-render:
+    name: Deploy Backend to Render
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'backend') || contains(github.event.head_commit.message, 'render') || github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.message), 'backend')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Render Deployment
+        run: |
+          echo "🚀 Triggering Render backend deployment..."
+          echo ""
+          echo "Render will auto-deploy on push to main branch."
+          echo "Backend URL: https://loopjs-backend-s3ja.onrender.com"
+          echo ""
+          echo "To manually trigger deployment:"
+          echo "1. Go to: https://dashboard.render.com"
+          echo "2. Find service: loopjs-backend"
+          echo "3. Click 'Manual Deploy' → 'Deploy latest commit'"
+          echo ""
+          echo "Or use Render API with token from secrets"
+          
+      - name: Check Render Service Status
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -n "$RENDER_API_KEY" ]; then
+            echo "Checking Render backend status..."
+            SERVICE_ID="srv-d425i1e3jp1c73abu5q0"
+            curl -s -H "Authorization: Bearer $RENDER_API_KEY" \
+              "https://api.render.com/v1/services/$SERVICE_ID" | \
+              jq -r '.service | "Status: \(.serviceDetails.suspendedAt != null and "SUSPENDED" or "LIVE")\nURL: \(.serviceDetails.url)"' || echo "Could not check status (API may need refresh)"
+          else
+            echo "⚠️ RENDER_API_KEY not set in secrets. Skipping status check."
+          fi
+
+  deploy-frontend-vercel:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'frontend') || contains(github.event.head_commit.message, 'vercel') || github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.message), 'frontend')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./frontend
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Frontend deployed to Vercel!"
+          echo ""
+          echo "🔗 Backend (Render): https://loopjs-backend-s3ja.onrender.com"
+          echo "🔗 Frontend (Vercel): Check Vercel dashboard for URL"
+          echo ""
+          echo "Note: If deployment fails, deploy manually via:"
+          echo "  npx vercel --prod --cwd frontend"
+
