@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(git config:*)",
+      "Bash(python3:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(sudo -S systemctl status:*)",
+      "Read(//home/cjs/.config/windsurf/User/**)",
+      "Read(//media/cjs/ESD-ISO/Projects/loopjs/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -8,9 +8,13 @@ import {
   Pause, 
   RotateCcw,
   Search,
-  RefreshCw
+  RefreshCw,
+  Terminal
 } from 'lucide-react';
-import { FiTerminal } from 'react-icons/fi';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import request from '../axios';
 import toast from 'react-hot-toast';
 import { WS_URL } from '../config';
@@ -338,7 +342,7 @@ const LogsPage: React.FC = () => {
       <div className="premium-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <FiTerminal className="w-6 h-6 text-indigo-600" />
+            <Terminal className="w-6 h-6 text-indigo-600" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Command Logs

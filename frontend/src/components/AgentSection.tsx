@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { FiDownload, FiSettings, FiShield, FiCpu, FiZap, FiEye, FiEyeOff, FiCopy, FiRefreshCw, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { Download, Settings, Zap, Eye, EyeOff, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface AgentBuild {
   id: string;
   name: string;
   version: string;
+  description?: string;
   createdAt: string;
   status: 'generating' | 'ready' | 'error';
   downloadUrl?: string;
@@ -272,7 +273,7 @@ const AgentSection: React.FC = () => {
                 onClick={() => handleConfigChange('agentName', generateRandomName())}
                 className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
-                <FiRefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -293,7 +294,7 @@ const AgentSection: React.FC = () => {
                 onClick={() => handleConfigChange('serviceName', generateRandomName())}
                 className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
-                <FiRefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -344,7 +345,7 @@ const AgentSection: React.FC = () => {
           disabled={isGenerating || !agentConfig.agentName || !agentConfig.serviceName}
           className="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
         >
-          <FiZap className="w-5 h-5 mr-2" />
+          <Zap className="w-5 h-5 mr-2" />
           {isGenerating ? 'Generating...' : 'Generate Agent'}
         </button>
       </div>
@@ -529,7 +530,7 @@ const AgentSection: React.FC = () => {
                             className="text-blue-400 hover:text-blue-300"
                             title="Download Password-Protected Archive"
                           >
-                            <FiDownload className="w-4 h-4" />
+                            <Download className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -538,10 +539,10 @@ const AgentSection: React.FC = () => {
                         className="text-yellow-400 hover:text-yellow-300"
                         title="Show/Hide Passwords"
                       >
-                        {showPasswords[build.id] ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                        {showPasswords[build.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                       <button className="text-red-400 hover:text-red-300">
-                        <FiAlertCircle className="w-4 h-4" />
+                        <AlertCircle className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -615,7 +616,7 @@ const AgentSection: React.FC = () => {
             {activeTab === 'builds' && renderBuildsTab()}
             {activeTab === 'templates' && (
               <div className="text-center py-12">
-                <FiSettings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-bodydark2">Templates coming soon...</p>
               </div>
             )}

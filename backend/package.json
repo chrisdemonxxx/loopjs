@@ -10,6 +10,7 @@
     "build": "echo 'No build step required for Node.js backend'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "gcloud app deploy app.yaml --quiet",
+    "deploy:render": "node ../deploy-render.js",
     "deploy:wordful": "node deploy-wordful.js && npm run deploy",
     "deploy:wordful:complete": "node deploy-wordful-complete.js",
     "setup:wordful": "node deploy-wordful.js",

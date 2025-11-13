@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  FiHome, 
-  FiUsers, 
-  FiSettings, 
-  FiMonitor, 
-  FiActivity, 
-  FiShield, 
-  FiDatabase,
-  FiX,
-  FiChevronDown,
-  FiChevronRight,
-  FiTerminal,
-  FiCalendar,
-  FiCpu
-} from 'react-icons/fi';
+  Home, 
+  Users, 
+  Settings, 
+  Monitor, 
+  Activity, 
+  Shield, 
+  Database,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Terminal,
+  Calendar,
+  Cpu
+} from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -36,19 +36,19 @@ const getMenuItems = (userRole: string): MenuItem[] => [
   {
     id: 'dashboard',
     label: 'Overview',
-    icon: <FiHome className="w-5 h-5" />,
+    icon: <Home className="w-5 h-5" />,
     path: '/dashboard'
   },
   {
     id: 'clients',
     label: 'Clients',
-    icon: <FiUsers className="w-5 h-5" />,
+    icon: <Users className="w-5 h-5" />,
     path: '/clients'
   },
   {
     id: 'agent',
     label: 'Agent',
-    icon: <FiCpu className="w-5 h-5" />,
+    icon: <Cpu className="w-5 h-5" />,
     path: '/agent'
   },
   {
