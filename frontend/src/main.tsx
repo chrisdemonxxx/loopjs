@@ -1,16 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './styles/globals.css';
 
-// Import CSS files - Vite will handle these correctly
-import './css/satoshi.css';
-import './styles/glassmorphism.css';
-import './styles/themes.css';
-import './styles/premium-design-system.css';
-import './css/style.css';
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 );

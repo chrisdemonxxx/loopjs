@@ -1,280 +1,159 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type ThemeMode = 'light' | 'dark' | 'hacker-elite' | 'premium-cyber';
-type ColorScheme = 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'neon' | 'terminal' | 'blood' | 'matrix-green' | 'cyber-purple' | 'neon-pink' | 'quantum-blue' | 'holographic';
+export type ThemeType = 'obsidian-black' | 'neon-purple' | 'quantum-gold' | 'matrix-green';
 
-interface ThemeProperties {
-  name: string;
-  icon: string;
+interface ThemeColors {
+  primary: string;
+  primaryDark: string;
+  secondary: string;
+  accent: string;
   background: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  textColor: string;
-  borderColor: string;
-  animation: string;
-  effect: string;
-  glassMorphism: boolean;
-  glowEffect: boolean;
-  particleEffect: boolean;
+  backgroundSecondary: string;
+  cardBg: string;
+  cardBgHover: string;
+  textPrimary: string;
+  textSecondary: string;
+  border: string;
+  icon: string;
+  name: string;
+  description: string;
+  // Optional gradient properties for themes that use them
+  primaryLight?: string;
+  bgGradientFrom?: string;
+  bgGradientTo?: string;
+  cardGradientFrom?: string;
+  cardGradientTo?: string;
+  glowColor?: string;
 }
 
+const themes: Record<ThemeType, ThemeColors> = {
+  'obsidian-black': {
+    primary: '#6366f1',
+    primaryDark: '#4f46e5',
+    secondary: '#8b5cf6',
+    accent: '#a78bfa',
+    background: '#000000',
+    backgroundSecondary: '#0a0a0a',
+    cardBg: '#0d0d0d',
+    cardBgHover: '#121212',
+    textPrimary: '#d4d4d8',
+    textSecondary: '#71717a',
+    border: 'rgba(113, 113, 122, 0.2)',
+    bgGradientFrom: '#000000',
+    bgGradientTo: '#0a0a0a',
+    cardGradientFrom: '#0d0d0d',
+    cardGradientTo: '#121212',
+    glowColor: 'rgba(99, 102, 241, 0.15)',
+    icon: '◆',
+    name: 'Obsidian Black',
+    description: 'Ultra dark pure black with minimal violet accents'
+  },
+  'neon-purple': {
+    primary: '#c026d3',
+    primaryLight: '#e879f9',
+    primaryDark: '#a21caf',
+    secondary: '#ec4899',
+    accent: '#f97316',
+    bgGradientFrom: '#0f0019',
+    bgGradientTo: '#1a0528',
+    cardGradientFrom: '#1e0a2e',
+    cardGradientTo: '#2d1245',
+    glowColor: 'rgba(192, 38, 211, 0.4)',
+    textPrimary: '#fdf4ff',
+    textSecondary: '#e9d5ff',
+    border: 'rgba(192, 38, 211, 0.4)',
+    icon: '◆',
+    name: 'Neon Purple',
+    description: 'Electric magenta energy with neon glow'
+  },
+  'quantum-gold': {
+    primary: '#f59e0b',
+    primaryLight: '#fbbf24',
+    primaryDark: '#d97706',
+    secondary: '#eab308',
+    accent: '#fb923c',
+    bgGradientFrom: '#0c0a03',
+    bgGradientTo: '#1a1408',
+    cardGradientFrom: '#1f1a0a',
+    cardGradientTo: '#2d2410',
+    glowColor: 'rgba(245, 158, 11, 0.35)',
+    textPrimary: '#fffbeb',
+    textSecondary: '#fef3c7',
+    border: 'rgba(245, 158, 11, 0.4)',
+    icon: '◆',
+    name: 'Quantum Gold',
+    description: 'Luxury golden particles with premium feel'
+  },
+  'matrix-green': {
+    primary: '#22c55e',
+    primaryLight: '#4ade80',
+    primaryDark: '#16a34a',
+    secondary: '#10b981',
+    accent: '#84cc16',
+    bgGradientFrom: '#020905',
+    bgGradientTo: '#0a1508',
+    cardGradientFrom: '#0f1f14',
+    cardGradientTo: '#152d1a',
+    glowColor: 'rgba(34, 197, 94, 0.3)',
+    textPrimary: '#f0fdf4',
+    textSecondary: '#bbf7d0',
+    border: 'rgba(34, 197, 94, 0.4)',
+    icon: '◆',
+    name: 'Matrix Green',
+    description: 'Digital rain with hacker terminal vibe'
+  }
+};
+
 interface ThemeContextType {
-  mode: ThemeMode;
-  colorScheme: ColorScheme;
-  isDark: boolean;
-  setMode: (mode: ThemeMode) => void;
-  setColorScheme: (scheme: ColorScheme) => void;
-  toggleMode: () => void;
+  theme: ThemeType;
+  setTheme: (theme: ThemeType) => void;
+  colors: ThemeColors;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-const colorSchemes = {
-  blue: {
-    primary: '#3B82F6',
-    primaryHover: '#2563EB',
-    primaryLight: '#DBEAFE',
-    primaryDark: '#1E40AF'
-  },
-  green: {
-    primary: '#10B981',
-    primaryHover: '#059669',
-    primaryLight: '#D1FAE5',
-    primaryDark: '#047857'
-  },
-  purple: {
-    primary: '#8B5CF6',
-    primaryHover: '#7C3AED',
-    primaryLight: '#EDE9FE',
-    primaryDark: '#6D28D9'
-  },
-  red: {
-    primary: '#EF4444',
-    primaryHover: '#DC2626',
-    primaryLight: '#FEE2E2',
-    primaryDark: '#B91C1C'
-  },
-  orange: {
-    primary: '#F97316',
-    primaryHover: '#EA580C',
-    primaryLight: '#FED7AA',
-    primaryDark: '#C2410C'
-  },
-  neon: {
-    primary: '#00FF41',
-    primaryHover: '#00CC33',
-    primaryLight: '#80FF99',
-    primaryDark: '#00AA2B'
-  },
-  terminal: {
-    primary: '#00FFFF',
-    primaryHover: '#00CCCC',
-    primaryLight: '#80FFFF',
-    primaryDark: '#00AAAA'
-  },
-  blood: {
-    primary: '#FF0040',
-    primaryHover: '#CC0033',
-    primaryLight: '#FF8099',
-    primaryDark: '#AA002B'
-  },
-  'matrix-green': {
-    primary: '#00FF41',
-    primaryHover: '#00CC33',
-    primaryLight: '#80FF99',
-    primaryDark: '#00AA2B'
-  },
-  'cyber-purple': {
-    primary: '#8A2BE2',
-    primaryHover: '#6A0DAD',
-    primaryLight: '#C9A3FF',
-    primaryDark: '#4B0082'
-  },
-  'neon-pink': {
-    primary: '#FF00FF',
-    primaryHover: '#CC00CC',
-    primaryLight: '#FF80FF',
-    primaryDark: '#AA00AA'
-  },
-  'quantum-blue': {
-    primary: '#00FFFF',
-    primaryHover: '#00CCCC',
-    primaryLight: '#80FFFF',
-    primaryDark: '#00AAAA'
-  },
-  holographic: {
-    primary: '#FF6B6B',
-    primaryHover: '#FF5252',
-    primaryLight: '#FFBABA',
-    primaryDark: '#E53935'
-  }
-};
-
-// Advanced theme properties with unique visual identities
-const themeProperties: Record<ThemeMode, ThemeProperties> = {
-  light: {
-    name: 'Light Premium',
-    icon: '☀️',
-    background: 'bg-white',
-    primaryColor: '#6366f1',
-    secondaryColor: '#f8fafc',
-    accentColor: '#10b981',
-    textColor: '#0f172a',
-    borderColor: '#e2e8f0',
-    animation: 'none',
-    effect: 'none',
-    glassMorphism: false,
-    glowEffect: false,
-    particleEffect: false
-  },
-  dark: {
-    name: 'Dark Premium',
-    icon: '🌙',
-    background: 'bg-slate-900',
-    primaryColor: '#6366f1',
-    secondaryColor: '#1e293b',
-    accentColor: '#10b981',
-    textColor: '#f8fafc',
-    borderColor: '#334155',
-    animation: 'none',
-    effect: 'none',
-    glassMorphism: false,
-    glowEffect: false,
-    particleEffect: false
-  },
-  'hacker-elite': {
-    name: 'Hacker Elite',
-    icon: '💚',
-    background: 'bg-black',
-    primaryColor: '#00ff41',
-    secondaryColor: '#0a0a0a',
-    accentColor: '#00cc33',
-    textColor: '#00ff41',
-    borderColor: '#00ff41',
-    animation: 'matrix-rain',
-    effect: 'terminal-cursor',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: true
-  },
-  'premium-cyber': {
-    name: 'Premium Cyber',
-    icon: '🚀',
-    background: 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900',
-    primaryColor: '#00d4ff',
-    secondaryColor: '#1a1a2e',
-    accentColor: '#0099cc',
-    textColor: '#00d4ff',
-    borderColor: '#00d4ff',
-    animation: 'cyber-grid',
-    effect: 'holographic-display',
-    glassMorphism: true,
-    glowEffect: true,
-    particleEffect: false
-  }
-};
-
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('theme-mode');
-    return (saved as ThemeMode) || 'dark';
-  });
-  
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(() => {
-    const saved = localStorage.getItem('color-scheme');
-    return (saved as ColorScheme) || 'blue';
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<ThemeType>(() => {
+    const saved = localStorage.getItem('loopjs-theme');
+    return (saved as ThemeType) || 'obsidian-black';
   });
 
-  const [isDark, setIsDark] = useState(false);
+  const setTheme = (newTheme: ThemeType) => {
+    setThemeState(newTheme);
+    localStorage.setItem('loopjs-theme', newTheme);
+  };
 
-  // Determine if dark mode should be active
   useEffect(() => {
-    const updateDarkMode = () => {
-      if (['hacker-elite', 'premium-cyber'].includes(mode)) {
-        setIsDark(true); // Hacker themes are always dark
-      } else {
-        setIsDark(mode === 'dark');
-      }
-    };
-
-    updateDarkMode();
-  }, [mode]);
-
-  // Apply theme to document
-  useEffect(() => {
-    const root = document.documentElement;
-    const colors = colorSchemes[colorScheme];
-
-    // Apply dark/light class for shadcn
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-
-    // Apply theme-specific data attributes for shadcn compatibility
-    root.setAttribute('data-theme', mode);
-    
-    // Apply theme-specific classes for existing system
-    root.classList.remove('theme-hacker-elite', 'theme-premium-cyber');
-    if (['hacker-elite', 'premium-cyber'].includes(mode)) {
-      root.classList.add(`theme-${mode}`);
-    }
-
-    // Apply color scheme CSS variables
-    root.style.setProperty('--color-primary', colors.primary);
-    root.style.setProperty('--color-primary-hover', colors.primaryHover);
-    root.style.setProperty('--color-primary-light', colors.primaryLight);
-    root.style.setProperty('--color-primary-dark', colors.primaryDark);
-
-    // Save to localStorage
-    localStorage.setItem('theme-mode', mode);
-    localStorage.setItem('color-scheme', colorScheme);
-  }, [isDark, colorScheme, mode]);
-
-  const handleSetMode = (newMode: ThemeMode) => {
-    setMode(newMode);
-  };
-
-  const handleSetColorScheme = (scheme: ColorScheme) => {
-    setColorScheme(scheme);
-  };
-
-  const toggleMode = () => {
-    const modes: ThemeMode[] = ['light', 'dark', 'hacker-elite', 'premium-cyber'];
-    const currentIndex = modes.indexOf(mode);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    setMode(modes[nextIndex]);
-  };
-
-  const value: ThemeContextType = {
-    mode,
-    colorScheme,
-    isDark,
-    setMode: handleSetMode,
-    setColorScheme: handleSetColorScheme,
-    toggleMode
-  };
+    // Apply theme to document root
+    const colors = themes[theme];
+    document.documentElement.style.setProperty('--theme-primary', colors.primary);
+    document.documentElement.style.setProperty('--theme-primary-dark', colors.primaryDark);
+    document.documentElement.style.setProperty('--theme-secondary', colors.secondary);
+    document.documentElement.style.setProperty('--theme-accent', colors.accent);
+    document.documentElement.style.setProperty('--theme-bg', colors.background);
+    document.documentElement.style.setProperty('--theme-bg-secondary', colors.backgroundSecondary);
+    document.documentElement.style.setProperty('--theme-card-bg', colors.cardBg);
+    document.documentElement.style.setProperty('--theme-card-bg-hover', colors.cardBgHover);
+    document.documentElement.style.setProperty('--theme-glow', colors.glowColor);
+    document.documentElement.style.setProperty('--theme-text-primary', colors.textPrimary);
+    document.documentElement.style.setProperty('--theme-text-secondary', colors.textSecondary);
+    document.documentElement.style.setProperty('--theme-border', colors.border);
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={{ theme, setTheme, colors: themes[theme] }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = (): ThemeContextType => {
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider');
   }
   return context;
-};
+}
 
-export { colorSchemes, themeProperties };
-export type { ThemeMode, ColorScheme };
+export { themes };
+export type { ThemeColors };

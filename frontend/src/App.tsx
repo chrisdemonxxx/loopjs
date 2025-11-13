@@ -1,539 +1,247 @@
-import { useState, useEffect, useRef } from 'react';
-import { Toaster } from 'react-hot-toast';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import DashboardPage from './pages/DashboardPage';
-import PremiumLoginPage from './components/PremiumLoginPage';
-import TransferModal from './TransferModal';
-import TasksModal from './components/TasksModal';
-import { Agent } from './types';
-import agentService from './services/agentService';
-import toast from 'react-hot-toast';
-import { wsIntegration } from './utils/integration';
-import { TerminalRef } from './components/Terminal';
-import { WS_URL } from './config';
-import request from './axios';
+import { useState, useEffect } from 'react';
+import { Activity, Users, Bot, Terminal, Brain, FileText, CheckSquare, Settings, Shield, ChevronDown, Circle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { Button } from './components/ui/button';
+import { Avatar, AvatarFallback } from './components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
+import { Badge } from './components/ui/badge';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import LoginScreen from './components/LoginScreen';
+import OverviewSection from './components/OverviewSection';
+import ClientsSection from './components/ClientsSection';
+import AgentSection from './components/AgentSection';
+import AITerminalSection from './components/AITerminalSection';
+import AIInsightsSection from './components/AIInsightsSection';
+import LogsSection from './components/LogsSection';
+import TasksSection from './components/TasksSection';
+import SettingsSection from './components/SettingsSection';
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [tableData, setTableData] = useState<Agent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [modalStatus, setModalStatus] = useState(false);
-  const [tasksModalStatus, setTasksModalStatus] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
-  const [naturalLanguageHistory, setNaturalLanguageHistory] = useState<any[]>([]);
-  // const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
-  
-  // Terminal ref and task mapping
-  const terminalRef = useRef<TerminalRef>(null);
-  const taskIdToHistoryId = useRef<Map<string, string>>(new Map());
-  const taskIdToAgentId = useRef<Map<string, string>>(new Map());
-  const wsRef = useRef<WebSocket | null>(null);  // Add ref for WebSocket
+function AppContent() {
+  const { colors } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // Changed to true to bypass login
+  const [activeTab, setActiveTab] = useState('overview');
+  const [operationalStatus, setOperationalStatus] = useState(true);
+  const [panelName, setPanelName] = useState('C2 Panel');
+  const [panelIcon, setPanelIcon] = useState('Shield');
+  const [userRole, setUserRole] = useState('Admin');
 
-  // Check for existing authentication on app startup
+  // Apply dark mode
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const isAuthStored = localStorage.getItem('isAuthenticated') === 'true';
-    
-    // Load saved theme on startup
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
-    
-    if (token && isAuthStored) {
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-    }
+    document.documentElement.classList.add('dark');
   }, []);
 
-  // Add this function to handle command failures with AI retry
-  const handleCommandFailureWithAI = async (correlationId: string, error: string, originalCommand: string) => {
-    try {
-      // Find the command in history
-      const commandEntry = naturalLanguageHistory.find(cmd => 
-        cmd.id === correlationId || cmd.correlationId === correlationId
-      );
-
-      if (!commandEntry || !selectedUser) return;
-
-      // Check if we should retry with AI
-      const retryCount = commandEntry.retryCount || 0;
-      if (retryCount >= 2) {
-        console.log('Max retry attempts reached for command:', originalCommand);
-        return;
-      }
-
-      // Process error through AI
-      const aiErrorResponse = await request({
-        url: '/ai/handle-error',
-        method: 'POST',
-        data: {
-          error: error,
-          originalCommand: originalCommand,
-          clientInfo: selectedUser,
-          retryCount: retryCount,
-          context: {
-            previousCommands: naturalLanguageHistory.slice(-3)
-          }
-        }
-      });
-
-      if (aiErrorResponse.data.success) {
-        const { fixedCommand, explanation, changesMade } = aiErrorResponse.data.data;
-        
-        // Update command history with retry attempt
-        setNaturalLanguageHistory(prev => 
-          prev.map(cmd => 
-            cmd.id === correlationId || cmd.correlationId === correlationId
-              ? { 
-                  ...cmd, 
-                  retryCount: retryCount + 1,
-                  status: 'retrying',
-                  output: `Retrying with AI fix: ${explanation}`,
-                  aiRetryCommand: fixedCommand,
-                  aiChanges: changesMade
-                }
-              : cmd
-          )
-        );
-
-        // Execute the AI-fixed command
-        setTimeout(() => {
-          // Send the retry command through the existing command system
-          if (selectedUser) {
-            const retryCommand = {
-              targetUuid: selectedUser.id,
-              command: fixedCommand,
-              id: `retry_${correlationId}_${retryCount + 1}`,
-              isRetry: true,
-              originalCorrelationId: correlationId
-            };
-            // This would need to be integrated with the existing command sending mechanism
-            console.log('AI retry command:', retryCommand);
-          }
-        }, 1000);
-
-        toast.success(`AI is retrying command with fix: ${explanation}`);
-      }
-    } catch (aiError) {
-      console.error('AI error handling failed:', aiError);
-      toast.error('Failed to get AI error fix');
-    }
-  };
-
-  const initWebSocket = () => {
-    const token = localStorage.getItem('accessToken') || '';
-    console.log('[FRONTEND WS] Initializing WebSocket with token:', token);
-    console.log('[FRONTEND WS] WebSocket URL:', WS_URL);
-    
-    const handleMessage = (data: any) => {
-      console.log('[FRONTEND WS] WebSocket message received:', data);
-      console.log('[FRONTEND WS] Message type:', data.type);
-      console.log('[FRONTEND WS] Full message data:', JSON.stringify(data, null, 2));
-      
-      // DEBUG: Log all message types to see what we're receiving
-      console.log('[FRONTEND WS] DEBUG - All message types received:', data.type);
-      
-      // Handle command responses with correlationId
-      if (data.type === 'output' && data.correlationId) {
-        console.log('[FRONTEND WS] Command output received:', data.correlationId, 'Output:', data.output);
-        console.log('[FRONTEND WS] Terminal ref available:', !!terminalRef.current);
-        
-        // Update natural language command history
-        setNaturalLanguageHistory(prev => 
-          prev.map(cmd => 
-            cmd.id === data.correlationId || cmd.correlationId === data.correlationId
-              ? { ...cmd, output: data.output, status: data.status === 'success' ? 'completed' : 'failed', completed: true }
-              : cmd
-          )
-        );
-        
-        if (terminalRef.current) {
-          terminalRef.current.applyOutput(data.correlationId, data.output, data.status || 'success');
-          console.log('[FRONTEND WS] Output applied to terminal');
-        } else {
-          console.error('[FRONTEND WS] Terminal ref not available!');
-        }
-        
-        // Handle command failures with AI retry
-        if (data.status === 'error' || data.status === 'failed') {
-          console.log('[FRONTEND WS] Command failed, attempting AI retry:', data.correlationId);
-          
-          // Find original command for retry
-          const commandEntry = naturalLanguageHistory.find(cmd => 
-            cmd.id === data.correlationId || cmd.correlationId === data.correlationId
-          );
-          
-          if (commandEntry) {
-            handleCommandFailureWithAI(
-              data.correlationId, 
-              data.output || data.error || 'Command execution failed',
-              commandEntry.originalCommand || commandEntry.command
-            );
-          }
-        } else {
-          toast.success(`Command completed: ${data.status}`);
-        }
-        return;
-      }
-      
-      // Log all other message types for debugging
-      console.log('[FRONTEND WS] Unhandled message type:', data.type);
-      
-      // Handle command sent confirmation
-      if (data.type === 'command_sent' && data.taskId && data.correlationId) {
-        console.log('Command sent confirmation:', data.taskId, 'CorrelationId:', data.correlationId);
-        
-        // Update natural language command history with AI response
-        if (data.aiProcessed) {
-          setNaturalLanguageHistory(prev => 
-            prev.map(cmd => 
-              cmd.id === data.correlationId || cmd.correlationId === data.correlationId
-                ? { 
-                    ...cmd, 
-                    aiCommand: data.command,
-                    aiExplanation: 'AI processed and optimized command',
-                    aiSafetyLevel: 'Safe',
-                    status: data.status === 'success' ? 'sent' : 'error',
-                    output: data.error || '',
-                    completed: data.status !== 'success'
-                  }
-                : cmd
-            )
-          );
-        }
-        
-        // Optionally map taskId to correlationId if needed, but since output uses correlationId directly, may not be necessary
-        return;
-      }
-      
-      // Handle command sent error
-      if (data.type === 'command_sent' && data.status === 'error') {
-        console.error('Command failed:', data.error);
-        if (terminalRef.current && data.correlationId) {
-          terminalRef.current.applyOutput(data.correlationId, `Error: ${data.error}`, 'error');
-        }
-        toast.error(`Command failed: ${data.error}`);
-        return;
-      }
-      
-      // Handle task created confirmation
-      if (data.type === 'task_created' && data.taskId && data.correlationId) {
-        console.log('Task created confirmation:', data.taskId, 'CorrelationId:', data.correlationId, 'Status:', data.status);
-        // Task was created successfully, we can show a loading state or just log it
-        return;
-      }
-      
-      wsIntegration.handleMessage(data, {
-        onClientUpdate: (clients: any[]) => {
-          console.log('onClientUpdate called with clients:', clients);
-          if (Array.isArray(clients)) {
-            if (clients.length === 1) {
-              // Single client update - convert Client to Agent format
-              console.log('Single client update:', clients[0]);
-              setTableData(prevData => {
-                const clientData = clients[0];
-                const agentData: Agent = {
-                  _id: clientData._id,
-                  id: clientData.uuid || clientData.id,
-                  name: clientData.computerName || clientData.name || 'Unknown',
-                  computerName: clientData.computerName || 'Unknown',
-                  hostname: clientData.hostname,
-                  ip: clientData.ipAddress || clientData.ip || 'Unknown',
-                  ipAddress: clientData.ipAddress || clientData.ip || 'Unknown',
-                  platform: clientData.platform || 'unknown',
-                  operatingSystem: clientData.operatingSystem || clientData.platform || 'unknown',
-                  osVersion: clientData.osVersion || 'Unknown',
-                  architecture: clientData.architecture || 'unknown',
-                  status: clientData.status || 'offline',
-                  lastSeen: clientData.lastSeen || clientData.lastActiveTime || new Date().toISOString(),
-                  lastActiveTime: clientData.lastActiveTime || new Date().toISOString(),
-                  lastHeartbeat: clientData.lastHeartbeat,
-                  connectionCount: clientData.connectionCount || 0,
-                  version: clientData.version || '1.0.0',
-                  country: clientData.country || 'Unknown',
-                  capabilities: clientData.capabilities || {
-                    persistence: [],
-                    injection: [],
-                    evasion: [],
-                    commands: [],
-                    features: []
-                  },
-                  features: {
-                    hvnc: false,
-                    keylogger: false,
-                    screenCapture: false,
-                    fileManager: false,
-                    processManager: false
-                  },
-                  geoLocation: clientData.geoLocation,
-                  systemInfo: clientData.systemInfo
-                };
-                
-                // Find existing client by computerName and IP (not just UUID)
-                const existingClientIndex = prevData.findIndex(agent => 
-                  agent.computerName === agentData.computerName && 
-                  agent.ipAddress === agentData.ipAddress
-                );
-                
-                let updatedData;
-                if (existingClientIndex !== -1) {
-                  // Replace existing client (client reconnected with new UUID)
-                  console.log(`Replacing existing client ${prevData[existingClientIndex].id} with new UUID ${agentData.id}`);
-                  updatedData = [...prevData];
-                  updatedData[existingClientIndex] = agentData;
-                } else {
-                  // Add new client
-                  updatedData = [...prevData, agentData];
-                }
-                return updatedData;
-              });
-              toast.success(`Client ${clients[0].computerName || clients[0].name} is now ${clients[0].status}`);
-            } else {
-              // Full client list update - convert all clients to agents
-              console.log('Full client list update with', clients.length, 'clients');
-              console.log('Sample client data:', JSON.stringify(clients[0], null, 2));
-              // Deduplicate clients by machineFingerprint or UUID before mapping
-              const uniqueClients = clients.reduce((acc, clientData) => {
-                const key = clientData.machineFingerprint || clientData.uuid;
-                if (!acc.has(key)) {
-                  acc.set(key, clientData);
-                } else {
-                  // Keep the most recent one
-                  const existing = acc.get(key);
-                  if (new Date(clientData.lastActiveTime || 0) > new Date(existing.lastActiveTime || 0)) {
-                    acc.set(key, clientData);
-                  }
-                }
-                return acc;
-              }, new Map());
-              
-              const agentList: Agent[] = Array.from(uniqueClients.values()).map((clientData: any) => {
-                const agentId = clientData.uuid;
-                console.log('Mapping client:', clientData.computerName, 'uuid:', clientData.uuid, 'id:', clientData.id, 'final agentId:', agentId);
-                return {
-                _id: clientData._id,
-                id: agentId,
-                name: clientData.computerName || clientData.name || 'Unknown',
-                computerName: clientData.computerName || 'Unknown',
-                hostname: clientData.hostname,
-                ip: clientData.ipAddress || clientData.ip || 'Unknown',
-                ipAddress: clientData.ipAddress || clientData.ip || 'Unknown',
-                platform: clientData.platform || 'unknown',
-                operatingSystem: clientData.operatingSystem || clientData.platform || 'unknown',
-                osVersion: clientData.osVersion || 'Unknown',
-                architecture: clientData.architecture || 'unknown',
-                status: clientData.status || 'offline',
-                lastSeen: clientData.lastSeen || clientData.lastActiveTime || new Date().toISOString(),
-                lastActiveTime: clientData.lastActiveTime || new Date().toISOString(),
-                lastHeartbeat: clientData.lastHeartbeat,
-                connectionCount: clientData.connectionCount || 0,
-                version: clientData.version || '1.0.0',
-                country: clientData.country || 'Unknown',
-                capabilities: clientData.capabilities || {
-                  persistence: [],
-                  injection: [],
-                  evasion: [],
-                  commands: [],
-                  features: []
-                },
-                features: {
-                  hvnc: false,
-                  keylogger: false,
-                  screenCapture: false,
-                  fileManager: false,
-                  processManager: false
-                },
-                geoLocation: (clientData as any).geoLocation,
-                systemInfo: (clientData as any).systemInfo
-              };
-              });
-              console.log('Setting table data with', agentList.length, 'agents (deduplicated from', clients.length, 'clients)');
-              setTableData(agentList);
-            }
-          }
-        },
-
-        onError: (error: string) => {
-          console.error('WebSocket error:', error);
-          toast.error(`WebSocket error: ${error}`);
-        }
-      });
-    };
-    
-    wsRef.current = wsIntegration.createConnection(token, handleMessage);
-    console.log('[FRONTEND WS] WebSocket connection created:', wsRef.current);
-    
-    // Add connection event listeners for debugging
-    if (wsRef.current) {
-      // setWsConnectionStatus('connecting');
-      
-      wsRef.current.addEventListener('open', () => {
-        console.log('[FRONTEND WS] WebSocket connection opened');
-        // setWsConnectionStatus('connected');
-      });
-      
-      wsRef.current.addEventListener('message', (event) => {
-        console.log('[FRONTEND WS] Raw WebSocket message received:', event.data);
-      });
-      
-      wsRef.current.addEventListener('close', (event) => {
-        console.log('[FRONTEND WS] WebSocket connection closed:', event.code, event.reason);
-        // setWsConnectionStatus('disconnected');
-      });
-      
-      wsRef.current.addEventListener('error', (error) => {
-        console.error('[FRONTEND WS] WebSocket error:', error);
-        // setWsConnectionStatus('error');
-      });
-    }
-  };
-
-  const getUserList = async () => {
-    try {
-      setIsLoading(true);
-      console.log('Fetching client list from API...');
-      const agents = await agentService.getAgents();
-      console.log('API returned agents:', agents);
-      if (agents) {
-        setTableData(agents);
-        console.log('Set table data with', agents.length, 'agents from API');
-      } else {
-        setTableData([]);
-        console.log('No agents data returned from server');
-        toast.error('No agents data returned from server.');
-      }
-    } catch (error: any) {
-      console.error('Error fetching agent list:', error);
-      toast.error('Failed to fetch agent list. Please check your authentication status.');
-      // 如果是认证错误，可能需要重新登录
-      if (error?.response && (error.response.status === 401 || error.response.status === 403)) {
-        toast.error('Authentication error. Please login again.');
-        handleLogout();
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleActionClicked = (agent: Agent) => {
-    setSelectedUser(agent);
-    setModalStatus(true);
-  };
-
-  const handleTasksClicked = (agent: Agent) => {
-    setSelectedUser(agent);
-    setTasksModalStatus(true);
-  };
-
-  const handleSendCommand = (agentId: string, command: string, correlationId: string) => {
-    console.log('[FRONTEND WS] Sending command to agent:', agentId, 'Command:', command, 'CorrelationId:', correlationId);
-    console.log('[FRONTEND WS] WebSocket state:', wsRef.current?.readyState);
-    console.log('[FRONTEND WS] WebSocket URL:', wsRef.current?.url);
-    
-    // Send command via WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      const commandMessage = {
-        type: 'command',
-        targetId: agentId,
-        command: command,
-        correlationId: correlationId,  // Include correlationId
-        timestamp: new Date().toISOString()
-      };
-      
-      console.log('[FRONTEND WS] Sending WebSocket command:', commandMessage);
-      wsRef.current.send(JSON.stringify(commandMessage));
-      console.log('[FRONTEND WS] Command sent successfully');
-    } else {
-      console.error('[FRONTEND WS] WebSocket not connected. State:', wsRef.current?.readyState);
-      toast.error('WebSocket not connected. Cannot send command.');
-    }
-  };
-
-  const handleRegisterPending = (taskId: string, agentId: string, historyId: string) => {
-    taskIdToHistoryId.current.set(taskId, historyId);
-    taskIdToAgentId.current.set(taskId, agentId);
-    console.log('Registered pending command:', { taskId, agentId, historyId });
-  };
-
-
-  const handleProcess = async (user: Agent, commandKey: string) => {
-    try {
-      await agentService.sendCommand(user.id, commandKey);
-      toast.success(`Task sent to ${user.name}`);
-      setModalStatus(false);
-    } catch (error) {
-      toast.error('Failed to send task.');
-      console.error(error);
-    }
-  };
-
-
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('accessToken');
-    setIsAuthenticated(false);
-  };
-
+  // Pulse animation for operational status
   useEffect(() => {
-    if (isAuthenticated) {
-      initWebSocket();
-      getUserList();
-    }
-  }, [isAuthenticated]);
+    const interval = setInterval(() => {
+      setOperationalStatus(prev => prev);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Show loading screen while checking authentication
-  if (isLoading) {
-    return (
-      <ThemeProvider>
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-      </ThemeProvider>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <ThemeProvider>
-        <PremiumLoginPage onLogin={() => setIsAuthenticated(true)} />
-      </ThemeProvider>
-    );
+  // Show login screen if not logged in
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
   }
 
   return (
+    <div className="min-h-screen" style={{
+      background: `linear-gradient(to bottom right, var(--theme-bg-from), var(--theme-bg-to))`
+    }}>
+      {/* Header Bar */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl" style={{
+        borderBottom: `1px solid var(--theme-border)`,
+        backgroundColor: `${colors.cardGradientFrom}cc`
+      }}>
+        <div className="flex items-center justify-between px-6 py-4">
+          {/* Left Side - Logo & Name */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">{panelIcon}</div>
+              <div>
+                <h1 className="text-xl bg-gradient-to-r bg-clip-text text-transparent" style={{
+                  backgroundImage: `linear-gradient(to right, var(--theme-primary), var(--theme-primary-light))`
+                }}>
+                  {panelName}
+                </h1>
+                <p className="text-xs text-slate-400">Command & Control Panel</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side - Status & User */}
+          <div className="flex items-center gap-4">
+            {/* Operational Status */}
+            <div className="flex items-center gap-2 rounded-lg px-4 py-2 backdrop-blur" style={{
+              backgroundColor: `${colors.cardGradientFrom}80`,
+              border: `1px solid var(--theme-border)`
+            }}>
+              <Circle className={`h-2 w-2 animate-pulse`} style={{
+                fill: colors.primary,
+                color: colors.primary
+              }} />
+              <span className="text-sm text-slate-300">
+                {operationalStatus ? 'OPERATIONAL' : 'OFFLINE'}
+              </span>
+            </div>
+
+            {/* User Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 rounded-lg hover:bg-[#1e2538]/50">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-[#0a0e1a]" style={{
+                      background: `linear-gradient(to bottom right, var(--theme-primary), var(--theme-primary-dark))`
+                    }}>
+                      AD
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-left">
+                    <p className="text-sm text-slate-200">Admin User</p>
+                    <p className="text-xs text-slate-400">{userRole}</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48" style={{
+                backgroundColor: colors.cardGradientFrom,
+                borderColor: colors.border
+              }}>
+                <DropdownMenuItem className="text-slate-200 focus:bg-[#1e2538] focus:text-white">
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-slate-200 focus:bg-[#1e2538] focus:text-white">
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Navigation Tabs */}
+          <TabsList className="mb-6 grid w-full grid-cols-8 gap-2 bg-[#131824]/50 p-2 backdrop-blur-xl border border-[#00d9b5]/20 rounded-2xl">
+            <TabsTrigger 
+              value="overview" 
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Activity className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="clients"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Clients</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="agent"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Bot className="h-4 w-4" />
+              <span className="hidden sm:inline">Agent</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="terminal"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Terminal className="h-4 w-4" />
+              <span className="hidden sm:inline">AI Terminal</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="insights"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">AI Insights</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="logs"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Logs</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tasks"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <CheckSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Tasks</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#00d9b5] data-[state=active]:to-[#00b894] data-[state=active]:text-[#0a0e1a] rounded-xl transition-all hover:bg-[#1e2538]/30"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab Content */}
+          <TabsContent value="overview" className="mt-0">
+            <OverviewSection />
+          </TabsContent>
+          
+          <TabsContent value="clients" className="mt-0">
+            <ClientsSection />
+          </TabsContent>
+          
+          <TabsContent value="agent" className="mt-0">
+            <AgentSection />
+          </TabsContent>
+          
+          <TabsContent value="terminal" className="mt-0">
+            <AITerminalSection />
+          </TabsContent>
+          
+          <TabsContent value="insights" className="mt-0">
+            <AIInsightsSection />
+          </TabsContent>
+          
+          <TabsContent value="logs" className="mt-0">
+            <LogsSection />
+          </TabsContent>
+          
+          <TabsContent value="tasks" className="mt-0">
+            <TasksSection />
+          </TabsContent>
+          
+          <TabsContent value="settings" className="mt-0">
+            <SettingsSection 
+              panelName={panelName}
+              setPanelName={setPanelName}
+              panelIcon={panelIcon}
+              setPanelIcon={setPanelIcon}
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#00d9b5]/20 bg-[#0f1420]/50 px-6 py-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between text-sm text-slate-400">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-2">
+              <Circle className="h-2 w-2 fill-[#00d9b5] text-[#00d9b5] animate-pulse" />
+              Connected
+            </span>
+            <span>Last updated: Just now</span>
+          </div>
+          <span>LoopJS C2 Panel v1.0.0</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
     <ThemeProvider>
-      <NotificationProvider>
-        <Toaster position="top-right" />
-        {selectedUser && (
-          <TransferModal
-            isOpen={modalStatus}
-            setIsOpen={setModalStatus}
-            handleProcess={handleProcess}
-            user={selectedUser}
-          />
-        )}
-        {selectedUser && (
-          <TasksModal
-            isOpen={tasksModalStatus}
-            setIsOpen={setTasksModalStatus}
-            user={selectedUser}
-          />
-        )}
-        <DashboardPage
-          tableData={tableData}
-          onActionClicked={handleActionClicked}
-          onTasksClicked={handleTasksClicked}
-          onLogout={handleLogout}
-          onSendCommand={handleSendCommand}
-          onRegisterPending={handleRegisterPending}
-          naturalLanguageHistory={naturalLanguageHistory}
-          setNaturalLanguageHistory={setNaturalLanguageHistory}
-        />
-      </NotificationProvider>
+      <AppContent />
     </ThemeProvider>
-   );
+  );
 }

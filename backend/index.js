@@ -141,17 +141,44 @@ async function initializeApp() {
     }
 }
 
-async function connectDB() {
+async function connectDB(retryCount = 0, maxRetries = 5) {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loopjs';
+        console.log(`[INIT] Attempting MongoDB connection (attempt ${retryCount + 1}/${maxRetries})...`);
+
         await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000,
-            connectTimeoutMS: 5000,
-            socketTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 30000,
+            connectTimeoutMS: 30000,
+            socketTimeoutMS: 30000,
         });
-        console.log('[INIT] ✅ MongoDB connected');
+
+        console.log('[INIT] ✅ MongoDB connected successfully');
+
+        // Handle connection events
+        mongoose.connection.on('disconnected', () => {
+            console.warn('[INIT] ⚠️  MongoDB disconnected. Attempting to reconnect...');
+        });
+
+        mongoose.connection.on('error', (err) => {
+            console.error('[INIT] ❌ MongoDB error:', err.message);
+        });
+
+        mongoose.connection.on('reconnected', () => {
+            console.log('[INIT] ✅ MongoDB reconnected');
+        });
+
     } catch (error) {
-        console.error('[INIT] MongoDB connection failed:', error.message);
+        console.error(`[INIT] MongoDB connection failed (attempt ${retryCount + 1}/${maxRetries}):`, error.message);
+
+        if (retryCount < maxRetries - 1) {
+            const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Exponential backoff, max 30s
+            console.log(`[INIT] Retrying in ${delay/1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return connectDB(retryCount + 1, maxRetries);
+        } else {
+            console.error('[INIT] ❌ Max retry attempts reached. Continuing without MongoDB.');
+            console.error('[INIT] ⚠️  Some features may be limited without database connection.');
+        }
     }
 }
 

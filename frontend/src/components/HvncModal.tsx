@@ -1,39 +1,40 @@
-import React from 'react';
-import { FiX } from 'react-icons/fi';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import HvncControl from './HvncControl';
 
-interface HvncModalProps {
-  agentId: string;
+interface Client {
+  id: string;
+  computerName: string;
   platform: string;
+}
+
+interface HvncModalProps {
+  client: Client;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const HvncModal: React.FC<HvncModalProps> = ({ agentId, platform, isOpen, onClose }) => {
-  if (!isOpen) return null;
-
+export default function HvncModal({ client, isOpen, onClose }: HvncModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-stroke dark:border-strokedark">
-          <h2 className="text-xl font-semibold">HVNC Remote Control</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-bodydark2 rounded-lg transition-colors"
-            aria-label="Close"
-          >
-            <FiX className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <HvncControl agentId={agentId} platform={platform} onClose={onClose} />
-        </div>
-      </div>
-    </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent 
+        className="max-w-[95vw] w-full h-[95vh] p-0 bg-gradient-to-br from-[#131824]/95 to-[#1e2538]/95 backdrop-blur-2xl border-[#00d9b5]/30 overflow-hidden"
+        style={{
+          boxShadow: '0 20px 60px 0 rgba(0, 217, 181, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1)'
+        }}
+      >
+        <VisuallyHidden>
+          <DialogTitle>HVNC Remote Control - {client.computerName}</DialogTitle>
+          <DialogDescription>
+            Remote desktop control for {client.computerName} ({client.platform})
+          </DialogDescription>
+        </VisuallyHidden>
+        <HvncControl 
+          agentId={client.id} 
+          platform={client.platform} 
+          onClose={onClose} 
+        />
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default HvncModal;
+}

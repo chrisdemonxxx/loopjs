@@ -5,9 +5,12 @@ services:
     region: oregon
     plan: free
     branch: main
-    buildCommand: npm install
+    buildCommand: npm ci --production=false
     startCommand: npm start
     healthCheckPath: /health
+
+    # Auto-deploy settings
+    autoDeploy: true
 
     envVars:
       - key: NODE_ENV
@@ -18,33 +21,53 @@ services:
 
       - key: MONGODB_URI
         sync: false
+        # Add this manually in Render dashboard
+        # Format: mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
 
       - key: JWT_SECRET
         generateValue: true
+        # Auto-generated secure secret for JWT tokens
 
       - key: SESSION_SECRET
         generateValue: true
+        # Auto-generated secure secret for sessions
 
       - key: JWT_ACCESS_TOKEN_EXPIRATION
         value: "15m"
+        # Access tokens expire in 15 minutes for security
 
       - key: JWT_REFRESH_TOKEN_EXPIRATION
         value: "24h"
+        # Refresh tokens expire in 24 hours
 
       - key: ALLOWED_ORIGINS
         sync: false
+        # Add your frontend URL(s) in Render dashboard
+        # Example: https://your-app.vercel.app,https://your-app.com
 
       - key: LOG_LEVEL
         value: info
+        # Options: error, warn, info, debug
 
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
+        # 15 minutes in milliseconds
 
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
+        # Max 100 requests per window
 
       - key: WS_HEARTBEAT_INTERVAL
         value: "30000"
+        # WebSocket heartbeat every 30 seconds
 
       - key: WS_CONNECTION_TIMEOUT
         value: "60000"
+        # WebSocket connection timeout 60 seconds
+
+      # Optional: Add these if using external services
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      #
+      # - key: GOOGLE_GEMINI_API_KEY
+      #   sync: false

@@ -1,18 +1,14 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "devCommand": "npm run dev",
-  "installCommand": "npm install --legacy-peer-deps",
-  "framework": "vite",
-  "outputDirectory": "dist",
-
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
-
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -24,18 +20,7 @@
       ]
     }
   ],
-
   "env": {
-    "VITE_USE_LOCAL": "false"
-  },
-
-  "build": {
-    "env": {
-      "VITE_USE_LOCAL": "false",
-      "VITE_API_URL": "https://loopjs-backend-s3ja.onrender.com",
-      "VITE_WS_URL": "wss://loopjs-backend-s3ja.onrender.com/ws"
-    }
-  },
-
-  "regions": ["iad1"]
+    "VITE_API_URL": "@vite_api_url"
+  }
 }

