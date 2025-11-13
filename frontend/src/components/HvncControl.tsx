@@ -3,6 +3,7 @@ import { FiMonitor, FiMousePointer, FiType, FiClipboard, FiDownload, FiCamera, F
 import { SiWindows, SiApple, SiAndroid, SiLinux } from 'react-icons/si';
 import axios from 'axios';
 import { useNotification } from '../contexts/NotificationContext';
+import { WS_URL } from '../config';
 
 interface HvncControlProps {
   agentId: string;
@@ -124,12 +125,24 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
   // WebSocket connection for HVNC
   useEffect(() => {
     if (!wsRef.current) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      // Use configured WebSocket URL
+      const wsUrl = WS_URL;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
         console.log('WebSocket connected for HVNC');
+        // Authenticate with JWT token if available
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          wsRef.current?.send(JSON.stringify({
+            type: 'auth',
+            token: token
+          }));
+        }
+        // Identify as web client
+        wsRef.current?.send(JSON.stringify({
+          type: 'web_client'
+        }));
       };
 
       wsRef.current.onmessage = (event) => {
