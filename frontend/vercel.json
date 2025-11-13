@@ -37,7 +37,5 @@
     }
   },
 
-  "regions": ["iad1"],
-
-  "functions": {}
+  "regions": ["iad1"]
 }
