@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -38,6 +38,11 @@ const processPendingTasks = async (clientUuid, ws) => {
         
         for (const task of pendingTasks) {
             try {
+                if (!ws || ws.readyState !== ws.OPEN) {
+                    console.warn(`WebSocket not ready for client ${clientUuid}, stopping pending task replay`);
+                    break;
+                }
+
                 // Prepare command payload
                 let commandPayload = {
                     type: 'command',              // ADD THIS - critical for routing
@@ -58,8 +63,9 @@ const processPendingTasks = async (clientUuid, ws) => {
                     { 
                         $set: { 
                             'queue.state': 'sent',
+                            'queue.reason': null,
                             sentAt: new Date(),
-                            'queue.attempts': (task.queue.attempts || 0) + 1,
+                            'queue.attempts': ((task.queue && task.queue.attempts) || 0) + 1,
                             'queue.lastAttemptAt': new Date()
                         }
                     }
@@ -318,6 +324,12 @@ const wsHandler = (ws, req) => {
                 clientId = data.uuid || data.agentId;
                 ws.uuid = clientId;  // Set on the ws object
                 ws.clientType = 'client';  // Set clientType on ws
+                ws.ipAddress = data.ipAddress || data.ip || req.socket.remoteAddress || 'Unknown';
+                ws.platform = data.platform || 'Unknown';
+                ws.systemInfo = data.systemInfo || {};
+                ws.computerName = data.computerName || data.hostname || 'Unknown';
+                ws.hostname = data.hostname || 'Unknown';
+                ws.userAgent = data.userAgent || req.headers['user-agent'] || '';
                 clearTimeout(authTimeout);
                 
                 console.log('Client registered:', clientId);
@@ -428,6 +440,9 @@ const wsHandler = (ws, req) => {
                     console.error('Database registration error:', dbError.message);
                 }
             }
+
+            // Replay any queued tasks now that the client is online
+            await processPendingTasks(clientId, ws);
             
             return; // Exit early after handling registration
         }
@@ -511,7 +526,7 @@ const wsHandler = (ws, req) => {
                                         'params.aiProcessing.lastError': error.message,
                                         'params.aiProcessing.lastFix': retryCommand.fixApplied,
                                         'queue.state': 'pending',
-                                        'queue.attempts': (originalTask.queue.attempts || 0) + 1
+                                        'queue.attempts': ((originalTask.queue && originalTask.queue.attempts) || 0) + 1
                                     }
                                 }
                             );
@@ -547,19 +562,28 @@ const wsHandler = (ws, req) => {
                 
                 // Update task in database
                 if (taskId) {
+                    const now = new Date();
+                    const startTime = originalTask?.sentAt || originalTask?.createdAt || now;
+                    const executionTimeMs = Math.max(0, now.getTime() - new Date(startTime).getTime());
+
                     const updateData = {
                         output: output,
-                        completedAt: new Date(),
-                        executionTimeMs: Date.now() - (new Date().getTime() - 60000) // Rough estimate
+                        completedAt: now,
+                        executionTimeMs,
                     };
                     
                     if (status === 'success') {
                         updateData['queue.state'] = 'completed';
+                        updateData['queue.reason'] = null;
+                        updateData.errorMessage = '';
+                        updateData.status = 'executed';
                         
                         // AI learning functionality removed
                     } else {
                         updateData['queue.state'] = 'failed';
+                        updateData['queue.reason'] = 'Client reported failure';
                         updateData.errorMessage = output;
+                        updateData.status = 'failed';
                         
                         // AI learning functionality removed
                     }
@@ -748,22 +772,36 @@ const wsHandler = (ws, req) => {
                 
                 // Update agent HVNC session status
                 if (sessionId) {
-                    const updateData = {
-                        'hvncSession.status': status,
-                        'hvncSession.lastUpdate': new Date()
+                    const updateOperations = {
+                        $set: {
+                            'hvncSession.status': status,
+                            'hvncSession.lastUpdate': new Date()
+                        }
                     };
-                    
-                    if (error) {
-                        updateData['hvncSession.error'] = error;
-                    }
-                    
+
                     if (screenInfo) {
-                        updateData['hvncSession.screenInfo'] = screenInfo;
+                        updateOperations.$set['hvncSession.screenInfo'] = screenInfo;
+                    }
+
+                    if (status === 'stopped' || status === 'error') {
+                        updateOperations.$set['hvncSession.endedAt'] = new Date();
+                    }
+
+                    if (status === 'active') {
+                        updateOperations.$unset = updateOperations.$unset || {};
+                        updateOperations.$unset['hvncSession.endedAt'] = '';
+                    }
+
+                    if (error) {
+                        updateOperations.$set['hvncSession.error'] = error;
+                    } else {
+                        updateOperations.$unset = updateOperations.$unset || {};
+                        updateOperations.$unset['hvncSession.error'] = '';
                     }
                     
                     await Client.findOneAndUpdate(
                         { uuid: ws.uuid },
-                        { $set: updateData }
+                        updateOperations
                     );
                 }
                 
@@ -794,6 +832,60 @@ const wsHandler = (ws, req) => {
                     frameInfo,
                     timestamp: new Date().toISOString()
                 });
+                return;
+            }
+
+            // Handle HVNC command from admin to forward to client
+            if (data.type === 'hvnc_command' && clientType === 'admin') {
+                const { targetId, sessionId, command, params } = data;
+                
+                // Find the target client WebSocket by UUID
+                let targetClient = null;
+                let targetUuid = null;
+                
+                if (targetId && targetId.length === 36 && targetId.includes('-')) {
+                    targetClient = connectedClients.get(targetId);
+                    targetUuid = targetId;
+                } else {
+                    // Try to find by IP address
+                    for (const [uuid, client] of connectedClients.entries()) {
+                        if (client.ipAddress === targetId || client.ipAddress === targetId.replace(/[()]/g, '')) {
+                            targetClient = client;
+                            targetUuid = uuid;
+                            break;
+                        }
+                    }
+                }
+                
+                if (targetClient && targetClient.clientType === 'client') {
+                    // Forward HVNC command to client
+                    const hvncCommand = {
+                        type: 'hvnc_command',
+                        sessionId,
+                        command,
+                        params: params || {}
+                    };
+                    
+                    try {
+                        targetClient.send(JSON.stringify(hvncCommand));
+                        console.log(`HVNC command forwarded to client ${targetUuid}: ${command}`);
+                    } catch (wsError) {
+                        console.error(`Failed to forward HVNC command to client ${targetUuid}:`, wsError);
+                        ws.send(JSON.stringify({
+                            type: 'hvnc_command_error',
+                            targetId,
+                            error: 'Failed to forward command to client',
+                            timestamp: new Date().toISOString()
+                        }));
+                    }
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'hvnc_command_error',
+                        targetId,
+                        error: 'Client not found or not connected',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
                 return;
             }
 
@@ -1159,15 +1251,34 @@ const wsHandler = (ws, req) => {
         } else if (ws.uuid && ws.clientType === 'client') {
             connectedClients.delete(ws.uuid);
             console.log('Client disconnected:', ws.uuid);
+
+            const now = new Date();
+            const clientDocument = await Client.findOne({ uuid: ws.uuid }, { hvncSession: 1 });
+
+            const updateSet = {
+                status: 'offline',
+                lastSeen: now
+            };
+            let updateUnset = null;
+
+            if (clientDocument && clientDocument.hvncSession && clientDocument.hvncSession.sessionId) {
+                updateSet['hvncSession.status'] = 'stopped';
+                updateSet['hvncSession.lastUpdate'] = now;
+                updateSet['hvncSession.endedAt'] = now;
+                updateUnset = { 'hvncSession.error': '' };
+            }
+
+            const updatePayload = {
+                $set: updateSet
+            };
+
+            if (updateUnset) {
+                updatePayload.$unset = updateUnset;
+            }
             
             const updatedClient = await Client.findOneAndUpdate(
                 { uuid: ws.uuid },
-                { 
-                    $set: { 
-                        status: 'offline',
-                        lastSeen: new Date()
-                    }
-                },
+                updatePayload,
                 { new: true }
             );
             

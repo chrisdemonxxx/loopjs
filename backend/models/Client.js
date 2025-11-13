@@ -82,6 +82,42 @@ const clientSchema = new mongoose.Schema({
             default: [],
         },
     },
+    // HVNC session metadata
+    hvncSession: {
+        sessionId: {
+            type: String
+        },
+        status: {
+            type: String,
+            enum: ['starting', 'active', 'stopping', 'stopped', 'error'],
+            default: 'starting'
+        },
+        quality: {
+            type: String,
+            enum: ['low', 'medium', 'high'],
+            default: 'medium'
+        },
+        fps: {
+            type: Number,
+            min: 1,
+            max: 60,
+            default: 15
+        },
+        settings: {
+            type: Object,
+            default: {}
+        },
+        screenInfo: {
+            width: Number,
+            height: Number,
+            colorDepth: Number,
+            dpi: Number
+        },
+        startedAt: Date,
+        endedAt: Date,
+        lastUpdate: Date,
+        error: String
+    },
     // Authentication and security
     authToken: {
         type: String,

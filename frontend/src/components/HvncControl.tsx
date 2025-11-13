@@ -3,6 +3,7 @@ import { FiMonitor, FiMousePointer, FiType, FiClipboard, FiDownload, FiCamera, F
 import { SiWindows, SiApple, SiAndroid, SiLinux } from 'react-icons/si';
 import axios from 'axios';
 import { useNotification } from '../contexts/NotificationContext';
+import { WS_URL } from '../config';
 
 interface HvncControlProps {
   agentId: string;
@@ -117,23 +118,38 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
   const wsRef = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+  const isDraggingRef = useRef(false);
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
+  const screenInfoRef = useRef<{ width: number; height: number } | null>(null);
 
   // WebSocket connection for HVNC
   useEffect(() => {
     if (!wsRef.current) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      // Use configured WebSocket URL
+      const wsUrl = WS_URL;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
         console.log('WebSocket connected for HVNC');
+        // Authenticate with JWT token if available
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          wsRef.current?.send(JSON.stringify({
+            type: 'auth',
+            token: token
+          }));
+        }
+        // Identify as web client
+        wsRef.current?.send(JSON.stringify({
+          type: 'web_client'
+        }));
       };
 
       wsRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           
-          if (data.type === 'hvnc_response' && data.agentId === agentId) {
+          if (data.type === 'hvnc_response' && (data.agentId === agentId || data.agentUuid === agentId)) {
             console.log('HVNC Response:', data);
             if (data.status === 'connected') {
               setIsConnected(true);
@@ -146,39 +162,43 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
             }
           }
           
-          if (data.type === 'hvnc_frame' && data.agentId === agentId) {
+          if (data.type === 'hvnc_frame' && data.agentUuid === agentId) {
             console.log('HVNC Frame received:', data.frameInfo);
-            // Handle frame data for screen display
+            // Update screen info
+            if (data.frameInfo) {
+              screenInfoRef.current = {
+                width: data.frameInfo.width || 1920,
+                height: data.frameInfo.height || 1080
+              };
+            }
+            
+            // Handle frame data for screen display (binary WebSocket frames)
             if (data.frameData && canvasRef.current) {
               const canvas = canvasRef.current;
               const ctx = canvas.getContext('2d');
               
-              // For SVG data (mock frames), create an image from SVG
-              if (data.frameData.includes('<svg')) {
-                const svgBlob = new Blob([atob(data.frameData)], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(svgBlob);
+              // Handle binary frame data (JPEG/PNG)
+              if (typeof data.frameData === 'string') {
+                // Base64 encoded
                 const img = new Image();
-                
                 img.onload = () => {
-                  canvas.width = data.frameInfo?.width || img.width;
-                  canvas.height = data.frameInfo?.height || img.height;
-                  ctx.drawImage(img, 0, 0);
-                  URL.revokeObjectURL(url);
-                };
-                
-                img.src = url;
-              } else {
-                // For JPEG/PNG data
-                const img = new Image();
-                
-                img.onload = () => {
-                  canvas.width = data.frameInfo?.width || img.width;
-                  canvas.height = data.frameInfo?.height || img.height;
+                  if (screenInfoRef.current) {
+                    canvas.width = screenInfoRef.current.width;
+                    canvas.height = screenInfoRef.current.height;
+                  } else {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                  }
                   ctx.drawImage(img, 0, 0);
                 };
-                
                 img.src = `data:image/jpeg;base64,${data.frameData}`;
               }
+            }
+          }
+          
+          if (data.type === 'hvnc_response' && data.agentUuid === agentId) {
+            if (data.screenInfo) {
+              screenInfoRef.current = data.screenInfo;
             }
           }
         } catch (error) {
@@ -255,12 +275,169 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
     }
   };
 
-  // Take screenshot
-  const takeScreenshot = () => {
+  // Transform canvas coordinates to screen coordinates
+  const transformCoordinates = (canvasX: number, canvasY: number) => {
+    if (!canvasRef.current || !screenInfoRef.current) {
+      return { x: canvasX, y: canvasY };
+    }
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = screenInfoRef.current.width / canvas.width;
+    const scaleY = screenInfoRef.current.height / canvas.height;
+    
+    const x = Math.floor((canvasX - rect.left) * scaleX);
+    const y = Math.floor((canvasY - rect.top) * scaleY);
+    
+    return { x, y };
+  };
+
+  // Send HVNC command via WebSocket
+  const sendHvncCommand = (command: string, params: any) => {
+    if (!wsRef.current || !sessionId || !isConnected) return;
+    
+    const message = {
+      type: 'hvnc_command',
+      targetId: agentId,
+      sessionId,
+      command,
+      params
+    };
+    
+    wsRef.current.send(JSON.stringify(message));
+  };
+
+  // Mouse handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isConnected) return;
     
-    // In a real implementation, this would capture the current screen
-    console.log('Taking screenshot...');
+    isDraggingRef.current = true;
+    const coords = transformCoordinates(e.clientX, e.clientY);
+    lastMousePosRef.current = coords;
+    
+    const button = e.button === 0 ? 'left' : e.button === 2 ? 'right' : 'middle';
+    sendHvncCommand('mouse_down', { x: coords.x, y: coords.y, button });
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isConnected) return;
+    
+    isDraggingRef.current = false;
+    const coords = transformCoordinates(e.clientX, e.clientY);
+    
+    const button = e.button === 0 ? 'left' : e.button === 2 ? 'right' : 'middle';
+    sendHvncCommand('mouse_up', { x: coords.x, y: coords.y, button });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isConnected) return;
+    
+    const coords = transformCoordinates(e.clientX, e.clientY);
+    
+    if (isDraggingRef.current) {
+      sendHvncCommand('mouse_drag', { 
+        x: coords.x, 
+        y: coords.y,
+        deltaX: coords.x - lastMousePosRef.current.x,
+        deltaY: coords.y - lastMousePosRef.current.y
+      });
+    } else {
+      sendHvncCommand('mouse_move', { x: coords.x, y: coords.y });
+    }
+    
+    lastMousePosRef.current = coords;
+  };
+
+  const handleMouseWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    if (!isConnected) return;
+    
+    e.preventDefault();
+    const coords = transformCoordinates(e.clientX, e.clientY);
+    
+    sendHvncCommand('mouse_scroll', {
+      x: coords.x,
+      y: coords.y,
+      deltaX: e.deltaX,
+      deltaY: e.deltaY,
+      deltaZ: e.deltaZ
+    });
+  };
+
+  const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault(); // Prevent browser context menu
+  };
+
+  // Keyboard handlers
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isConnected || !canvasRef.current?.contains(document.activeElement)) return;
+    
+    e.preventDefault();
+    
+    const keyCode = e.keyCode || e.which;
+    const key = e.key;
+    const code = e.code;
+    
+    sendHvncCommand('key_down', {
+      key,
+      code,
+      keyCode,
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey
+    });
+  };
+
+  const handleKeyUp = (e: React.KeyboardEvent) => {
+    if (!isConnected || !canvasRef.current?.contains(document.activeElement)) return;
+    
+    e.preventDefault();
+    
+    const keyCode = e.keyCode || e.which;
+    const key = e.key;
+    const code = e.code;
+    
+    sendHvncCommand('key_up', {
+      key,
+      code,
+      keyCode,
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey
+    });
+  };
+
+  // Clipboard sync
+  const syncClipboardToRemote = async () => {
+    if (!isConnected || !sessionId) return;
+    
+    try {
+      const text = await navigator.clipboard.readText();
+      sendHvncCommand('clipboard_set', { text });
+    } catch (error) {
+      console.error('Failed to read clipboard:', error);
+    }
+  };
+
+  const syncClipboardFromRemote = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error('Failed to write to clipboard:', error);
+    }
+  };
+
+  // Take screenshot
+  const takeScreenshot = async () => {
+    if (!isConnected || !sessionId) return;
+    
+    try {
+      await axios.post(`/api/agent/${agentId}/hvnc/screenshot`, { sessionId });
+      addNotification('info', 'Screenshot request sent');
+    } catch (error: any) {
+      addNotification('error', `Failed to take screenshot: ${error.message}`);
+    }
   };
 
   // Toggle fullscreen
@@ -398,6 +575,14 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
                     ref={canvasRef}
                     className="max-w-full max-h-full border border-gray-600 rounded"
                     style={{ cursor: 'crosshair' }}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseMove={handleMouseMove}
+                    onWheel={handleMouseWheel}
+                    onContextMenu={handleContextMenu}
+                    tabIndex={0}
+                    onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
                   />
                   {!isConnected && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -431,7 +616,11 @@ const HvncControl: React.FC<HvncControlProps> = ({ agentId, platform, onClose })
                     </button>
                   </>
                 )}
-                <button className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center">
+                <button 
+                  className="py-2 px-3 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors flex items-center"
+                  onClick={syncClipboardToRemote}
+                  title="Sync clipboard to remote"
+                >
                   <FiClipboard className="w-4 h-4 mr-1" />
                   <span>Clipboard</span>
                 </button>

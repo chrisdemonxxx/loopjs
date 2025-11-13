@@ -32,12 +32,10 @@
   "build": {
     "env": {
       "VITE_USE_LOCAL": "false",
-      "VITE_API_URL": "",
-      "VITE_WS_URL": ""
+      "VITE_API_URL": "https://loopjs-backend-s3ja.onrender.com",
+      "VITE_WS_URL": "wss://loopjs-backend-s3ja.onrender.com/ws"
     }
   },
 
-  "regions": ["iad1"],
-
-  "functions": {}
+  "regions": ["iad1"]
 }

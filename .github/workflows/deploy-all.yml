@@ -1,15 +1,18 @@
 name: Deploy All Services
-# Trigger deployment - testing workflow
+# DEPRECATED: This workflow uses Google Cloud which is NOT ACTIVE
+# Use deploy-render-vercel.yml instead: Render for backend, Vercel for frontend
+# This file is kept for reference but disabled
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch:  # Disabled - only manual trigger
+  # push:
+  #   branches:
+  #     - main
 
 env:
   PROJECT_ID: code-assist-470813
   REGION: us-central1
+  DEPRECATED: "Use Render + Vercel instead - see deploy-render-vercel.yml"
 
 jobs:
   deploy-backend:
