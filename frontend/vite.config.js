@@ -11,6 +11,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild',
     rollupOptions: {
       external: [],
     },
@@ -29,9 +31,5 @@ export default defineConfig({
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' }
-  },
-  build: {
-    sourcemap: false,
-    minify: 'esbuild'
   }
 })
