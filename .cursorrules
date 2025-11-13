@@ -5,14 +5,13 @@ LoopJS is a Command & Control (C2) panel system with:
 - **Backend**: Node.js/Express API with WebSocket support
 - **Frontend**: React/TypeScript C2 Panel  
 - **Client**: Qt C++ desktop application
-- **Infrastructure**: Google Cloud Platform with automated deployment
+- **Infrastructure**: Render (Backend) + Vercel (Frontend) - DO NOT use Google Cloud
 
 ## Production URLs & Configuration
-- **Frontend**: https://loopjs.vidai.sbs/
-- **Backend**: https://loopjs-backend-361659024403.us-central1.run.app
-- **WebSocket**: wss://loopjs-backend-361659024403.us-central1.run.app/ws
-- **Project ID**: code-assist-470813
-- **Region**: us-central1
+- **Frontend**: Vercel (auto-deploys from main branch)
+- **Backend**: https://loopjs-backend-s3ja.onrender.com (Render)
+- **WebSocket**: wss://loopjs-backend-s3ja.onrender.com/ws
+- **Deployment**: Render (Backend) + Vercel (Frontend) - NOT Google Cloud
 
 ## Key Configuration Files
 - **Frontend Config**: `frontend/src/config.ts` - API and WebSocket URLs
@@ -20,8 +19,9 @@ LoopJS is a Command & Control (C2) panel system with:
 - **Client Config**: `clients/qt-client/CMakeLists.txt` - Build configuration
 
 ## Deployment Automation
-- **GitHub Actions**: `.github/workflows/deploy-all.yml`
-- **Google Cloud Build**: `backend/cloudbuild.yaml`
+- **GitHub Actions**: `.github/workflows/deploy-render-vercel.yml`
+- **Render Backend**: `backend/render.yaml` (auto-deploys on push to main)
+- **Vercel Frontend**: `frontend/vercel.json` (auto-deploys on push to main)
 - **Build Scripts**: `clients/qt-client/build-standalone.bat`
 
 ## Common Issues & Solutions
@@ -46,7 +46,7 @@ cd clients/qt-client && .\build-standalone.bat
 - **JWT Authentication**: Token-based auth
 - **CORS**: Domain-specific configuration
 - **SSL/TLS**: Encrypted communication
-- **Secrets**: Stored in Google Secret Manager
+- **Secrets**: Stored in Render environment variables (backend) and Vercel environment variables (frontend)
 
 ## Database Schema
 - **Client Model**: UUID, computerName, ipAddress, platform, status, lastSeen
@@ -66,7 +66,7 @@ cd clients/qt-client && .\build-standalone.bat
 - **Backend Health**: `GET /health`
 - **Frontend Health**: Root endpoint
 - **WebSocket Test**: Connection validation
-- **Logs**: Google Cloud Run logs
+- **Logs**: Render logs (backend) and Vercel logs (frontend)
 
 ## File Structure
 ```
@@ -86,7 +86,7 @@ loopjs/
 - Client requires Qt 6.9.3 MinGW 64-bit
 - Backend requires MongoDB connection
 - Frontend requires backend URL configuration
-- All services deployed to Google Cloud Run
+- Backend deployed to Render, Frontend deployed to Vercel (DO NOT use Google Cloud)
 - Automated deployment via GitHub Actions
 - Health checks and rollback configured
 - SSL/TLS support via Windows SChannel

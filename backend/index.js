@@ -35,7 +35,6 @@ const corsOptions = {
             'http://localhost:4173',
             'http://localhost:4174',
             'http://localhost',
-            'https://loopjs-frontend-361659024403.us-central1.run.app',
             'https://loopjs.vidai.sbs',
             'https://loopjs-frontend.onrender.com',
             'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app'
@@ -164,7 +163,6 @@ app.use((err, req, res, next) => {
         'http://localhost:4173',
         'http://localhost:4174',
         'http://localhost',
-        'https://loopjs-frontend-361659024403.us-central1.run.app',
         'https://loopjs.vidai.sbs',
         'https://loopjs-frontend.onrender.com',
         'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app'
