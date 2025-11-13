@@ -83,7 +83,10 @@ async function initializeApp() {
                     'http://localhost:4174',
                     'http://localhost',
                     'https://loopjs-frontend-361659024403.us-central1.run.app',
-                    'https://loopjs.vidai.sbs'
+                    'https://loopjs.vidai.sbs',
+                    'https://loopjs-frontend.onrender.com',
+                    'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app',
+                    'https://*.vercel.app'
                 ];
                 
                 // Allow requests with no origin (like mobile apps, curl requests)
