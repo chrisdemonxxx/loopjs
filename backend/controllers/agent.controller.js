@@ -368,3 +368,131 @@ exports.stopHvncSession = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+/**
+ * Get HVNC session status
+ */
+exports.getHvncSessionStatus = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const sessionId = req.params.sessionId;
+  
+  const agent = await Client.findOne({ uuid: agentId });
+  
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+  
+  if (!agent.hvncSession || agent.hvncSession.sessionId !== sessionId) {
+    return next(new AppError('HVNC session not found', 404));
+  }
+  
+  res.status(200).json({
+    status: 'success',
+    data: {
+      sessionId: agent.hvncSession.sessionId,
+      status: agent.hvncSession.status || 'unknown',
+      quality: agent.hvncSession.quality,
+      fps: agent.hvncSession.fps,
+      startedAt: agent.hvncSession.startedAt,
+      lastUpdate: agent.hvncSession.lastUpdate,
+      screenInfo: agent.hvncSession.screenInfo,
+      error: agent.hvncSession.error
+    }
+  });
+});
+
+/**
+ * Send HVNC command (mouse/keyboard input)
+ */
+exports.sendHvncCommand = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const { sessionId, command, params } = req.body;
+  
+  const agent = await Client.findOne({ uuid: agentId });
+  
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+  
+  if (!agent.hvncSession || agent.hvncSession.sessionId !== sessionId) {
+    return next(new AppError('HVNC session not found', 404));
+  }
+  
+  // Get WebSocket connection
+  const wsHandler = require('../configs/ws.handler');
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
+  
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
+  }
+  
+  // Send HVNC command to client
+  const hvncCommand = {
+    type: 'hvnc_command',
+    sessionId,
+    command,
+    params: params || {}
+  };
+  
+  try {
+    clientConnection.send(JSON.stringify(hvncCommand));
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'HVNC command sent',
+      data: {
+        sessionId,
+        command,
+        params: params || {}
+      }
+    });
+  } catch (wsError) {
+    return next(new AppError('Failed to send HVNC command', 500));
+  }
+});
+
+/**
+ * Take HVNC screenshot
+ */
+exports.takeHvncScreenshot = catchAsync(async (req, res, next) => {
+  const agentId = req.params.id;
+  const { sessionId } = req.body;
+  
+  const agent = await Client.findOne({ uuid: agentId });
+  
+  if (!agent) {
+    return next(new AppError('No agent found with that ID', 404));
+  }
+  
+  if (!agent.hvncSession || agent.hvncSession.sessionId !== sessionId) {
+    return next(new AppError('HVNC session not found', 404));
+  }
+  
+  // Get WebSocket connection
+  const wsHandler = require('../configs/ws.handler');
+  const clientConnection = wsHandler.getClientConnection(agent.uuid);
+  
+  if (!clientConnection) {
+    return next(new AppError('Client WebSocket connection not found', 400));
+  }
+  
+  // Send screenshot request to client
+  const hvncCommand = {
+    type: 'hvnc_screenshot',
+    sessionId
+  };
+  
+  try {
+    clientConnection.send(JSON.stringify(hvncCommand));
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Screenshot request sent',
+      data: {
+        sessionId
+      }
+    });
+  } catch (wsError) {
+    return next(new AppError('Failed to send screenshot request', 500));
+  }
+});

