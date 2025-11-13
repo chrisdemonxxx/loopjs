@@ -127,7 +127,12 @@ router.post('/login', authRateLimit, async (req, res) => {
 
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ error: 'Internal server error' });
+    // Ensure error response includes proper error message
+    const errorMessage = err.message || 'Internal server error';
+    res.status(500).json({ 
+      error: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { details: err.stack })
+    });
   }
 });
 

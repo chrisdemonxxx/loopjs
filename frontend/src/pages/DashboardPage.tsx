@@ -319,9 +319,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
 
   return (
-    <div className={`min-h-screen theme-${mode}`}>
+    <div className={`min-h-screen theme-${mode} bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/50`}>
       {/* Header */}
-      <Card className="m-6 mb-0">
+      <Card className="m-6 mb-0 border-0 shadow-xl">
         <CardContent className="p-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -445,7 +445,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       </Card>
 
       {/* Navigation Tabs */}
-      <Card className="mx-6 mb-6">
+      <Card className="mx-6 mb-6 border-0 shadow-lg">
         <CardContent className="p-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-transparent">
