@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import DashboardPage from './pages/DashboardPage';
-import ThemeLoginPage from './components/ThemeLoginPage';
+import PremiumLoginPage from './components/PremiumLoginPage';
 import TransferModal from './TransferModal';
 import TasksModal from './components/TasksModal';
 import { Agent } from './types';
@@ -499,7 +499,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <ThemeProvider>
-        <ThemeLoginPage onLogin={() => setIsAuthenticated(true)} />
+        <PremiumLoginPage onLogin={() => setIsAuthenticated(true)} />
       </ThemeProvider>
     );
   }
