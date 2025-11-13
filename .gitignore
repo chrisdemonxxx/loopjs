@@ -1,3 +1,6 @@
+# Production secrets and URLs (NEVER COMMIT!)
+PRODUCTION_URLS.md
+
 # Dependencies
 node_modules/
 */node_modules/

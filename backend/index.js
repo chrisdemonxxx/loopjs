@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
 // Set critical environment variable fallbacks IMMEDIATELY
 if (!process.env.JWT_SECRET) {
@@ -24,6 +24,43 @@ const PORT = process.env.PORT || 8080;
 console.log('[STARTUP] Starting LoopJS Backend Server...');
 console.log('[STARTUP] PORT:', PORT);
 console.log('[STARTUP] Environment:', process.env.NODE_ENV || 'development');
+
+// CORS setup - MUST be before other middleware and routes
+const corsOptions = {
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://localhost:5175',
+            'http://localhost:4173',
+            'http://localhost:4174',
+            'http://localhost',
+            'https://loopjs.vidai.sbs',
+            'https://loopjs-frontend.onrender.com',
+            'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app'
+        ];
+        
+        // Allow requests with no origin (like mobile apps, curl requests)
+        if (!origin) {
+            console.log('CORS: Allowing request with no origin');
+            callback(null, true);
+        } else if (allowedOrigins.indexOf(origin) !== -1) {
+            console.log(`CORS: Allowing origin: ${origin}`);
+            callback(null, true);
+        } else if (origin.endsWith('.vercel.app')) {
+            // Allow all Vercel deployments
+            console.log(`CORS: Allowing Vercel origin: ${origin}`);
+            callback(null, true);
+        } else {
+            console.log(`CORS: Blocking origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+app.use(cors(corsOptions));
 
 // Basic middleware
 app.use(express.json());
@@ -72,35 +109,7 @@ async function initializeApp() {
             console.warn('[INIT] JWT_REFRESH_TOKEN_EXPIRATION not set, using fallback: 7d');
         }
         
-        // CORS setup
-        const corsOptions = {
-            origin: function (origin, callback) {
-                const allowedOrigins = [
-                    'http://localhost:5173',
-                    'http://localhost:5174',
-                    'http://localhost:5175',
-                    'http://localhost:4173',
-                    'http://localhost:4174',
-                    'http://localhost',
-                    'https://loopjs-frontend-361659024403.us-central1.run.app',
-                    'https://loopjs.vidai.sbs'
-                ];
-                
-                // Allow requests with no origin (like mobile apps, curl requests)
-                if (!origin) {
-                    console.log('CORS: Allowing request with no origin');
-                    callback(null, true);
-                } else if (allowedOrigins.indexOf(origin) !== -1) {
-                    console.log(`CORS: Allowing origin: ${origin}`);
-                    callback(null, true);
-                } else {
-                    console.log(`CORS: Blocking origin: ${origin}`);
-                    callback(new Error('Not allowed by CORS'));
-                }
-            },
-            credentials: true
-        };
-        app.use(cors(corsOptions));
+        // CORS already configured above - no need to configure again
         
         // Load routes
         const apiRoutes = require('./routes/index');
@@ -116,6 +125,11 @@ async function initializeApp() {
         const wss = new WebSocket.Server({ server, path: "/ws" });
         const wsHandler = require('./configs/ws.handler');
         wss.on('connection', wsHandler);
+        
+        // Initialize file management cleanup job
+        const fileManagerService = require('./services/fileManagerService');
+        fileManagerService.initializeCleanupJob();
+        console.log('[INIT] ✅ File management cleanup job initialized');
         
         // Mark as fully initialized
         global.appInitialized = true;
@@ -141,9 +155,31 @@ async function connectDB() {
     }
 }
 
-// Error handling middleware
+// Error handling middleware - ensure CORS headers are always included
 app.use((err, req, res, next) => {
     console.error('[ERROR]', err);
+    
+    // Set CORS headers even for errors - use the same logic as corsOptions
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:4173',
+        'http://localhost:4174',
+        'http://localhost',
+        'https://loopjs.vidai.sbs',
+        'https://loopjs-frontend.onrender.com',
+        'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app'
+    ];
+    
+    if (origin && (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app'))) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    }
+    
     res.status(500).json({
         error: 'Internal server error',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),

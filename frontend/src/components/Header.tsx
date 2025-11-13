@@ -1,24 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import {
-  FiBell,
-  FiSearch,
-  FiUser,
-  FiLogOut,
-  FiMenu,
-  FiX,
-  FiMoon,
-  FiSun,
-  FiTerminal,
-  FiZap,
-  FiEye,
-  FiShield,
-  FiEdit,
-  FiCamera,
-  FiKey,
-  FiSave,
-  FiEyeOff
-} from 'react-icons/fi';
+  Bell,
+  Search,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Moon,
+  Sun,
+  Terminal,
+  Zap,
+  Eye,
+  Shield,
+  Edit,
+  Camera,
+  Key,
+  Save,
+  EyeOff
+} from 'lucide-react';
 import request from '../axios';
 import toast from 'react-hot-toast';
 

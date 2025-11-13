@@ -25,7 +25,36 @@ const UserSchema = new mongoose.Schema({
         ipAddress: { type: String }
     }],
     lastLogin: { type: Date },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    // Build quotas and permissions
+    buildQuota: {
+        type: Number,
+        default: function() {
+            // Default quotas based on role
+            if (this.role === 'admin') return -1; // Unlimited
+            if (this.role === 'user') return 50;
+            return 10; // viewer
+        }
+    },
+    buildCount: {
+        type: Number,
+        default: 0
+    },
+    quotaResetAt: {
+        type: Date,
+        default: function() {
+            // Reset monthly
+            const resetDate = new Date();
+            resetDate.setMonth(resetDate.getMonth() + 1);
+            return resetDate;
+        }
+    },
+    buildPermissions: {
+        canCreate: { type: Boolean, default: true },
+        canDelete: { type: Boolean, default: true },
+        canDownload: { type: Boolean, default: true },
+        canTest: { type: Boolean, default: true }
+    }
 }, { timestamps: true });
 
 // Hash password before saving

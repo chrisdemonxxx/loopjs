@@ -210,14 +210,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const root = document.documentElement;
     const colors = colorSchemes[colorScheme];
 
-    // Apply dark/light class
+    // Apply dark/light class for shadcn
     if (isDark) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
 
-    // Apply theme-specific classes
+    // Apply theme-specific data attributes for shadcn compatibility
+    root.setAttribute('data-theme', mode);
+    
+    // Apply theme-specific classes for existing system
     root.classList.remove('theme-hacker-elite', 'theme-premium-cyber');
     if (['hacker-elite', 'premium-cyber'].includes(mode)) {
       root.classList.add(`theme-${mode}`);

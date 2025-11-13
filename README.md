@@ -6,12 +6,23 @@
 
 ## 🎯 Overview
 
-LoopJS is a comprehensive Command & Control (C2) panel system designed for system administration and remote management. It consists of a web-based control panel, a Node.js backend API, and a Qt C++ desktop client application.
+LoopJS is a comprehensive Command & Control (C2) panel system designed for system administration and remote management. It consists of a web-based control panel, a Node.js backend API, and multiple client implementations (Qt C++, C#, Stealth).
 
-### 🌐 Live Demo
-- **Frontend**: [https://loopjs.vidai.sbs/](https://loopjs.vidai.sbs/)
-- **Backend API**: [https://loopjs-backend-361659024403.us-central1.run.app](https://loopjs-backend-361659024403.us-central1.run.app)
-- **Health Check**: [https://loopjs-backend-361659024403.us-central1.run.app/health](https://loopjs-backend-361659024403.us-central1.run.app/health)
+### 🌐 Production Deployment
+
+**Ready to deploy to production!** This project is configured for **100% FREE deployment** using:
+- **Frontend:** Vercel (100GB bandwidth/month)
+- **Backend:** Render.com (750 hours/month)
+- **Database:** MongoDB Atlas (512MB storage)
+
+**📖 Complete Deployment Guide:** See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for step-by-step instructions.
+
+**✅ Quick Deployment Checklist:** See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
+
+### 🌐 Demo / Production URLs
+- **Frontend**: Update after Vercel deployment
+- **Backend API**: Update after Render deployment
+- **Health Check**: `<your-backend-url>/health`
 
 ## 🏗️ Architecture
 
@@ -31,11 +42,18 @@ LoopJS is a comprehensive Command & Control (C2) panel system designed for syste
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Development Prerequisites
 - **Node.js**: 18+ for backend and frontend
-- **Qt 6.9.3**: MinGW 64-bit for client
-- **MongoDB**: Database for backend
-- **Google Cloud**: For production deployment
+- **MongoDB**: Local instance or MongoDB Atlas (free tier)
+- **Qt 6.9.3**: MinGW 64-bit for client (optional)
+
+### Production Prerequisites
+- **GitHub Account** (for repository hosting)
+- **MongoDB Atlas** (free tier - 512MB)
+- **Render.com Account** (free tier - 750 hours/month)
+- **Vercel Account** (free tier - 100GB bandwidth/month)
+
+**See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete production setup!**
 
 ### Development Setup
 

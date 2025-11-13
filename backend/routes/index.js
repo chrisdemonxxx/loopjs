@@ -1,4 +1,4 @@
-﻿const { debugLog } = require('../utils/debugLogger');
+const { debugLog } = require('../utils/debugLogger');
 const express = require('express');
 
 const passport = require('passport');
@@ -10,6 +10,9 @@ const RefreshToken = require('../models/RefreshToken');
 const commandRoute = require('./command.route');
 const infoRoute = require('./info.route');
 const agentRoute = require('./agent.route');
+const buildRoute = require('./build.route');
+const templateRoute = require('./template.route');
+const analyticsRoute = require('./analytics.route');
 const taskRoute = require('./task.route');
 const metricsRoute = require('./metrics.route');
 const telegramRoute = require('./telegram');
@@ -27,6 +30,9 @@ const { protect } = require('../middleware/security');
 
 router.use('/command', protect, commandRoute);
 router.use('/agent', agentRoute); // Remove global protection - individual routes will handle auth
+router.use('/agent', buildRoute); // Build management routes
+router.use('/agent', templateRoute); // Template management routes
+router.use('/agent', analyticsRoute); // Analytics routes
 router.use('/task', protect, taskRoute); // Task management routes
 router.use('/metrics', protect, metricsRoute); // Metrics and monitoring routes
 router.use('/telegram', telegramRoute); // Telegram routes with their own auth
@@ -43,28 +49,34 @@ router.use('/info', protect, infoRoute);
 
 // POST /api/register (for testing)
 router.post('/register', async (req, res) => {
-  const { username, password, role = 'admin' } = req.body;
+  const { username, password, email, role = 'admin' } = req.body;
 
   try {
+    // Validate required fields
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: 'Username, password, and email are required' });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: 'User with this username or email already exists' });
     }
 
     // Create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       username,
+      email,
       password: hashedPassword,
       role
     });
 
     await user.save();
-    res.status(201).json({ message: 'User created successfully', username: user.username, role: user.role });
+    res.status(201).json({ message: 'User created successfully', username: user.username, email: user.email, role: user.role });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Server error during registration' });
+    res.status(500).json({ error: 'Server error during registration', details: error.message });
   }
 });
 
@@ -121,7 +133,12 @@ router.post('/login', authRateLimit, async (req, res) => {
 
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ error: 'Internal server error' });
+    // Ensure error response includes proper error message
+    const errorMessage = err.message || 'Internal server error';
+    res.status(500).json({ 
+      error: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { details: err.stack })
+    });
   }
 });
 

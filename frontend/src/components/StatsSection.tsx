@@ -1,15 +1,15 @@
 import React from 'react';
 import { 
-  FiUsers, 
-  FiActivity, 
-  FiWifi, 
-  FiGlobe, 
-  FiMonitor, 
-  FiShield,
-  FiClock,
-  FiMapPin,
-  FiSmartphone
-} from 'react-icons/fi';
+  Users, 
+  Activity, 
+  Wifi, 
+  Globe, 
+  Monitor, 
+  Shield,
+  Clock,
+  MapPin,
+  Smartphone
+} from 'lucide-react';
 import { Agent } from '../types';
 
 interface StatsSectionProps {
@@ -119,27 +119,27 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ agents }) => {
         <StatCard
           title="Total Clients"
           value={agents.length}
-          icon={<FiUsers className="w-6 h-6 text-white" />}
+          icon={<Users className="w-6 h-6 text-white" />}
           color="bg-blue-500"
         />
         <StatCard
           title="Online"
           value={onlineAgents}
-          icon={<FiActivity className="w-6 h-6 text-white" />}
+          icon={<Activity className="w-6 h-6 text-white" />}
           color="bg-green-500"
           subtitle={`${Math.round((onlineAgents / agents.length) * 100)}% active`}
         />
         <StatCard
           title="Offline"
           value={offlineAgents}
-          icon={<FiWifi className="w-6 h-6 text-white" />}
+          icon={<Wifi className="w-6 h-6 text-white" />}
           color="bg-red-500"
           subtitle={`${Math.round((offlineAgents / agents.length) * 100)}% inactive`}
         />
         <StatCard
           title="Locations"
           value={uniqueLocations}
-          icon={<FiMapPin className="w-6 h-6 text-white" />}
+          icon={<MapPin className="w-6 h-6 text-white" />}
           color="bg-purple-500"
           subtitle={`${uniqueOS} OS types`}
         />
@@ -150,7 +150,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ agents }) => {
         {/* Top Operating Systems */}
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-4">
           <div className="flex items-center mb-4">
-            <FiMonitor className="w-5 h-5 text-blue-500 mr-2" />
+            <Monitor className="w-5 h-5 text-blue-500 mr-2" />
             <h3 className="text-lg font-semibold text-black dark:text-white">Top Operating Systems</h3>
           </div>
           <div className="space-y-3">
@@ -177,7 +177,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ agents }) => {
         {/* Top Locations */}
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-4">
           <div className="flex items-center mb-4">
-            <FiGlobe className="w-5 h-5 text-green-500 mr-2" />
+            <Globe className="w-5 h-5 text-green-500 mr-2" />
             <h3 className="text-lg font-semibold text-black dark:text-white">Top Locations</h3>
           </div>
           <div className="space-y-3">
@@ -282,7 +282,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ agents }) => {
         {/* Connection Quality */}
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-4">
           <div className="flex items-center mb-4">
-            <FiActivity className="w-5 h-5 text-indigo-500 mr-2" />
+            <Activity className="w-5 h-5 text-indigo-500 mr-2" />
             <h3 className="text-lg font-semibold text-black dark:text-white">Connection Quality</h3>
           </div>
           <div className="space-y-4">

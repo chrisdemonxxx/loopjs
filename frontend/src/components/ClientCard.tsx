@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { Agent } from '../types';
 import { 
-  FiMonitor, 
-  FiShield, 
-  FiClock, 
-  FiMapPin, 
-  FiCpu, 
-  FiHardDrive,
-  FiMoreVertical,
-  FiPower,
-  FiRefreshCw,
-  FiCamera,
-  FiTerminal,
-  FiInfo
-} from 'react-icons/fi';
+  Monitor, 
+  Shield, 
+  Clock, 
+  MapPin, 
+  Cpu, 
+  HardDrive,
+  MoreVertical,
+  RefreshCw,
+  Camera,
+  Terminal,
+  Info
+} from 'lucide-react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface ClientCardProps {
   client: Agent;
@@ -33,19 +36,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
     return `${minutes}m`;
   };
 
-  const formatLastActive = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
-  };
 
   const getOSDisplay = () => {
     if (client.operatingSystem === 'windows') {
@@ -67,102 +57,105 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction }) => {
   const isAdmin = client.systemInfo?.isAdmin || false;
 
   return (
-    <div className="premium-client-card group">
-      {/* Header */}
-      <div className="premium-client-header">
-        <div className="flex items-center gap-3">
-          <div className="premium-client-status"></div>
-          <div>
-            <h3 className="premium-client-name">{client.computerName}</h3>
-            <p className="text-sm font-mono" style={{color: 'var(--text-tertiary)'}}>{client.uuid}</p>
+    <Card className="group hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${client.status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <div>
+              <h3 className="font-semibold text-lg">{client.computerName}</h3>
+              <p className="text-sm text-muted-foreground font-mono">{client.id}</p>
+            </div>
+          </div>
+          
+          {/* Actions Menu */}
+          <DropdownMenu open={showActions} onOpenChange={setShowActions}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onAction('reboot', client)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Reboot
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAction('screenshot', client)}>
+                <Camera className="w-4 h-4 mr-2" />
+                Screenshot
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAction('system-info', client)}>
+                <Info className="w-4 h-4 mr-2" />
+                System Info
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAction('custom-command', client)}>
+                <Terminal className="w-4 h-4 mr-2" />
+                Custom Command
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-0">
+        {/* Client Info Grid */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Monitor className="w-4 h-4 text-muted-foreground" />
+            <span>{getOSDisplay()}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <span>{getAntivirusDisplay()}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-muted-foreground" />
+            <Badge variant={isAdmin ? "default" : "secondary"}>
+              {isAdmin ? 'Administrator' : 'Standard User'}
+            </Badge>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <span>{client.geoLocation?.country || client.country || 'Unknown'}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <span>{client.systemInfo?.uptime ? formatUptime(client.systemInfo.uptime) : 'Unknown'}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <HardDrive className="w-4 h-4 text-muted-foreground" />
+            <span>{client.ipAddress}</span>
           </div>
         </div>
-        
-        {/* Floating Actions Menu */}
-        <div className="premium-floating-menu">
-          <button
-            className="premium-floating-menu-button"
-            onClick={() => setShowActions(!showActions)}
+
+        {/* Quick Actions */}
+        <div className="flex gap-2 mt-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onAction('reboot', client)}
+            className="flex-1"
           >
-            <FiMoreVertical className="w-4 h-4" />
-          </button>
-          
-          {showActions && (
-            <div className="premium-dropdown show">
-              <div className="premium-dropdown-item" onClick={() => onAction('reboot', client)}>
-                <FiRefreshCw className="w-4 h-4 mr-2" />
-                Reboot
-              </div>
-              <div className="premium-dropdown-item" onClick={() => onAction('screenshot', client)}>
-                <FiCamera className="w-4 h-4 mr-2" />
-                Screenshot
-              </div>
-              <div className="premium-dropdown-item" onClick={() => onAction('system-info', client)}>
-                <FiInfo className="w-4 h-4 mr-2" />
-                System Info
-              </div>
-              <div className="premium-dropdown-item" onClick={() => onAction('custom-command', client)}>
-                <FiTerminal className="w-4 h-4 mr-2" />
-                Custom Command
-              </div>
-            </div>
-          )}
+            <RefreshCw className="w-3 h-3 mr-1" />
+            Reboot
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onAction('custom-command', client)}
+            className="flex-1"
+          >
+            <Terminal className="w-3 h-3 mr-1" />
+            Command
+          </Button>
         </div>
-      </div>
-
-      {/* Client Info Grid */}
-      <div className="premium-client-info">
-        <div className="premium-client-info-item">
-          <FiMonitor className="premium-client-info-icon" />
-          <span>{getOSDisplay()}</span>
-        </div>
-        
-        <div className="premium-client-info-item">
-          <FiShield className="premium-client-info-icon" />
-          <span>{getAntivirusDisplay()}</span>
-        </div>
-        
-        <div className="premium-client-info-item">
-          <FiCpu className="premium-client-info-icon" />
-          <span className={`premium-badge ${isAdmin ? 'badge-admin' : 'badge-user'}`}>
-            {isAdmin ? 'Administrator' : 'Standard User'}
-          </span>
-        </div>
-        
-        <div className="premium-client-info-item">
-          <FiMapPin className="premium-client-info-icon" />
-          <span>{client.geoLocation?.country || client.country || 'Unknown'}</span>
-        </div>
-        
-        <div className="premium-client-info-item">
-          <FiClock className="premium-client-info-icon" />
-          <span>{client.systemInfo?.uptime ? formatUptime(client.systemInfo.uptime) : 'Unknown'}</span>
-        </div>
-        
-        <div className="premium-client-info-item">
-          <FiHardDrive className="premium-client-info-icon" />
-          <span>{client.ipAddress}</span>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="premium-client-actions">
-        <button 
-          className="premium-action-button"
-          onClick={() => onAction('reboot', client)}
-        >
-          <FiRefreshCw className="w-3 h-3 mr-1" />
-          Reboot
-        </button>
-        <button 
-          className="premium-action-button"
-          onClick={() => onAction('custom-command', client)}
-        >
-          <FiTerminal className="w-3 h-3 mr-1" />
-          Command
-        </button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
