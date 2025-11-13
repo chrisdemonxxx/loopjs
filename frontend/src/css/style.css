@@ -297,9 +297,6 @@
   --border-color: rgba(255, 255, 255, 0.2);
   --accent-color: rgba(59, 130, 246, 0.8);
   --accent-hover: rgba(37, 99, 235, 0.9);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Hacker theme animations */
