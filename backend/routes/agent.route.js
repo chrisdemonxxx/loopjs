@@ -15,5 +15,8 @@ router.post('/:id/command', agentController.sendCommand);
 // HVNC specific routes
 router.post('/:id/hvnc/start', agentController.startHvncSession);
 router.post('/:id/hvnc/stop', agentController.stopHvncSession);
+router.get('/:id/hvnc/status/:sessionId', agentController.getHvncSessionStatus);
+router.post('/:id/hvnc/command', agentController.sendHvncCommand);
+router.post('/:id/hvnc/screenshot', agentController.takeHvncScreenshot);
 
 module.exports = router;
