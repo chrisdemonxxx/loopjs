@@ -1,47 +1,57 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const agentTemplateSchema = new mongoose.Schema({
+const AgentTemplate = sequelize.define('AgentTemplate', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
     name: {
-        type: String,
-        required: true,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
     description: {
-        type: String,
-        default: ''
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     config: {
-        type: Object,
-        required: true
+        type: DataTypes.JSONB,
+        allowNull: false
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        index: true
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
     },
     isPublic: {
-        type: Boolean,
-        default: false,
-        index: true
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
     usageCount: {
-        type: Number,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     lastUsedAt: {
-        type: Date
+        type: DataTypes.DATE
     }
 }, {
-    timestamps: true
+    tableName: 'agent_templates',
+    timestamps: true,
+    indexes: [
+        {
+            fields: ['name']
+        },
+        {
+            fields: ['isPublic', 'createdAt']
+        },
+        {
+            fields: ['createdBy', 'createdAt']
+        }
+    ]
 });
 
-// Indexes for performance
-agentTemplateSchema.index({ name: 1 });
-agentTemplateSchema.index({ isPublic: 1, createdAt: -1 });
-agentTemplateSchema.index({ createdBy: 1, createdAt: -1 });
-
-const AgentTemplate = mongoose.model('AgentTemplate', agentTemplateSchema);
-
 module.exports = AgentTemplate;
-

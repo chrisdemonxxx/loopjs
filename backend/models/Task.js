@@ -1,97 +1,106 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const taskSchema = new mongoose.Schema({
+const Task = sequelize.define('Task', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
     taskId: {
-        type: String,
-        required: true,
-        unique: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     },
     agentUuid: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false
     },
     command: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false
     },
     params: {
-        type: Object,
-        default: {},
+        type: DataTypes.JSONB,
+        defaultValue: {}
     },
     queue: {
-        state: {
-            type: String,
-            enum: ['pending', 'sent', 'ack', 'completed', 'failed'],
-            default: 'pending',
-        },
-        reason: String,
-        attempts: {
-            type: Number,
-            default: 0,
-        },
-        lastAttemptAt: Date,
-        priority: {
-            type: Number,
-            default: 0,
-        },
+        type: DataTypes.JSONB,
+        defaultValue: {
+            state: 'pending',
+            reason: null,
+            attempts: 0,
+            lastAttemptAt: null,
+            priority: 0
+        }
     },
     createdBy: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    sentAt: Date,
-    ackAt: Date,
-    completedAt: Date,
+    sentAt: {
+        type: DataTypes.DATE
+    },
+    ackAt: {
+        type: DataTypes.DATE
+    },
+    completedAt: {
+        type: DataTypes.DATE
+    },
     executionTimeMs: {
-        type: Number,
-        default: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     output: {
-        type: String,
-        default: '',
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     errorMessage: {
-        type: String,
-        default: '',
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     platform: {
-        type: String,
-        default: 'unknown',
+        type: DataTypes.STRING,
+        defaultValue: 'unknown'
     },
     meta: {
-        type: Object,
-        default: {},
+        type: DataTypes.JSONB,
+        defaultValue: {}
     },
     // Legacy fields for backward compatibility
     uuid: {
-        type: String,
+        type: DataTypes.STRING
     },
     originalCommand: {
-        type: String,
-        default: '',
+        type: DataTypes.STRING,
+        defaultValue: ''
     },
     status: {
-        type: String,
-        enum: ['pending', 'executed', 'failed', 'cancelled'],
-        default: 'pending',
+        type: DataTypes.ENUM('pending', 'executed', 'failed', 'cancelled'),
+        defaultValue: 'pending'
     },
     executionTime: {
-        type: Number,
-        default: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     executedAt: {
-        type: Date,
-    },
+        type: DataTypes.DATE
+    }
 }, {
+    tableName: 'tasks',
     timestamps: true,
+    indexes: [
+        {
+            unique: true,
+            fields: ['taskId']
+        },
+        {
+            fields: ['agentUuid', 'createdAt']
+        },
+        {
+            fields: ['createdAt']
+        }
+    ]
 });
-
-// Add indexes for performance
-taskSchema.index({ taskId: 1 }, { unique: true });
-taskSchema.index({ agentUuid: 1, 'queue.state': 1, createdAt: -1 });
-taskSchema.index({ createdAt: -1 });
-taskSchema.index({ 'queue.state': 1, createdAt: -1 });
-
-const Task = mongoose.model('Task', taskSchema);
 
 module.exports = Task;

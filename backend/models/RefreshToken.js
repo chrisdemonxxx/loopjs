@@ -1,21 +1,49 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const RefreshTokenSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  token: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    expires: '7d', // This will automatically delete tokens after 7 days
-  },
+const RefreshToken = sequelize.define('RefreshToken', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    userId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
+    },
+    token: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    expiresAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: () => {
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            return date;
+        }
+    }
+}, {
+    tableName: 'refresh_tokens',
+    timestamps: true,
+    indexes: [
+        {
+            unique: true,
+            fields: ['token']
+        },
+        {
+            fields: ['userId']
+        },
+        {
+            fields: ['expiresAt']
+        }
+    ]
 });
 
-module.exports = mongoose.model('RefreshToken', RefreshTokenSchema);
+module.exports = RefreshToken;

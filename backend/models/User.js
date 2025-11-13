@@ -1,80 +1,145 @@
-
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/database');
 
-const UserSchema = new mongoose.Schema({
-    username: { type: String, unique: true, required: true },
-    email: { type: String, unique: true, required: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'user', 'viewer'], default: 'user' },
-    displayName: { type: String },
-    profilePicture: { type: String },
-    twoFactorEnabled: { type: Boolean, default: false },
-    preferences: {
-        theme: { type: String, default: 'dark' },
-        language: { type: String, default: 'en' },
-        notifications: { type: Boolean, default: true },
-        autoRefresh: { type: Boolean, default: true },
-        refreshInterval: { type: Number, default: 30 }
+const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
     },
-    refreshTokens: [{
-        token: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now },
-        lastUsed: { type: Date, default: Date.now },
-        userAgent: { type: String },
-        ipAddress: { type: String }
-    }],
-    lastLogin: { type: Date },
-    isActive: { type: Boolean, default: true },
-    // Build quotas and permissions
-    buildQuota: {
-        type: Number,
-        default: function() {
-            // Default quotas based on role
-            if (this.role === 'admin') return -1; // Unlimited
-            if (this.role === 'user') return 50;
-            return 10; // viewer
+    username: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+            notEmpty: true
         }
+    },
+    email: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+            isEmail: true
+        }
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    role: {
+        type: DataTypes.ENUM('admin', 'user', 'viewer'),
+        defaultValue: 'user'
+    },
+    displayName: {
+        type: DataTypes.STRING
+    },
+    profilePicture: {
+        type: DataTypes.STRING
+    },
+    twoFactorEnabled: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    preferences: {
+        type: DataTypes.JSONB,
+        defaultValue: {
+            theme: 'dark',
+            language: 'en',
+            notifications: true,
+            autoRefresh: true,
+            refreshInterval: 30
+        }
+    },
+    refreshTokens: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    },
+    lastLogin: {
+        type: DataTypes.DATE
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    },
+    buildQuota: {
+        type: DataTypes.INTEGER,
+        defaultValue: 50
     },
     buildCount: {
-        type: Number,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     quotaResetAt: {
-        type: Date,
-        default: function() {
-            // Reset monthly
-            const resetDate = new Date();
-            resetDate.setMonth(resetDate.getMonth() + 1);
-            return resetDate;
-        }
+        type: DataTypes.DATE
     },
     buildPermissions: {
-        canCreate: { type: Boolean, default: true },
-        canDelete: { type: Boolean, default: true },
-        canDownload: { type: Boolean, default: true },
-        canTest: { type: Boolean, default: true }
+        type: DataTypes.JSONB,
+        defaultValue: {
+            canCreate: true,
+            canDelete: true,
+            canDownload: true,
+            canTest: true
+        }
     }
-}, { timestamps: true });
+}, {
+    tableName: 'users',
+    timestamps: true,
+    hooks: {
+        beforeSave: async (user) => {
+            // Only hash if password was modified
+            if (user.changed('password')) {
+                const isHashed = /^\$2[aby]\$\d{2}\$/.test(user.password);
+                if (!isHashed) {
+                    const salt = await bcrypt.genSalt(10);
+                    user.password = await bcrypt.hash(user.password, salt);
+                }
+            }
 
-// Hash password before saving
-UserSchema.pre('save', async function(next) {
-    // Only hash the password if it has been modified (or is new)
-    if (!this.isModified('password')) return next();
+            // Set build quota based on role if not already set
+            if (user.changed('role') && !user.buildQuota) {
+                if (user.role === 'admin') {
+                    user.buildQuota = -1; // Unlimited
+                } else if (user.role === 'user') {
+                    user.buildQuota = 50;
+                } else {
+                    user.buildQuota = 10; // viewer
+                }
+            }
 
-    // Don't re-hash already hashed passwords
-    const isHashed = /^\$2[aby]\$\d{2}\$/.test(this.password);
-    if (isHashed) {
-        return next();
-    }
-
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (err) {
-        next(err);
+            // Set quota reset date if not set
+            if (!user.quotaResetAt) {
+                const resetDate = new Date();
+                resetDate.setMonth(resetDate.getMonth() + 1);
+                user.quotaResetAt = resetDate;
+            }
+        }
     }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+// Instance methods
+User.prototype.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
+User.prototype.addRefreshToken = async function(tokenData) {
+    const tokens = this.refreshTokens || [];
+    tokens.push({
+        token: tokenData.token,
+        createdAt: new Date(),
+        lastUsed: new Date(),
+        userAgent: tokenData.userAgent,
+        ipAddress: tokenData.ipAddress
+    });
+    this.refreshTokens = tokens;
+    await this.save();
+};
+
+User.prototype.removeRefreshToken = async function(token) {
+    const tokens = this.refreshTokens || [];
+    this.refreshTokens = tokens.filter(t => t.token !== token);
+    await this.save();
+};
+
+module.exports = User;

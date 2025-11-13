@@ -1,107 +1,112 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const agentBuildSchema = new mongoose.Schema({
+const AgentBuild = sequelize.define('AgentBuild', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
     agentId: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     },
     name: {
-        type: String,
-        required: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
     version: {
-        type: String,
-        default: '1.0.0'
+        type: DataTypes.STRING,
+        defaultValue: '1.0.0'
     },
     description: {
-        type: String,
-        default: ''
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     config: {
-        type: Object,
-        required: true
+        type: DataTypes.JSONB,
+        allowNull: false
     },
     status: {
-        type: String,
-        enum: ['queued', 'generating', 'compiling', 'packaging', 'ready', 'error', 'cancelled'],
-        default: 'queued',
-        index: true
+        type: DataTypes.ENUM('queued', 'generating', 'compiling', 'packaging', 'ready', 'error', 'cancelled'),
+        defaultValue: 'queued'
     },
     progress: {
-        type: Number,
-        min: 0,
-        max: 100,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        validate: {
+            min: 0,
+            max: 100
+        }
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        index: true
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
     },
     filePaths: {
-        exe: String,
-        msi: String,
-        zip: String,
-        cpp: String,
-        logs: String
+        type: DataTypes.JSONB,
+        defaultValue: {}
     },
     metadata: {
-        serviceName: String,
-        clonedService: String,
-        password: String,
-        features: [String],
-        codeStructure: Object,
-        junkCodeLines: Number,
-        entryPoint: String,
-        codeSigningMetadata: Object,
-        securityFeatures: [String]
+        type: DataTypes.JSONB,
+        defaultValue: {}
     },
     errorMessage: {
-        type: String,
-        default: ''
+        type: DataTypes.TEXT,
+        defaultValue: ''
     },
     startedAt: {
-        type: Date
+        type: DataTypes.DATE
     },
     completedAt: {
-        type: Date
+        type: DataTypes.DATE
     },
     fileSize: {
-        type: Number,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     downloadCount: {
-        type: Number,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
     testResults: {
-        type: Object,
-        default: null
+        type: DataTypes.JSONB,
+        defaultValue: null
     },
     parentBuildId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'AgentBuild',
-        default: null
+        type: DataTypes.UUID,
+        references: {
+            model: 'agent_builds',
+            key: 'id'
+        }
     },
-    versionHistory: [{
-        version: String,
-        buildId: mongoose.Schema.Types.ObjectId,
-        createdAt: Date
-    }]
+    versionHistory: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    }
 }, {
-    timestamps: true
+    tableName: 'agent_builds',
+    timestamps: true,
+    indexes: [
+        {
+            unique: true,
+            fields: ['agentId']
+        },
+        {
+            fields: ['status', 'createdAt']
+        },
+        {
+            fields: ['createdBy', 'createdAt']
+        },
+        {
+            fields: ['parentBuildId']
+        }
+    ]
 });
 
-// Indexes for performance
-agentBuildSchema.index({ createdAt: -1 });
-agentBuildSchema.index({ status: 1, createdAt: -1 });
-agentBuildSchema.index({ createdBy: 1, createdAt: -1 });
-agentBuildSchema.index({ parentBuildId: 1 });
-
-const AgentBuild = mongoose.model('AgentBuild', agentBuildSchema);
-
 module.exports = AgentBuild;
-

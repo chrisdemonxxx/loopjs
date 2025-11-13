@@ -1,207 +1,125 @@
-/**
- * Command Pattern Model
- * Stores successful command patterns and failed anti-patterns for learning
- */
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const mongoose = require('mongoose');
-
-const commandPatternSchema = new mongoose.Schema({
+const CommandPattern = sequelize.define('CommandPattern', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
     userIntent: {
-        type: String,
-        required: true,
-        index: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    
     softwareName: {
-        type: String,
-        index: true
+        type: DataTypes.STRING
     },
-    
     category: {
-        type: String,
-        enum: ['download', 'install', 'network', 'file', 'system', 'process', 'automation', 'general'],
-        default: 'general',
-        index: true
+        type: DataTypes.ENUM('download', 'install', 'network', 'file', 'system', 'process', 'automation', 'general'),
+        defaultValue: 'general'
     },
-    
     platform: {
-        type: String,
-        default: 'windows'
+        type: DataTypes.STRING,
+        defaultValue: 'windows'
     },
-    
     successfulApproach: {
-        steps: [{
-            type: String
-        }],
-        urls: [{
-            type: String
-        }],
-        commands: [{
-            type: String
-        }],
-        strategy: {
-            type: String
-        },
-        successRate: {
-            type: Number,
-            default: 1.0,
-            min: 0,
-            max: 1
-        },
-        averageTime: {
-            type: Number, // in milliseconds
-            default: 0
-        },
-        executionCount: {
-            type: Number,
-            default: 1
+        type: DataTypes.JSONB,
+        defaultValue: {
+            steps: [],
+            urls: [],
+            commands: [],
+            strategy: '',
+            successRate: 1.0,
+            averageTime: 0,
+            executionCount: 1
         }
     },
-    
-    failedApproaches: [{
-        approach: {
-            type: String,
-            required: true
-        },
-        error: {
-            type: String
-        },
-        errorCategory: {
-            type: String
-        },
-        frequency: {
-            type: Number,
-            default: 1
-        },
-        lastOccurred: {
-            type: Date,
-            default: Date.now
-        }
-    }],
-    
+    failedApproaches: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    },
     metadata: {
-        firstSeen: {
-            type: Date,
-            default: Date.now
-        },
-        lastUsed: {
-            type: Date,
-            default: Date.now
-        },
-        totalExecutions: {
-            type: Number,
-            default: 1
-        },
-        successCount: {
-            type: Number,
-            default: 1
-        },
-        failureCount: {
-            type: Number,
-            default: 0
+        type: DataTypes.JSONB,
+        defaultValue: {
+            firstSeen: new Date(),
+            lastUsed: new Date(),
+            totalExecutions: 1,
+            successCount: 1,
+            failureCount: 0
         }
     },
-    
     systemContext: {
-        requiresAdmin: {
-            type: Boolean,
-            default: false
-        },
-        requiresInternet: {
-            type: Boolean,
-            default: false
-        },
-        requiredTools: [{
-            type: String
-        }]
+        type: DataTypes.JSONB,
+        defaultValue: {
+            requiresAdmin: false,
+            requiresInternet: false,
+            requiredTools: []
+        }
     }
 }, {
-    timestamps: true
+    tableName: 'command_patterns',
+    timestamps: true,
+    indexes: [
+        {
+            fields: ['userIntent', 'category']
+        },
+        {
+            fields: ['softwareName']
+        }
+    ]
 });
 
-// Indexes for efficient querying
-commandPatternSchema.index({ userIntent: 1, category: 1 });
-commandPatternSchema.index({ softwareName: 1 });
-commandPatternSchema.index({ 'metadata.lastUsed': -1 });
-commandPatternSchema.index({ 'successfulApproach.successRate': -1 });
+// Instance methods
+CommandPattern.prototype.recordSuccess = async function(executionTime) {
+    const metadata = this.metadata || {};
+    metadata.successCount = (metadata.successCount || 0) + 1;
+    metadata.totalExecutions = (metadata.totalExecutions || 0) + 1;
+    metadata.lastUsed = new Date();
 
-// Methods
-commandPatternSchema.methods.recordSuccess = function(executionTime) {
-    this.metadata.successCount += 1;
-    this.metadata.totalExecutions += 1;
-    this.metadata.lastUsed = new Date();
-    
-    if (this.successfulApproach) {
-        this.successfulApproach.executionCount += 1;
-        
-        // Update average time
-        const currentTotal = this.successfulApproach.averageTime * (this.successfulApproach.executionCount - 1);
-        this.successfulApproach.averageTime = (currentTotal + executionTime) / this.successfulApproach.executionCount;
-        
-        // Update success rate
-        this.successfulApproach.successRate = this.metadata.successCount / this.metadata.totalExecutions;
-    }
-    
-    return this.save();
+    const approach = this.successfulApproach || {};
+    approach.executionCount = (approach.executionCount || 0) + 1;
+
+    const currentTotal = (approach.averageTime || 0) * (approach.executionCount - 1);
+    approach.averageTime = (currentTotal + executionTime) / approach.executionCount;
+    approach.successRate = metadata.successCount / metadata.totalExecutions;
+
+    this.metadata = metadata;
+    this.successfulApproach = approach;
+    await this.save();
 };
 
-commandPatternSchema.methods.recordFailure = function(approach, error, errorCategory) {
-    this.metadata.failureCount += 1;
-    this.metadata.totalExecutions += 1;
-    this.metadata.lastUsed = new Date();
-    
-    // Find existing failed approach or create new one
-    const existingFailure = this.failedApproaches.find(f => f.approach === approach);
-    
+CommandPattern.prototype.recordFailure = async function(approach, error, errorCategory) {
+    const metadata = this.metadata || {};
+    metadata.failureCount = (metadata.failureCount || 0) + 1;
+    metadata.totalExecutions = (metadata.totalExecutions || 0) + 1;
+    metadata.lastUsed = new Date();
+
+    const failures = this.failedApproaches || [];
+    const existingFailure = failures.find(f => f.approach === approach);
+
     if (existingFailure) {
         existingFailure.frequency += 1;
         existingFailure.lastOccurred = new Date();
         if (error) existingFailure.error = error;
         if (errorCategory) existingFailure.errorCategory = errorCategory;
     } else {
-        this.failedApproaches.push({
-            approach: approach,
-            error: error,
-            errorCategory: errorCategory,
+        failures.push({
+            approach,
+            error,
+            errorCategory,
             frequency: 1,
             lastOccurred: new Date()
         });
     }
-    
-    // Update success rate
+
+    this.metadata = metadata;
+    this.failedApproaches = failures;
+
     if (this.successfulApproach) {
-        this.successfulApproach.successRate = this.metadata.successCount / this.metadata.totalExecutions;
+        this.successfulApproach.successRate = metadata.successCount / metadata.totalExecutions;
     }
-    
-    return this.save();
-};
 
-// Static methods
-commandPatternSchema.statics.findByIntent = function(userIntent, category = null) {
-    const query = { userIntent: new RegExp(userIntent, 'i') };
-    if (category) {
-        query.category = category;
-    }
-    return this.find(query).sort({ 'successfulApproach.successRate': -1, 'metadata.totalExecutions': -1 });
+    await this.save();
 };
-
-commandPatternSchema.statics.findBySoftware = function(softwareName) {
-    return this.find({ softwareName: new RegExp(softwareName, 'i') })
-        .sort({ 'successfulApproach.successRate': -1 });
-};
-
-commandPatternSchema.statics.getTopPatterns = function(limit = 10) {
-    return this.find()
-        .sort({ 'successfulApproach.successRate': -1, 'metadata.totalExecutions': -1 })
-        .limit(limit);
-};
-
-commandPatternSchema.statics.getRecentPatterns = function(limit = 10) {
-    return this.find()
-        .sort({ 'metadata.lastUsed': -1 })
-        .limit(limit);
-};
-
-const CommandPattern = mongoose.model('CommandPattern', commandPatternSchema);
 
 module.exports = CommandPattern;

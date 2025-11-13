@@ -19,10 +19,10 @@ services:
       - key: PORT
         value: "10000"
 
-      - key: MONGODB_URI
-        sync: false
-        # Add this manually in Render dashboard
-        # Format: mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+      - key: DATABASE_URL
+        fromDatabase:
+          name: loopjs
+          property: connectionString
 
       - key: JWT_SECRET
         generateValue: true
@@ -71,3 +71,9 @@ services:
       #
       # - key: GOOGLE_GEMINI_API_KEY
       #   sync: false
+
+databases:
+  - name: loopjs
+    databaseName: loopjs
+    user: loopjs_user
+    plan: free
