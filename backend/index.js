@@ -85,8 +85,7 @@ async function initializeApp() {
                     'https://loopjs-frontend-361659024403.us-central1.run.app',
                     'https://loopjs.vidai.sbs',
                     'https://loopjs-frontend.onrender.com',
-                    'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app',
-                    'https://*.vercel.app'
+                    'https://frontend-c6l7dzrkd-chrisdemonxxxs-projects.vercel.app'
                 ];
                 
                 // Allow requests with no origin (like mobile apps, curl requests)
@@ -95,6 +94,10 @@ async function initializeApp() {
                     callback(null, true);
                 } else if (allowedOrigins.indexOf(origin) !== -1) {
                     console.log(`CORS: Allowing origin: ${origin}`);
+                    callback(null, true);
+                } else if (origin.endsWith('.vercel.app')) {
+                    // Allow all Vercel deployments
+                    console.log(`CORS: Allowing Vercel origin: ${origin}`);
                     callback(null, true);
                 } else {
                     console.log(`CORS: Blocking origin: ${origin}`);
