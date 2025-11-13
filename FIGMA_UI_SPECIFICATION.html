@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoopJS C2 Panel - Complete UI Specification</title>
+    <style>
+        @page { margin: 2cm; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 40px; 
+            line-height: 1.8; 
+            color: #1f2937;
+            background: #ffffff;
+        }
+        h1 { 
+            color: #6366f1; 
+            border-bottom: 3px solid #6366f1; 
+            padding-bottom: 10px; 
+            margin-top: 40px;
+            page-break-after: avoid;
+        }
+        h2 { 
+            color: #8b5cf6; 
+            margin-top: 30px;
+            border-left: 4px solid #8b5cf6;
+            padding-left: 15px;
+            page-break-after: avoid;
+        }
+        h3 { 
+            color: #3b82f6;
+            margin-top: 25px;
+            page-break-after: avoid;
+        }
+        code { 
+            background: #f3f4f6; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre { 
+            background: #1f2937; 
+            color: #f9fafb; 
+            padding: 20px; 
+            border-radius: 8px; 
+            overflow-x: auto;
+            page-break-inside: avoid;
+        }
+        pre code { background: none; color: inherit; padding: 0; }
+        ul, ol { margin-left: 30px; margin-bottom: 15px; }
+        li { margin-bottom: 8px; }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        th, td { 
+            border: 1px solid #e5e7eb; 
+            padding: 12px; 
+            text-align: left; 
+        }
+        th { 
+            background: #6366f1; 
+            color: white; 
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background: #f9fafb; }
+        hr { border: none; border-top: 2px solid #e5e7eb; margin: 30px 0; }
+        strong { color: #1f2937; font-weight: 600; }
+        @media print {
+            body { padding: 20px; }
+            h1, h2, h3 { page-break-after: avoid; }
+            pre, table { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<h1>LoopJS C2 Panel - Complete UI Specification for Figma Design</h1>
+<br>
+<h2>🎨 Design Requirements</h2>
+<ul>
+<li>**Style**: Premium, Modern, Figma-style</li>
+<li>**Theme**: Dark mode primary, with light mode support</li>
+<li>**Design System**: Glassmorphism effects, gradient buttons, rounded corners, smooth animations</li>
+<li>**Inspiration**: Modern SaaS dashboards, premium security tools, clean minimalist design</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>📱 Main Layout Structure</h2>
+<br>
+<h3>**1. Header Bar**</h3>
+<ul>
+<li>**Position**: Top of screen, sticky</li>
+<li>**Left Side**:</li>
+<li>Panel logo/icon (customizable emoji or icon)</li>
+<li>Panel name "C2 Panel" (customizable)</li>
+<li>Subtitle: "Command & Control Panel"</li>
+<li>**Right Side**:</li>
+<li>OPERATIONAL status indicator</li>
+<li>User profile dropdown with:</li>
+<li>User role badge (User/Admin)</li>
+<li>Profile picture or avatar</li>
+<li>Dropdown menu: Profile Settings, Logout</li>
+</ul>
+<br>
+<h3>**2. Navigation Tabs** (Primary Navigation)</h3>
+<ul>
+<li>**Layout**: Horizontal tab bar below header</li>
+<li>**Tabs** (8 total):</li>
+<li>**Overview** 📊 - Dashboard overview with stats</li>
+<li>**Clients** 👥 - Connected clients/agents table</li>
+<li>**Agent** 🤖 - Agent builder and management</li>
+<li>**AI Terminal** 💻 - Command terminal interface</li>
+<li>**AI Insights** 🧠 - AI analytics and decision-making</li>
+<li>**Logs** 📝 - System logs and audit trail</li>
+<li>**Tasks** 📋 - Task management and scheduling</li>
+<li>**Settings** ⚙️ - Application settings</li>
+<li>**Design**: Rounded tabs, gradient highlight on active tab, icons + labels</li>
+</ul>
+<br>
+<h3>**3. Main Content Area**</h3>
+<ul>
+<li>Full-width content area below navigation</li>
+<li>Responsive padding and spacing</li>
+<li>Card-based layout for sections</li>
+</ul>
+<br>
+<h3>**4. Footer** (Optional)</h3>
+<ul>
+<li>Status bar: Connection status, last updated time, version number</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>📄 Page Sections & Features</h2>
+<br>
+<h3>**SECTION 1: OVERVIEW (Dashboard)**</h3>
+<br>
+<p>#### <strong>Dashboard Stats Cards</strong> (Grid Layout)</p>
+<ul>
+<li>**Total Clients**</li>
+<li>Icon: Users icon</li>
+<li>Value: Dynamic number</li>
+<li>Color: Indigo/Purple gradient</li>
+</ul>
+<br>
+<ul>
+<li>**Online Clients**</li>
+<li>Icon: Active users icon</li>
+<li>Value: Dynamic number</li>
+<li>Color: Green gradient</li>
+</ul>
+<br>
+<ul>
+<li>**Offline Clients**</li>
+<li>Icon: Inactive users icon</li>
+<li>Value: Dynamic number</li>
+<li>Color: Gray gradient</li>
+</ul>
+<br>
+<ul>
+<li>**Pending Tasks**</li>
+<li>Icon: Clock icon</li>
+<li>Value: Dynamic number</li>
+<li>Subtitle: "In queue"</li>
+<li>Color: Orange gradient</li>
+</ul>
+<br>
+<ul>
+<li>**Success Rate**</li>
+<li>Icon: Checkmark icon</li>
+<li>Value: Percentage (e.g., "95.5%")</li>
+<li>Subtitle: "Command execution"</li>
+<li>Color: Green gradient</li>
+</ul>
+<br>
+<ul>
+<li>**Average Execution Time**</li>
+<li>Icon: Timer icon</li>
+<li>Value: Time in ms (e.g., "1.2s")</li>
+<li>Color: Blue gradient</li>
+</ul>
+<br>
+<p>#### <strong>Real-time Activity Feed</strong></p>
+<ul>
+<li>Live activity stream</li>
+<li>Connection/disconnection events</li>
+<li>Command execution results</li>
+<li>System alerts</li>
+</ul>
+<br>
+<p>#### <strong>Quick Actions Panel</strong></p>
+<ul>
+<li>Buttons for common actions:</li>
+<li>View All Clients</li>
+<li>Create New Task</li>
+<li>View Recent Logs</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 2: CLIENTS**</h3>
+<br>
+<p>#### <strong>Filter & Search Bar</strong></p>
+<ul>
+<li>**Search Input**: "Search by name, IP, or OS..."</li>
+<li>**Status Filter Dropdown**: All Status / Online / Offline</li>
+<li>**OS Filter Dropdown**: All OS / Windows / Linux / macOS</li>
+<li>**Actions**:</li>
+<li>"Export CSV" button (with download icon)</li>
+<li>"Show Offline (X)" toggle button</li>
+</ul>
+<br>
+<p>#### <strong>Clients Table</strong></p>
+<ul>
+<li>**Columns**:</li>
+<li>**Computer Name** (sortable, clickable)</li>
+<li>**IP Address** (sortable)</li>
+<li>**Platform** (badge: Windows/Linux/macOS)</li>
+<li>**Status** (badge: Online/Offline with colored dot)</li>
+<li>**Last Seen** (relative time: "2 minutes ago")</li>
+<li>**Actions** (dropdown menu):</li>
+<li>View Details</li>
+<li>Execute Command</li>
+<li>View Tasks</li>
+<li>Remote Control</li>
+<li>Screenshot</li>
+<li>Keylogger Toggle</li>
+<li>Disconnect</li>
+</ul>
+<br>
+<ul>
+<li>**Table Features**:</li>
+<li>Sortable columns (click header to sort)</li>
+<li>Pagination or infinite scroll</li>
+<li>Row hover effects</li>
+<li>Empty state: "No online clients found. Start the client to see it appear here."</li>
+</ul>
+<br>
+<p>#### <strong>Client Details Modal</strong> (when clicking client)</p>
+<ul>
+<li>Client information card</li>
+<li>System information</li>
+<li>Capabilities list</li>
+<li>Action buttons</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 3: AGENT**</h3>
+<br>
+<p>#### <strong>Agent Management Header</strong></p>
+<ul>
+<li>Title: "Agent Management"</li>
+<li>Subtitle: "Generate polymorphic MSI agents with advanced evasion techniques"</li>
+<li>Robot icon</li>
+</ul>
+<br>
+<p>#### <strong>Sub-navigation Tabs</strong></p>
+<ul>
+<li>**Generate** 🚀 - Agent generation form</li>
+<li>**Configuration** ⚙️ - Agent settings</li>
+<li>**Builds** 📦 - Build history</li>
+<li>**Templates** 📄 - Saved templates</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Generate</strong></p>
+<ul>
+<li>**Advanced Agent Builder** (coming soon notice)</li>
+<li>"Coming Soon" badge</li>
+<li>Description text: "We're working on an advanced polymorphic agent builder with MSI packaging, evasion techniques, and stealth capabilities. Stay tuned!"</li>
+</ul>
+<br>
+<ul>
+<li>**Generate New Agent Form**:</li>
+<li>**Agent Name** input (with refresh icon button)</li>
+<li>**Service Name** input (with refresh icon button)</li>
+<li>**Description** textarea (multi-line)</li>
+<li>**Generate Agent** button (gradient, large, with lightning icon)</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Configuration</strong></p>
+<ul>
+<li>**Basic Configuration**:</li>
+<li>Agent name</li>
+<li>Service name</li>
+<li>Description</li>
+</ul>
+<br>
+<ul>
+<li>**Evasion Settings** (checkboxes):</li>
+<li>Polymorphic naming</li>
+<li>UAC bypass</li>
+<li>Defender exclusion</li>
+<li>Process hollowing</li>
+<li>Memory evasion</li>
+</ul>
+<br>
+<ul>
+<li>**Stealth Settings** (checkboxes):</li>
+<li>Anti-debug</li>
+<li>Anti-VM</li>
+<li>Anti-sandbox</li>
+<li>Code obfuscation</li>
+<li>String encryption</li>
+</ul>
+<br>
+<ul>
+<li>**Persistence Settings** (checkboxes):</li>
+<li>Service installation</li>
+<li>Registry persistence</li>
+<li>Scheduled task</li>
+<li>Startup folder</li>
+</ul>
+<br>
+<ul>
+<li>**Communication Settings**:</li>
+<li>Server URL input</li>
+<li>Server port input</li>
+<li>Heartbeat interval input</li>
+<li>Reconnect attempts input</li>
+</ul>
+<br>
+<ul>
+<li>**Advanced Features** (checkboxes):</li>
+<li>Keylogger</li>
+<li>Screen capture</li>
+<li>File manager</li>
+<li>Process manager</li>
+<li>Network monitor</li>
+<li>System info</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Builds</strong></p>
+<ul>
+<li>Build history table:</li>
+<li>Build name</li>
+<li>Version</li>
+<li>Status badge (Generating/Ready/Error)</li>
+<li>Created date</li>
+<li>Actions: Download, View Details, Delete</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Templates</strong></p>
+<ul>
+<li>Template cards grid:</li>
+<li>Template name</li>
+<li>Description</li>
+<li>Last used date</li>
+<li>Actions: Use, Edit, Delete</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 4: AI TERMINAL**</h3>
+<br>
+<p>#### <strong>Terminal Header</strong></p>
+<ul>
+<li>Title: "AI Terminal"</li>
+<li>**Connection Status Indicator**:</li>
+<li>Status: "AI Connected" / "AI Disconnected"</li>
+<li>Colored dot (green/red)</li>
+<li>Lightning bolt icon</li>
+</ul>
+<br>
+<p>#### <strong>Mode Selection Buttons</strong></p>
+<ul>
+<li>**Chat Mode** 💬 - Natural language commands</li>
+<li>**Commands Mode** ⌨️ - Direct command execution</li>
+<li>Active mode highlighted with gradient</li>
+</ul>
+<br>
+<p>#### <strong>Action Buttons</strong></p>
+<ul>
+<li>**Clear Logs** button (trash icon)</li>
+</ul>
+<br>
+<p>#### <strong>Target Client Selector</strong></p>
+<ul>
+<li>Dropdown: "Target Client:"</li>
+<li>Options: List of online clients</li>
+<li>Default: "No online clients" (when none available)</li>
+</ul>
+<br>
+<p>#### <strong>Terminal Output Area</strong></p>
+<ul>
+<li>Dark terminal background</li>
+<li>Command prompt: `>_`</li>
+<li>Command history display:</li>
+<li>User input commands</li>
+<li>AI-processed commands</li>
+<li>Command output</li>
+<li>Success/error indicators</li>
+<li>Timestamps</li>
+</ul>
+<br>
+<p>#### <strong>Terminal Input Bar</strong></p>
+<ul>
+<li>Command input field (full width)</li>
+<li>"Send" button or Enter key to execute</li>
+<li>Auto-suggestions dropdown (optional)</li>
+</ul>
+<br>
+<p>#### <strong>Command History Panel</strong> (optional sidebar)</p>
+<ul>
+<li>Recent commands list</li>
+<li>Quick re-execute buttons</li>
+<li>Command status indicators</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 5: AI INSIGHTS**</h3>
+<br>
+<p>#### <strong>AI Insights Header</strong></p>
+<ul>
+<li>Title: "AI Insights Panel"</li>
+<li>Subtitle: "Real-time AI decision-making and learning analytics"</li>
+</ul>
+<br>
+<p>#### <strong>Sub-navigation Tabs</strong></p>
+<ul>
+<li>**Overview** 📊 - AI overview dashboard</li>
+<li>**Strategies** 🎯 - AI strategy execution</li>
+<li>**Learning** 📚 - AI learning analytics</li>
+<li>**Research** 🔍 - AI research results</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Overview</strong></p>
+<ul>
+<li>**AI Stats Cards**:</li>
+<li>Total commands processed</li>
+<li>Success rate</li>
+<li>Average strategies per command</li>
+<li>Learning improvements</li>
+</ul>
+<br>
+<ul>
+<li>**Recent Commands List**:</li>
+<li>Command preview</li>
+<li>Status indicators</li>
+<li>Strategy count</li>
+<li>Execution time</li>
+</ul>
+<br>
+<ul>
+<li>**Top Successful Patterns**:</li>
+<li>Pattern name</li>
+<li>Success rate</li>
+<li>Usage count</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Strategies</strong></p>
+<ul>
+<li>**Active Strategies List**:</li>
+<li>Strategy name</li>
+<li>Priority badge</li>
+<li>Status (Pending/Running/Success/Failed)</li>
+<li>Success rate percentage</li>
+<li>Estimated time</li>
+<li>Tools used</li>
+<li>Error messages (if failed)</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Learning</strong></p>
+<ul>
+<li>**Learning Statistics**:</li>
+<li>Total commands processed</li>
+<li>Success rate over time (chart)</li>
+<li>Average strategies per command</li>
+<li>Top successful patterns list</li>
+</ul>
+<br>
+<ul>
+<li>**Recent Improvements**:</li>
+<li>Date</li>
+<li>Improvement description</li>
+<li>Impact percentage</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Research</strong></p>
+<ul>
+<li>**Research Results**:</li>
+<li>"Research results will appear when the AI needs to find solutions"</li>
+<li>When active:</li>
+<li>Source name</li>
+<li>Solution description</li>
+<li>Confidence level (percentage)</li>
+<li>Source link/icon</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 6: LOGS**</h3>
+<br>
+<p>#### <strong>Logs Header</strong></p>
+<ul>
+<li>Title: "System Logs"</li>
+<li>**Filter Controls**:</li>
+<li>Log level filter: All / Info / Warning / Error / Debug</li>
+<li>Date range picker</li>
+<li>Search input</li>
+<li>Refresh button</li>
+</ul>
+<br>
+<p>#### <strong>Logs Table/List</strong></p>
+<ul>
+<li>**Columns**:</li>
+<li>Timestamp</li>
+<li>Level badge (Info/Warning/Error/Debug)</li>
+<li>Component/Module</li>
+<li>Message</li>
+<li>Details (expandable)</li>
+</ul>
+<br>
+<ul>
+<li>**Log Entry Design**:</li>
+<li>Color-coded by level</li>
+<li>Expandable details</li>
+<li>Copy button per entry</li>
+<li>Highlight on hover</li>
+</ul>
+<br>
+<p>#### <strong>Log Actions</strong></p>
+<ul>
+<li>**Clear All Logs** button</li>
+<li>**Export Logs** button</li>
+<li>**Auto-refresh** toggle</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 7: TASKS**</h3>
+<br>
+<p>#### <strong>Tasks Header</strong></p>
+<ul>
+<li>Title: "Task Management"</li>
+<li>**Actions**:</li>
+<li>"Create Task" button (plus icon)</li>
+<li>Filter dropdowns</li>
+<li>Search input</li>
+</ul>
+<br>
+<p>#### <strong>Task Filters</strong></p>
+<ul>
+<li>Status filter: All / Pending / Running / Completed / Failed / Paused</li>
+<li>Priority filter: All / Low / Medium / High / Critical</li>
+<li>Assignee filter</li>
+<li>Date range filter</li>
+</ul>
+<br>
+<p>#### <strong>Tasks Table</strong></p>
+<ul>
+<li>**Columns**:</li>
+<li>**Task Name** (clickable for details)</li>
+<li>**Description**</li>
+<li>**Status** badge (with icon)</li>
+<li>**Priority** badge (color-coded)</li>
+<li>**Assigned To** (client name)</li>
+<li>**Progress** (progress bar + percentage)</li>
+<li>**Created** (date/time)</li>
+<li>**Updated** (date/time)</li>
+<li>**Actions** (dropdown):</li>
+<li>View Details</li>
+<li>Edit</li>
+<li>Pause/Resume</li>
+<li>Cancel</li>
+<li>Delete</li>
+</ul>
+<br>
+<p>#### <strong>Task Details Modal</strong></p>
+<ul>
+<li>Full task information</li>
+<li>Execution logs</li>
+<li>Progress timeline</li>
+<li>Retry/cancel actions</li>
+</ul>
+<br>
+<p>#### <strong>Create Task Modal</strong></p>
+<ul>
+<li>Task name input</li>
+<li>Description textarea</li>
+<li>Priority selector</li>
+<li>Target client selector</li>
+<li>Command/script input</li>
+<li>Schedule options</li>
+</ul>
+<br>
+<hr>
+<br>
+<h3>**SECTION 8: SETTINGS**</h3>
+<br>
+<p>#### <strong>Settings Header</strong></p>
+<ul>
+<li>Title: "Settings"</li>
+<li>Subtitle: "Configure your C2 Panel"</li>
+</ul>
+<br>
+<p>#### <strong>Sub-navigation Tabs</strong></p>
+<ul>
+<li>**Appearance** 🎨 - Theme and UI settings</li>
+<li>**General** ⚙️ - General settings</li>
+<li>**Security** 🔒 - Security settings</li>
+<li>**Users** 👥 - User management</li>
+<li>**Database** 💾 - Database settings</li>
+<li>**Telegram** 📱 - Telegram integration</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Appearance</strong></p>
+<ul>
+<li>**Theme Selection**:</li>
+<li>Theme cards (grid layout):</li>
+<li>**Light Premium** ☀️</li>
+<li>Description: "Clean & minimal design"</li>
+<li>Category: Professional</li>
+</ul>
+<br>
+<ul>
+<li>**Dark Premium** 🌙</li>
+<li>Description: "Easy on the eyes"</li>
+<li>Category: Professional</li>
+</ul>
+<br>
+<ul>
+<li>**Hacker Elite** 💚</li>
+<li>Description: "Matrix rain effects"</li>
+<li>Category: Hacker</li>
+</ul>
+<br>
+<ul>
+<li>**Premium Cyber** 🚀</li>
+<li>Description: "Futuristic cyberpunk"</li>
+<li>Category: Cyberpunk</li>
+</ul>
+<br>
+<ul>
+<li>**Panel Customization**:</li>
+<li>Panel name input</li>
+<li>Panel icon selector/input (emoji or icon)</li>
+</ul>
+<br>
+<ul>
+<li>**Save** button</li>
+</ul>
+<br>
+<p>#### <strong>Tab: General</strong></p>
+<ul>
+<li>**Panel Settings**:</li>
+<li>Panel name input</li>
+<li>Panel icon input</li>
+<li>Auto-refresh toggle</li>
+<li>Refresh interval input (seconds)</li>
+<li>Notifications toggle</li>
+</ul>
+<br>
+<ul>
+<li>**Save** button</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Security</strong></p>
+<ul>
+<li>**Session Settings**:</li>
+<li>Session timeout input (minutes, default: 60)</li>
+<li>Max login attempts input (default: 5)</li>
+</ul>
+<br>
+<ul>
+<li>**Two-Factor Authentication**:</li>
+<li>"Require 2FA for all users" checkbox</li>
+</ul>
+<br>
+<ul>
+<li>**Password Policy**:</li>
+<li>Minimum length input (default: 8)</li>
+<li>"Require special characters" checkbox</li>
+<li>"Require numbers" checkbox</li>
+<li>"Require uppercase letters" checkbox</li>
+</ul>
+<br>
+<ul>
+<li>**Status Indicator**: "Saving..." when active</li>
+<li>**Save** button</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Users</strong></p>
+<ul>
+<li>**Users Table**:</li>
+<li>Columns: Username, Email, Role, Status, Created, Last Login, Actions</li>
+</ul>
+<br>
+<ul>
+<li>**User Actions**:</li>
+<li>"Create User" button</li>
+<li>Edit user (per row)</li>
+<li>Delete user (per row)</li>
+<li>Change role (per row)</li>
+</ul>
+<br>
+<ul>
+<li>**Create User Modal**:</li>
+<li>Username input</li>
+<li>Email input</li>
+<li>Password input (with show/hide toggle)</li>
+<li>Role selector (Admin/User/Viewer)</li>
+<li>"Create" button</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Database</strong></p>
+<ul>
+<li>**Database Settings**:</li>
+<li>Auto-clear logs toggle</li>
+<li>Log retention days input (default: 30)</li>
+<li>Offline logs toggle</li>
+</ul>
+<br>
+<ul>
+<li>**Database Actions**:</li>
+<li>"Clear All Logs" button</li>
+<li>"Backup Database" button</li>
+<li>"Restore Database" button</li>
+</ul>
+<br>
+<p>#### <strong>Tab: Telegram</strong></p>
+<ul>
+<li>**Telegram Integration**:</li>
+<li>Enable Telegram toggle</li>
+<li>Bot token input (with show/hide toggle)</li>
+<li>Chat ID input</li>
+<li>"Test Connection" button</li>
+<li>Test result message (success/error)</li>
+</ul>
+<br>
+<ul>
+<li>**Notification Settings** (when enabled):</li>
+<li>New connection toggle</li>
+<li>Disconnection toggle</li>
+<li>Task completion toggle</li>
+<li>System alerts toggle</li>
+</ul>
+<br>
+<ul>
+<li>**Save** button</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>🎨 Design System Components</h2>
+<br>
+<h3>**Buttons**</h3>
+<ul>
+<li>**Primary Button** (Gradient):</li>
+<li>Background: Indigo to Purple gradient</li>
+<li>Hover: Darker gradient</li>
+<li>Shadow: Indigo glow</li>
+<li>Text: White</li>
+<li>Rounded corners: 12px</li>
+</ul>
+<br>
+<ul>
+<li>**Secondary Button**:</li>
+<li>Background: Transparent with border</li>
+<li>Hover: Light background</li>
+<li>Text: Primary color</li>
+</ul>
+<br>
+<ul>
+<li>**Danger Button**:</li>
+<li>Background: Red gradient</li>
+<li>Hover: Darker red</li>
+<li>Text: White</li>
+</ul>
+<br>
+<ul>
+<li>**Icon Button**:</li>
+<li>Circular/square</li>
+<li>Icon only</li>
+<li>Hover: Background highlight</li>
+</ul>
+<br>
+<h3>**Input Fields**</h3>
+<ul>
+<li>Rounded corners: 12px</li>
+<li>Border: Subtle gray</li>
+<li>Focus: Indigo border + glow</li>
+<li>Background: Glassmorphism effect</li>
+<li>Placeholder: Gray text</li>
+</ul>
+<br>
+<h3>**Cards**</h3>
+<ul>
+<li>Background: Glassmorphism (semi-transparent with blur)</li>
+<li>Border: Subtle border</li>
+<li>Shadow: Soft shadow</li>
+<li>Rounded corners: 16px</li>
+<li>Hover: Slight elevation</li>
+</ul>
+<br>
+<h3>**Badges/Tags**</h3>
+<ul>
+<li>Status badges:</li>
+<li>Online: Green</li>
+<li>Offline: Gray</li>
+<li>Pending: Orange</li>
+<li>Running: Blue</li>
+<li>Completed: Green</li>
+<li>Failed: Red</li>
+<li>Rounded: 8px</li>
+<li>Text: Small, bold</li>
+</ul>
+<br>
+<h3>**Tables**</h3>
+<ul>
+<li>Header: Dark background</li>
+<li>Rows: Alternating subtle background</li>
+<li>Hover: Highlight row</li>
+<li>Border: Subtle dividers</li>
+<li>Scroll: Smooth scrolling</li>
+</ul>
+<br>
+<h3>**Modals/Dialogs**</h3>
+<ul>
+<li>Background: Dark overlay (backdrop blur)</li>
+<li>Content: Glassmorphism card</li>
+<li>Header: Title + close button</li>
+<li>Footer: Action buttons</li>
+<li>Rounded corners: 16px</li>
+<li>Animation: Fade in + slide up</li>
+</ul>
+<br>
+<h3>**Dropdown Menus**</h3>
+<ul>
+<li>Background: Glassmorphism</li>
+<li>Border: Subtle</li>
+<li>Hover: Highlight item</li>
+<li>Rounded corners: 8px</li>
+<li>Shadow: Soft shadow</li>
+</ul>
+<br>
+<h3>**Tabs**</h3>
+<ul>
+<li>Active: Gradient background</li>
+<li>Inactive: Transparent</li>
+<li>Hover: Light background</li>
+<li>Border: Subtle bottom border on active</li>
+<li>Icons: Left of label</li>
+</ul>
+<br>
+<h3>**Status Indicators**</h3>
+<ul>
+<li>Connected: Green dot + pulse animation</li>
+<li>Disconnected: Red dot</li>
+<li>Loading: Spinning indicator</li>
+<li>Success: Green checkmark</li>
+<li>Error: Red X icon</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>🎨 Color Palette</h2>
+<br>
+<h3>**Primary Colors**</h3>
+<ul>
+<li>Indigo: `#6366f1`</li>
+<li>Purple: `#8b5cf6`</li>
+<li>Blue: `#3b82f6`</li>
+</ul>
+<br>
+<h3>**Status Colors**</h3>
+<ul>
+<li>Success/Online: `#10b981` (Green)</li>
+<li>Error/Offline: `#ef4444` (Red)</li>
+<li>Warning/Pending: `#f59e0b` (Orange)</li>
+<li>Info: `#3b82f6` (Blue)</li>
+</ul>
+<br>
+<h3>**Neutral Colors**</h3>
+<ul>
+<li>Dark Background: `#0f172a` (Slate 900)</li>
+<li>Card Background: `#1e293b` (Slate 800)</li>
+<li>Border: `#334155` (Slate 700)</li>
+<li>Text Primary: `#f1f5f9` (Slate 100)</li>
+<li>Text Secondary: `#94a3b8` (Slate 400)</li>
+</ul>
+<br>
+<h3>**Gradients**</h3>
+<ul>
+<li>Primary: `linear-gradient(135deg, #6366f1, #8b5cf6)`</li>
+<li>Success: `linear-gradient(135deg, #10b981, #059669)`</li>
+<li>Error: `linear-gradient(135deg, #ef4444, #dc2626)`</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>✨ Animation & Transitions</h2>
+<br>
+<h3>**Page Transitions**</h3>
+<ul>
+<li>Fade in: 200ms</li>
+<li>Slide in: 300ms</li>
+</ul>
+<br>
+<h3>**Button Interactions**</h3>
+<ul>
+<li>Hover: Scale 1.05, shadow increase</li>
+<li>Active: Scale 0.95</li>
+<li>Transition: 200ms</li>
+</ul>
+<br>
+<h3>**Modal Animations**</h3>
+<ul>
+<li>Enter: Fade in + slide up (300ms)</li>
+<li>Exit: Fade out + slide down (200ms)</li>
+</ul>
+<br>
+<h3>**Status Indicators**</h3>
+<ul>
+<li>Pulse animation for active connections</li>
+<li>Loading spinner for async operations</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>📱 Responsive Design</h2>
+<br>
+<h3>**Breakpoints**</h3>
+<ul>
+<li>Mobile: < 640px</li>
+<li>Tablet: 640px - 1024px</li>
+<li>Desktop: > 1024px</li>
+</ul>
+<br>
+<h3>**Mobile Adaptations**</h3>
+<ul>
+<li>Collapsible sidebar</li>
+<li>Stack navigation tabs vertically</li>
+<li>Full-width tables with horizontal scroll</li>
+<li>Bottom navigation for mobile</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>🔤 Typography</h2>
+<br>
+<h3>**Font Family**</h3>
+<ul>
+<li>Primary: System font stack (Inter, -apple-system, sans-serif)</li>
+<li>Monospace: For terminal/code (JetBrains Mono, Consolas, monospace)</li>
+</ul>
+<br>
+<h3>**Font Sizes**</h3>
+<ul>
+<li>H1 (Page titles): 32px, bold</li>
+<li>H2 (Section titles): 24px, bold</li>
+<li>H3 (Card titles): 20px, semibold</li>
+<li>Body: 16px, regular</li>
+<li>Small: 14px, regular</li>
+<li>Caption: 12px, regular</li>
+</ul>
+<br>
+<h3>**Font Weights**</h3>
+<ul>
+<li>Bold: 700</li>
+<li>Semibold: 600</li>
+<li>Regular: 400</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>🎯 Interactive States</h2>
+<br>
+<h3>**Hover States**</h3>
+<ul>
+<li>Buttons: Scale + shadow</li>
+<li>Cards: Elevation increase</li>
+<li>Table rows: Background highlight</li>
+<li>Links: Underline</li>
+</ul>
+<br>
+<h3>**Active States**</h3>
+<ul>
+<li>Buttons: Pressed effect</li>
+<li>Tabs: Gradient highlight</li>
+<li>Inputs: Border glow</li>
+</ul>
+<br>
+<h3>**Disabled States**</h3>
+<ul>
+<li>Reduced opacity (50%)</li>
+<li>No pointer cursor</li>
+<li>No interactions</li>
+</ul>
+<br>
+<h3>**Loading States**</h3>
+<ul>
+<li>Skeleton screens for content</li>
+<li>Spinner for buttons</li>
+<li>Progress bars for operations</li>
+</ul>
+<br>
+<h3>**Empty States**</h3>
+<ul>
+<li>Icon illustration</li>
+<li>Descriptive text</li>
+<li>Action button (if applicable)</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>📋 Additional UI Elements</h2>
+<br>
+<h3>**Tooltips**</h3>
+<ul>
+<li>Appear on hover</li>
+<li>Dark background</li>
+<li>White text</li>
+<li>Small arrow pointing to element</li>
+</ul>
+<br>
+<h3>**Toast Notifications**</h3>
+<ul>
+<li>Position: Top-right</li>
+<li>Types: Success, Error, Warning, Info</li>
+<li>Auto-dismiss: 3-5 seconds</li>
+<li>Dismiss button</li>
+</ul>
+<br>
+<h3>**Progress Bars**</h3>
+<ul>
+<li>Animated fill</li>
+<li>Percentage display</li>
+<li>Color-coded by status</li>
+</ul>
+<br>
+<h3>**Charts/Graphs** (if needed)</h3>
+<ul>
+<li>Line charts for statistics</li>
+<li>Bar charts for comparisons</li>
+<li>Pie charts for distributions</li>
+<li>Dark theme compatible</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>✅ Final Checklist for Designer</h2>
+<br>
+<ul>
+<li>[ ] All 8 main navigation tabs designed</li>
+<li>[ ] Overview dashboard with stats cards</li>
+<li>[ ] Clients table with filters</li>
+<li>[ ] Agent builder with 4 sub-tabs</li>
+<li>[ ] AI Terminal with mode selection</li>
+<li>[ ] AI Insights with 4 sub-tabs</li>
+<li>[ ] Logs viewer with filters</li>
+<li>[ ] Tasks management table</li>
+<li>[ ] Settings with 6 sub-tabs</li>
+<li>[ ] Login page (Premium design)</li>
+<li>[ ] Modal/dialog designs</li>
+<li>[ ] Empty states for all sections</li>
+<li>[ ] Loading states</li>
+<li>[ ] Error states</li>
+<li>[ ] Mobile responsive layouts</li>
+<li>[ ] Dark theme color palette</li>
+<li>[ ] Light theme color palette (optional)</li>
+<li>[ ] Glassmorphism effects</li>
+<li>[ ] Gradient buttons</li>
+<li>[ ] Smooth animations</li>
+<li>[ ] Icon set (Lucide React compatible)</li>
+</ul>
+<br>
+<hr>
+<br>
+<h2>📦 Deliverables Expected</h2>
+<br>
+<ul>
+<li>**Figma File** with:</li>
+<li>All page layouts</li>
+<li>Component library</li>
+<li>Style guide</li>
+<li>Color palette</li>
+<li>Typography system</li>
+<li>Icon set</li>
+</ul>
+<br>
+<ul>
+<li>**Design Specifications**:</li>
+<li>Spacing system (4px grid)</li>
+<li>Border radius values</li>
+<li>Shadow elevations</li>
+<li>Animation timings</li>
+</ul>
+<br>
+<ul>
+<li>**Assets** (if applicable):</li>
+<li>Custom illustrations</li>
+<li>Icons (SVG format)</li>
+<li>Logos</li>
+</ul>
+<br>
+<hr>
+<br>
+<p><strong>Note</strong>: This UI specification covers all features and sections currently implemented in the LoopJS C2 Panel. The designer should create a premium, modern interface that matches the description above while maintaining usability and accessibility standards.</p>
+<br>
+<br>
+
+</body>
+</html>
