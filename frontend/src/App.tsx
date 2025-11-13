@@ -44,7 +44,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen" style={{
+    <div className="min-h-screen min-w-[1024px]" style={{
       background: `linear-gradient(to bottom right, var(--theme-bg-from), var(--theme-bg-to))`
     }}>
       {/* Header Bar */}
