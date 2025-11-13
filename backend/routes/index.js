@@ -43,28 +43,34 @@ router.use('/info', protect, infoRoute);
 
 // POST /api/register (for testing)
 router.post('/register', async (req, res) => {
-  const { username, password, role = 'admin' } = req.body;
+  const { username, password, email, role = 'admin' } = req.body;
 
   try {
+    // Validate required fields
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: 'Username, password, and email are required' });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: 'User with this username or email already exists' });
     }
 
     // Create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       username,
+      email,
       password: hashedPassword,
       role
     });
 
     await user.save();
-    res.status(201).json({ message: 'User created successfully', username: user.username, role: user.role });
+    res.status(201).json({ message: 'User created successfully', username: user.username, email: user.email, role: user.role });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Server error during registration' });
+    res.status(500).json({ error: 'Server error during registration', details: error.message });
   }
 });
 
