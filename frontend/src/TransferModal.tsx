@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Agent } from './types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -9,8 +13,6 @@ interface TransferModalProps {
 }
 
 const TransferModal: React.FC<TransferModalProps> = ({ isOpen, setIsOpen, user, handleProcess }) => {
-  if (!isOpen) return null;
-
   const [commandKey, setCommandKey] = useState('');
 
   const commands = {
@@ -21,49 +23,57 @@ const TransferModal: React.FC<TransferModalProps> = ({ isOpen, setIsOpen, user, 
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-[9999]">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full dark:bg-boxdark">
-        <h2 className="text-xl font-semibold mb-4">Sending Commands</h2>
-        <div className="mb-4 flex">
-          <label className="font-semibold text-gray-700 flex-2 dark:text-gray-300">Computer Name:</label>
-          <div className="text-gray-900 flex-1 pl-2 dark:text-gray-100">{user.name}</div>
-        </div>
-        {/* ... other user details ... */}
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Sending Commands</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="computer-name" className="text-right">
+              Computer Name:
+            </Label>
+            <div className="col-span-3">{user.computerName}</div>
+          </div>
 
-        <div className="mb-4">
-          <label className="font-semibold text-gray-700 flex-2 dark:text-gray-300">Command:</label>
-          <br />
-          <select
-            value={commandKey}
-            onChange={(e) => setCommandKey(e.target.value)}
-            className="mt-1 block w-full p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-boxdark-2 dark:border-strokedark"
-          >
-            <option value="">Choose a command</option>
-            {Object.entries(commands).map(([key, name]) => (
-              <option key={key} value={key}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="command-select" className="text-right">
+              Command:
+            </Label>
+            <Select value={commandKey} onValueChange={setCommandKey}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Choose a command" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(commands).map(([key, name]) => (
+                  <SelectItem key={key} value={key}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex justify-end">
-          <button
-            onClick={() => handleProcess(user, commandKey)}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Close
+          </Button>
+          <Button
+            onClick={() => {
+              if (commandKey) {
+                handleProcess(user, commandKey);
+                setIsOpen(false);
+              }
+            }}
             disabled={!commandKey}
-            className="mr-2 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
           >
             Send Command
-          </button>
-          <button
-            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 transition"
-            onClick={() => setIsOpen(false)}
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

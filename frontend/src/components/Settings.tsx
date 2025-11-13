@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { FiUsers, FiDatabase, FiTrash2, FiSave, FiEye, FiEyeOff, FiPlus, FiEdit, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { 
+  Users, 
+  Database, 
+  Trash2, 
+  Save, 
+  Eye, 
+  EyeOff, 
+  Plus, 
+  Edit, 
+  X, 
+  Check, 
+  AlertCircle,
+  Settings as SettingsIcon,
+  Shield,
+  Palette,
+  MessageSquare
+} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from 'axios';
 import request from '../axios';
 import { toast } from 'react-hot-toast';
@@ -415,43 +437,47 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
   // Render methods will be added in the next part...
   const renderAppearanceSettings = () => (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-          🎨 Panel Customization
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-black dark:text-white mb-2">
-              Panel Name
-            </label>
-            <input
-              type="text"
-              value={settings.panelName}
-              onChange={(e) => handleSettingChange('panelName', e.target.value)}
-              className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
-            />
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Panel Customization
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="panelName">Panel Name</Label>
+              <Input
+                id="panelName"
+                type="text"
+                value={settings.panelName}
+                onChange={(e) => handleSettingChange('panelName', e.target.value)}
+              />
+            </div>
           
-          <div>
-            <label className="block text-sm font-medium text-black dark:text-white mb-2">
-              Panel Icon
-            </label>
-            <input
-              type="text"
-              value={settings.panelIcon}
-              onChange={(e) => handleSettingChange('panelIcon', e.target.value)}
-              className="w-full px-3 py-2 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="panelIcon">Panel Icon</Label>
+              <Input
+                id="panelIcon"
+                type="text"
+                value={settings.panelIcon}
+                onChange={(e) => handleSettingChange('panelIcon', e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Theme Selection */}
-      <div>
-        <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-          🎭 Theme Selection
-        </h3>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Theme Selection
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
         
         {categories.map(category => (
           <div key={category} className="mb-6">
@@ -472,28 +498,29 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
             
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {themes.filter(theme => theme.category === category).map((theme) => (
-                <button
+                <Button
                   key={theme.value}
+                  variant={settings.theme === theme.value ? "default" : "outline"}
                   onClick={() => handleThemeChange(theme.value)}
-                  className={`p-3 rounded-lg border-2 transition-all duration-300 hover:scale-105 ${
-                    settings.theme === theme.value
-                      ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/20'
-                      : 'border-stroke dark:border-strokedark hover:border-primary/50'
-                  }`}
+                  className="h-auto p-3 flex flex-col items-center gap-2"
                 >
-                  <div className="text-lg mb-2">{theme.label.split(' ')[1]}</div>
-                  <div className="text-xs text-bodydark2">{theme.desc}</div>
-                </button>
+                  <div className="text-lg">{theme.label.split(' ')[1]}</div>
+                  <div className="text-xs text-muted-foreground">{theme.desc}</div>
+                </Button>
               ))}
             </div>
           </div>
         ))}
-      </div>
+        </CardContent>
+      </Card>
 
       {saved && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce">
-          ✅ Settings saved successfully!
-        </div>
+        <Alert>
+          <Check className="h-4 w-4" />
+          <AlertDescription>
+            Settings saved successfully!
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -670,7 +697,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
           onClick={() => setShowCreateUser(true)}
           className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center"
         >
-          <FiPlus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
           Create User
         </button>
       </div>
@@ -716,14 +743,14 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                 <td className="px-6 py-4">
                   <div className="flex space-x-2">
                     <button className="text-blue-400 hover:text-blue-300">
-                      <FiEdit className="w-4 h-4" />
+                      <Edit className="w-4 h-4" />
                     </button>
                     {user.id !== '1' && (
                       <button 
                         onClick={() => handleDeleteUser(user.id)}
                         className="text-red-400 hover:text-red-300"
                       >
-                        <FiX className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -784,9 +811,9 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     {showPassword ? (
-                      <FiEyeOff className="h-4 w-4 text-bodydark2" />
+                      <EyeOff className="h-4 w-4 text-bodydark2" />
                     ) : (
-                      <FiEye className="h-4 w-4 text-bodydark2" />
+                      <Eye className="h-4 w-4 text-bodydark2" />
                     )}
                   </button>
                 </div>
@@ -888,21 +915,21 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                 onClick={() => handleClearDatabase('logs')}
                 className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center"
               >
-                <FiTrash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-4 h-4 mr-2" />
                 Clear All Logs
               </button>
               <button
                 onClick={() => handleClearDatabase('users')}
                 className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
               >
-                <FiUsers className="w-4 h-4 mr-2" />
+                <Users className="w-4 h-4 mr-2" />
                 Clear All Users (Except Admin)
               </button>
               <button
                 onClick={() => handleClearDatabase('all')}
                 className="w-full px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors flex items-center justify-center"
               >
-                <FiDatabase className="w-4 h-4 mr-2" />
+                <Database className="w-4 h-4 mr-2" />
                 Clear Entire Database
               </button>
             </div>
@@ -1036,7 +1063,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                     </>
                   ) : (
                     <>
-                      <FiCheck className="w-4 h-4 mr-2" />
+                      <Check className="w-4 h-4 mr-2" />
                       Test Connection
                     </>
                   )}
@@ -1047,7 +1074,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                   disabled={telegramLoading}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
-                  <FiSave className="w-4 h-4 mr-2" />
+                  <Save className="w-4 h-4 mr-2" />
                   Save Config
                 </button>
               </div>
@@ -1060,9 +1087,9 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
                     : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
                 }`}>
                   {telegramTestResult.success ? (
-                    <FiCheck className="w-5 h-5 text-green-600 mr-2" />
+                    <Check className="w-5 h-5 text-green-600 mr-2" />
                   ) : (
-                    <FiAlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                    <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
                   )}
                   <span className={`text-sm ${
                     telegramTestResult.success 
@@ -1093,59 +1120,79 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark p-6">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
-          ⚙️ Advanced Settings
-        </h1>
-        <p className="text-bodydark2">
-          Configure your C2 panel with comprehensive settings and user management
-        </p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <SettingsIcon className="w-6 h-6" />
+            Advanced Settings
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Configure your C2 panel with comprehensive settings and user management
+          </p>
+        </CardHeader>
+      </Card>
 
       {/* Tab Navigation */}
-      <div className="bg-white dark:bg-boxdark rounded-lg shadow-sm border border-stroke dark:border-strokedark">
-        <div className="border-b border-stroke dark:border-strokedark">
-          <nav className="flex space-x-8 px-6 overflow-x-auto">
-            {[
-              { id: 'appearance', label: '🎨 Appearance', icon: '🎨' },
-              { id: 'general', label: '⚙️ General', icon: '⚙️' },
-              { id: 'security', label: '🔒 Security', icon: '🔒' },
-              { id: 'users', label: '👥 Users', icon: '👥' },
-              { id: 'database', label: '🗄️ Database', icon: '🗄️' },
-              { id: 'telegram', label: '📱 Telegram', icon: '📱' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-bodydark2 hover:text-black dark:hover:text-white hover:border-gray-300'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <Card>
+        <CardContent className="p-0">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-transparent">
+              <TabsTrigger value="appearance" className="flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                <span>Appearance</span>
+              </TabsTrigger>
+              <TabsTrigger value="general" className="flex items-center gap-2">
+                <SettingsIcon className="w-4 h-4" />
+                <span>General</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex items-center gap-2">
+                <Database className="w-4 h-4" />
+                <span>Database</span>
+              </TabsTrigger>
+              <TabsTrigger value="telegram" className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                <span>Telegram</span>
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'appearance' && renderAppearanceSettings()}
-          {activeTab === 'general' && renderGeneralSettings()}
-          {activeTab === 'security' && renderSecuritySettings()}
-          {activeTab === 'users' && renderUserManagement()}
-          {activeTab === 'database' && renderDatabaseSettings()}
-          {activeTab === 'telegram' && renderTelegramSettings()}
-        </div>
-      </div>
+            <div className="p-6">
+              <TabsContent value="appearance">
+                {renderAppearanceSettings()}
+              </TabsContent>
+              <TabsContent value="general">
+                {renderGeneralSettings()}
+              </TabsContent>
+              <TabsContent value="security">
+                {renderSecuritySettings()}
+              </TabsContent>
+              <TabsContent value="users">
+                {renderUserManagement()}
+              </TabsContent>
+              <TabsContent value="database">
+                {renderDatabaseSettings()}
+              </TabsContent>
+              <TabsContent value="telegram">
+                {renderTelegramSettings()}
+              </TabsContent>
+            </div>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button 
+        <Button 
           onClick={handleSaveSettings}
           disabled={loading}
-          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center disabled:opacity-50"
+          className="flex items-center gap-2"
         >
           {loading ? (
             <>
@@ -1154,11 +1201,11 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsSaved }) => {
             </>
           ) : (
             <>
-              <FiSave className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4 mr-2" />
               Save All Settings
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

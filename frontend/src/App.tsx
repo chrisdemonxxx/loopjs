@@ -22,7 +22,7 @@ export default function App() {
   const [tasksModalStatus, setTasksModalStatus] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Agent | null>(null);
   const [naturalLanguageHistory, setNaturalLanguageHistory] = useState<any[]>([]);
-  const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  // const [wsConnectionStatus, setWsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   
   // Terminal ref and task mapping
   const terminalRef = useRef<TerminalRef>(null);
@@ -369,11 +369,11 @@ export default function App() {
     
     // Add connection event listeners for debugging
     if (wsRef.current) {
-      setWsConnectionStatus('connecting');
+      // setWsConnectionStatus('connecting');
       
       wsRef.current.addEventListener('open', () => {
         console.log('[FRONTEND WS] WebSocket connection opened');
-        setWsConnectionStatus('connected');
+        // setWsConnectionStatus('connected');
       });
       
       wsRef.current.addEventListener('message', (event) => {
@@ -382,12 +382,12 @@ export default function App() {
       
       wsRef.current.addEventListener('close', (event) => {
         console.log('[FRONTEND WS] WebSocket connection closed:', event.code, event.reason);
-        setWsConnectionStatus('disconnected');
+        // setWsConnectionStatus('disconnected');
       });
       
       wsRef.current.addEventListener('error', (error) => {
         console.error('[FRONTEND WS] WebSocket error:', error);
-        setWsConnectionStatus('error');
+        // setWsConnectionStatus('error');
       });
     }
   };
@@ -525,7 +525,6 @@ export default function App() {
         )}
         <DashboardPage
           tableData={tableData}
-          isLoading={isLoading}
           onActionClicked={handleActionClicked}
           onTasksClicked={handleTasksClicked}
           onLogout={handleLogout}

@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { FiUser, FiLock, FiEye, FiEyeOff, FiShield, FiTerminal, FiWifi, FiCpu, FiZap, FiActivity, FiGlobe } from "react-icons/fi";
+import { User, Lock, Eye, EyeOff, Shield, Terminal, Wifi, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTheme } from "../contexts/ThemeContext";
 import { toastService } from "../services/toastService";
 import request from "../axios";
@@ -49,7 +53,7 @@ export default function ThemeLoginPage({ onLogin }: { onLogin: () => void }) {
         toastService.error("Authentication failed - Access denied", { soundType: 'error' });
         console.error("Invalid login response:", res);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
       if (err.response) {
         if (err.response.status === 401) {
@@ -79,48 +83,24 @@ export default function ThemeLoginPage({ onLogin }: { onLogin: () => void }) {
 
   const getThemeTitle = () => {
     switch (mode) {
-      case 'hacker': return 'HACKER TERMINAL';
-      case 'matrix': return 'MATRIX ACCESS';
-      case 'cyberpunk': return 'CYBERPUNK 2077';
-      case 'synthwave': return 'RETRO WAVE';
-      case 'void': return 'THE VOID';
-      case 'neon-punk': return 'NEON PUNK';
-      case 'ai-core': return 'AI CORE';
-      case 'blood': return 'BLOOD RED';
-      case 'glass': return 'GLASS MORPHISM';
-      case 'hologram': return 'HOLOGRAPHIC';
+      case 'hacker-elite': return 'HACKER TERMINAL';
+      case 'premium-cyber': return 'CYBERPUNK 2077';
       default: return 'C2 COMMAND PANEL';
     }
   };
 
   const getThemeSubtitle = () => {
     switch (mode) {
-      case 'hacker': return 'Access the underground network';
-      case 'matrix': return 'Enter the digital realm';
-      case 'cyberpunk': return 'Welcome to Night City';
-      case 'synthwave': return 'Step into the 80s future';
-      case 'void': return 'Enter the infinite darkness';
-      case 'neon-punk': return 'Join the electric rebellion';
-      case 'ai-core': return 'Connect to machine consciousness';
-      case 'blood': return 'Enter the crimson domain';
-      case 'glass': return 'Transparent security protocol';
-      case 'hologram': return 'Futuristic authentication';
+      case 'hacker-elite': return 'Access the underground network';
+      case 'premium-cyber': return 'Welcome to Night City';
       default: return 'Secure command and control';
     }
   };
 
   const getThemeIcon = () => {
     switch (mode) {
-      case 'hacker': return '💚';
-      case 'matrix': return '🔋';
-      case 'cyberpunk': return '🌆';
-      case 'synthwave': return '🌅';
-      case 'void': return '🌌';
-      case 'neon-punk': return '⚡';
-      case 'ai-core': return '🤖';
-      case 'blood': return '🩸';
-      case 'glass': return '🔮';
-      case 'hologram': return '🌈';
+      case 'hacker-elite': return '💚';
+      case 'premium-cyber': return '🌆';
       default: return '🎯';
     }
   };
@@ -136,7 +116,7 @@ export default function ThemeLoginPage({ onLogin }: { onLogin: () => void }) {
         <div className="absolute bottom-1/4 right-1/3 w-2 h-2 bg-primary/25 rounded-full animate-pulse"></div>
         
         {/* Grid lines for tech themes */}
-        {(mode === 'hacker' || mode === 'matrix' || mode === 'cyberpunk' || mode === 'ai-core') && (
+        {(mode === 'hacker-elite' || mode === 'premium-cyber') && (
           <>
             <div className="absolute inset-0 opacity-10">
               <div className="grid grid-cols-20 grid-rows-20 h-full w-full">
@@ -146,16 +126,6 @@ export default function ThemeLoginPage({ onLogin }: { onLogin: () => void }) {
               </div>
             </div>
           </>
-        )}
-        
-        {/* Holographic effects */}
-        {mode === 'hologram' && (
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 animate-pulse"></div>
-        )}
-        
-        {/* Glass morphism overlay */}
-        {mode === 'glass' && (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 backdrop-blur-sm"></div>
         )}
       </div>
 
@@ -177,137 +147,109 @@ export default function ThemeLoginPage({ onLogin }: { onLogin: () => void }) {
         {/* Login Form */}
         <div className="space-y-6">
           {/* Username Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiUser className="h-5 w-5 text-primary" />
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="username"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-10"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-10 pr-4 py-3 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
-            />
           </div>
 
           {/* Password Field */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiLock className="h-5 w-5 text-primary" />
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-10 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-10 pr-12 py-3 border border-stroke dark:border-strokedark rounded-lg bg-white dark:bg-boxdark text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            >
-              {showPassword ? (
-                <FiEyeOff className="h-5 w-5 text-bodydark2 hover:text-primary transition-colors" />
-              ) : (
-                <FiEye className="h-5 w-5 text-bodydark2 hover:text-primary transition-colors" />
-              )}
-            </button>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Login Button */}
-          <button
+          <Button
             onClick={handleLogin}
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
+            className="w-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg disabled:transform-none"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Authenticating...
               </div>
             ) : (
               <div className="flex items-center justify-center">
-                <FiShield className="h-5 w-5 mr-2" />
+                <Shield className="h-4 w-4 mr-2" />
                 Access System
               </div>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <div className="flex items-center justify-center space-x-4 text-sm text-bodydark2">
+          <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground">
             <div className="flex items-center">
-              <FiTerminal className="h-4 w-4 mr-1" />
+              <Terminal className="h-4 w-4 mr-1" />
               Terminal Ready
             </div>
             <div className="flex items-center">
-              <FiWifi className="h-4 w-4 mr-1" />
+              <Wifi className="h-4 w-4 mr-1" />
               Network Active
             </div>
             <div className="flex items-center">
-              <FiShield className="h-4 w-4 mr-1" />
+              <Shield className="h-4 w-4 mr-1" />
               Secure Protocol
             </div>
           </div>
         </div>
 
         {/* Theme-specific decorations */}
-        {mode === 'hacker' && (
+        {mode === 'hacker-elite' && (
           <div className="absolute top-4 left-4 text-green-400 font-mono text-xs animate-pulse">
             root@system:~$
           </div>
         )}
         
-        {mode === 'matrix' && (
-          <div className="absolute top-4 right-4 text-green-500 font-mono text-xs">
-            <div className="animate-pulse">01010101</div>
-            <div>01101001</div>
-          </div>
-        )}
-        
-        {mode === 'cyberpunk' && (
+        {mode === 'premium-cyber' && (
           <div className="absolute top-4 right-4 text-cyan-400 font-bold text-xs">
-            <div className="animate-pulse">NEON</div>
+            <div className="animate-pulse flex items-center">
+              <Zap className="h-3 w-3 mr-1" />
+              NEON
+            </div>
             <div>CITY</div>
-          </div>
-        )}
-        
-        {mode === 'synthwave' && (
-          <div className="absolute top-4 right-4 text-pink-400 font-bold text-xs">
-            <div className="animate-pulse">RETRO</div>
-            <div>WAVE</div>
-          </div>
-        )}
-        
-        {mode === 'void' && (
-          <div className="absolute top-4 right-4 text-white font-bold text-xs">
-            <div className="animate-pulse">VOID</div>
-            <div>∞</div>
-          </div>
-        )}
-        
-        {mode === 'neon-punk' && (
-          <div className="absolute top-4 right-4 text-yellow-400 font-bold text-xs">
-            <div className="animate-pulse">PUNK</div>
-            <div>⚡</div>
-          </div>
-        )}
-        
-        {mode === 'ai-core' && (
-          <div className="absolute top-4 right-4 text-cyan-300 font-bold text-xs">
-            <div className="animate-pulse">AI</div>
-            <div>🤖</div>
           </div>
         )}
       </div>
