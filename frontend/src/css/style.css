@@ -416,15 +416,15 @@ body {
 }
 
 .bg-primary\/10 {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
 }
 
 .bg-primary\/90 {
-  background-color: color-mix(in srgb, var(--color-primary) 90%, transparent) !important;
+  background-color: rgba(59, 130, 246, 0.9) !important;
 }
 
 .hover\:border-primary\/50:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
 }
 
 /* Improve font rendering */
