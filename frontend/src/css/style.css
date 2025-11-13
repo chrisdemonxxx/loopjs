@@ -2,15 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap');
 
-/* Import Satoshi font */
-@import './satoshi.css';
-
-/* Import glassmorphism styles */
-@import '../styles/glassmorphism.css';
-
-/* Import themes */
-@import '../styles/themes.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -297,6 +288,9 @@
   --border-color: rgba(255, 255, 255, 0.2);
   --accent-color: rgba(59, 130, 246, 0.8);
   --accent-hover: rgba(37, 99, 235, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Hacker theme animations */
