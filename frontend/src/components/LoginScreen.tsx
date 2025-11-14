@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Shield, Lock, User, Eye, EyeOff, ArrowRight, Fingerprint, Zap } from 'lucide-react';
+import { Shield, Lock, User, Eye, EyeOff, ArrowRight, Fingerprint, Zap, AlertCircle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { useTheme } from '../contexts/ThemeContext';
+import { api } from '../services/api';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -17,16 +18,28 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false);
+    setError('');
+
+    try {
+      const response = await api.post('/login', { username, password });
+
+      // Store auth token and user info
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // Call onLogin callback
       onLogin();
-    }, 1500);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.error || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,6 +110,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             
             <div className="p-8">
               <form onSubmit={handleLogin} className="space-y-6">
+                {/* Error Message */}
+                {error && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    <p className="text-sm text-red-400">{error}</p>
+                  </div>
+                )}
+
                 {/* Username Field */}
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-slate-300 flex items-center gap-2">

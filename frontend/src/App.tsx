@@ -18,7 +18,7 @@ import SettingsSection from './components/SettingsSection';
 
 function AppContent() {
   const { colors } = useTheme();
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Changed to true to bypass login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [operationalStatus, setOperationalStatus] = useState(true);
   const [panelName, setPanelName] = useState('C2 Panel');

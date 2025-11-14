@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { Search, Download, Monitor, Circle, MoreVertical, Eye, Terminal, List, Image, Keyboard, Power, Globe, Laptop, Server as ServerIcon, Apple } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -37,16 +38,29 @@ export default function ClientsSection() {
   const [terminalClient, setTerminalClient] = useState<Client | null>(null);
   const [tasksClient, setTasksClient] = useState<Client | null>(null);
 
-  const [clients] = useState<Client[]>([
-    { id: '1', computerName: 'DESKTOP-WK8X', ipAddress: '192.168.1.105', platform: 'Windows', status: 'Online', lastSeen: '2 minutes ago', features: { hvnc: true, keylogger: true, screenCapture: true, fileManager: true } },
-    { id: '2', computerName: 'CLIENT-PC', ipAddress: '192.168.1.112', platform: 'Windows', status: 'Online', lastSeen: '5 minutes ago', features: { hvnc: true, screenCapture: true, fileManager: true } },
-    { id: '3', computerName: 'LAPTOP-7Y9Z', ipAddress: '192.168.1.89', platform: 'macOS', status: 'Offline', lastSeen: '8 minutes ago', features: { hvnc: true, screenCapture: true } },
-    { id: '4', computerName: 'SERVER-01', ipAddress: '192.168.1.50', platform: 'Linux', status: 'Online', lastSeen: 'Just now', features: { hvnc: true, fileManager: true } },
-    { id: '5', computerName: 'WORKSTATION-A', ipAddress: '192.168.1.73', platform: 'Windows', status: 'Online', lastSeen: '1 minute ago', features: { hvnc: true, keylogger: true, screenCapture: true, fileManager: true } },
-    { id: '6', computerName: 'DEV-MACHINE', ipAddress: '192.168.1.94', platform: 'Linux', status: 'Online', lastSeen: 'Just now', features: { hvnc: true, fileManager: true } },
-    { id: '7', computerName: 'OFFICE-PC-12', ipAddress: '192.168.1.156', platform: 'Windows', status: 'Offline', lastSeen: '25 minutes ago', features: { screenCapture: true } },
-    { id: '8', computerName: 'MAC-STUDIO', ipAddress: '192.168.1.201', platform: 'macOS', status: 'Online', lastSeen: '3 minutes ago', features: { hvnc: true, screenCapture: true } },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch clients from API
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get('/info/clients');
+        setClients(response.clients || []);
+      } catch (error) {
+        console.error('Failed to fetch clients:', error);
+        setClients([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClients();
+    // Refresh clients every 10 seconds
+    const interval = setInterval(fetchClients, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.computerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
