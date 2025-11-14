@@ -4,6 +4,7 @@ const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 const { User, RefreshToken, sequelize } = require('../models');
 const commandRoute = require('./command.route');
 const infoRoute = require('./info.route');
@@ -58,7 +59,7 @@ router.post('/register', async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({
       where: {
-        [require('sequelize').Op.or]: [{ username }, { email }]
+        [Op.or]: [{ username }, { email }]
       }
     });
     if (existingUser) {
