@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type ThemeType = 'obsidian-black' | 'neon-purple' | 'quantum-gold' | 'matrix-green';
+export type ThemeType = 'cyber-teal' | 'obsidian-black' | 'neon-purple' | 'quantum-gold' | 'matrix-green';
 
 interface ThemeColors {
   primary: string;
@@ -27,6 +27,28 @@ interface ThemeColors {
 }
 
 const themes: Record<ThemeType, ThemeColors> = {
+  'cyber-teal': {
+    primary: '#00d9b5',
+    primaryLight: '#00f5d4',
+    primaryDark: '#00b894',
+    secondary: '#1e2538',
+    accent: '#3b82f6',
+    bgGradientFrom: '#0a0e1a',
+    bgGradientTo: '#0f1420',
+    cardGradientFrom: '#131824',
+    cardGradientTo: '#1a1f2e',
+    glowColor: 'rgba(0, 217, 181, 0.25)',
+    textPrimary: '#e8edf5',
+    textSecondary: '#8b93a8',
+    border: 'rgba(0, 217, 181, 0.2)',
+    background: '#0a0e1a',
+    backgroundSecondary: '#0f1420',
+    cardBg: '#131824',
+    cardBgHover: '#1e2538',
+    icon: '🛡️',
+    name: 'Cyber Teal',
+    description: 'Futuristic teal glassmorphism with depth'
+  },
   'obsidian-black': {
     primary: '#6366f1',
     primaryDark: '#4f46e5',
@@ -115,7 +137,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeType>(() => {
     const saved = localStorage.getItem('loopjs-theme');
-    return (saved as ThemeType) || 'obsidian-black';
+    return (saved as ThemeType) || 'cyber-teal';
   });
 
   const setTheme = (newTheme: ThemeType) => {
@@ -127,14 +149,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Apply theme to document root
     const colors = themes[theme];
     document.documentElement.style.setProperty('--theme-primary', colors.primary);
+    document.documentElement.style.setProperty('--theme-primary-light', colors.primaryLight || colors.primary);
     document.documentElement.style.setProperty('--theme-primary-dark', colors.primaryDark);
     document.documentElement.style.setProperty('--theme-secondary', colors.secondary);
     document.documentElement.style.setProperty('--theme-accent', colors.accent);
     document.documentElement.style.setProperty('--theme-bg', colors.background);
     document.documentElement.style.setProperty('--theme-bg-secondary', colors.backgroundSecondary);
+    document.documentElement.style.setProperty('--theme-bg-from', colors.bgGradientFrom || colors.background);
+    document.documentElement.style.setProperty('--theme-bg-to', colors.bgGradientTo || colors.backgroundSecondary);
     document.documentElement.style.setProperty('--theme-card-bg', colors.cardBg);
     document.documentElement.style.setProperty('--theme-card-bg-hover', colors.cardBgHover);
-    document.documentElement.style.setProperty('--theme-glow', colors.glowColor);
+    document.documentElement.style.setProperty('--theme-card-gradient-from', colors.cardGradientFrom || colors.cardBg);
+    document.documentElement.style.setProperty('--theme-card-gradient-to', colors.cardGradientTo || colors.cardBgHover);
+    document.documentElement.style.setProperty('--theme-glow', colors.glowColor || 'rgba(0, 0, 0, 0.1)');
     document.documentElement.style.setProperty('--theme-text-primary', colors.textPrimary);
     document.documentElement.style.setProperty('--theme-text-secondary', colors.textSecondary);
     document.documentElement.style.setProperty('--theme-border', colors.border);
